@@ -1,0 +1,13 @@
+{
+  "name": "usco-proto",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "platform": "Polymer/platform#master",
+    "polymer": "Polymer/polymer#master",
+    "ace": "Polymer/ace-element#master",
+    "polymer-ui-tabs": "Polymer/polymer-ui-tabs#master",
+
+    "usco-viewer-base": "usco/usco-viewer-base#master"
+  }
+}

@@ -1,0 +1,67 @@
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Example</title>
+      <script src="components/platform/platform.js"></script>
+      <link rel="import" href="components/polymer/polymer.html">
+      <link rel="import" href="components/ace/ace-element.html">
+      <link rel="import" href="components/usco-viewer-base/three-viewer.html">
+    <link rel="import" href="components/polymer-ui-tabs/polymer-ui-tabs.html">
+     
+
+    <style>
+      polymer-ui-tabs > * {
+height: 30px;
+line-height: 30px;
+      }
+
+polymer-ui-tabs > .polymer-selected {
+background-color: rgb(85, 153, 255);
+color: white;
+background-position: initial initial;
+background-repeat: initial initial;
+border: 1px solid black;
+border-radius: 4px 4px 0px 0px;
+}
+    </style>
+  </head>
+<body>
+  
+  <polymer-ui-tabs selected="0">
+    <span>myProject.coffee*</span>
+    <span>SuperPart.coffee</span>
+  </polymer-ui-tabs>
+
+  <div>
+    <ace-element mode="coffee" theme="solarized_dark" style="width:50%;top:40px">
+  class TestPart extends Part
+    constructor:->  
+    </ace-element>
+
+     <three-viewer style="position:absolute;left:50%;height:100%;width:50%"> </three-viewer>
+  </div>
+
+<!--
+
+    <ace-element mode="coffee" theme="solarized_dark" style="width:50%">
+  class TestPart extends Part
+    constructor:->  
+    </ace-element>
+ 
+-->
+
+  
+
+  <script>
+    window.addEventListener('WebComponentsReady', function() {
+
+      console.log("web components ready");
+      document.body.style.opacity = 1; // show body now that registration is done.
+	    //var aceEditor = document.querySelector('ace-element');
+      //workaround for node-webkit 0.6.3      
+      //aceEditor.style.opacity = 1;
+
+    });
+  </script>  
+</body>
+</html>
