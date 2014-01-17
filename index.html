@@ -5,8 +5,9 @@
       <script src="components/platform/platform.js"></script>
       <link rel="import" href="components/polymer/polymer.html">
       <link rel="import" href="components/ace/ace-element.html">
+      <link rel="import" href="components/code-mirror/code-mirror.html">
       <link rel="import" href="components/usco-viewer-base/three-viewer.html">
-    <link rel="import" href="components/polymer-ui-tabs/polymer-ui-tabs.html">
+      <link rel="import" href="components/polymer-ui-tabs/polymer-ui-tabs.html">
      
 
     <style>
@@ -38,41 +39,140 @@ mode="coffee"
 
 <script>
 /*would be hidden*/
-function part()
+
+/*
+function Part()
 {
+  THREE.Mesh.call(this, undefined, new THREE.MeshNormalMaterial());
+
   this._reflexed = null;
-} 
+}
+Part.prototype = Object.create( THREE.Mesh.prototype );
+Part.prototype.constructor = Part;
+
+function Cube(w,h,d)
+{
+  this.w = w || 50;
+  this.h = h || 50;
+  this.d = d || 50;
+
+  Part.call( this );
+  this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
+}
+Cube.prototype = Object.create( Part.prototype );
+Cube.prototype.constructor = Cube;
+
+
+function Sphere(r)
+{
+  this.r = r || 25;
+
+  Part.call( this );
+  this.geometry = new THREE.SphereGeometry( this.r, 30, 30 );
+}
+Sphere.prototype = Object.create( Part.prototype );
+Sphere.prototype.constructor = Sphere;
+
+
+
+//here is the actual test
+function CustomPart()
+{
+  Part.call( this );
+  
+  var subCube = new Cube(17,2.4,3);
+  this.add(subCube);
+
+  var subCube2 = new Cube(3,14,3);
+  subCube.position.y = 27;
+
+  this.add(subCube2);
+}
+CustomPart.prototype = Object.create( Part.prototype );
+CustomPart.prototype.constructor = CustomPart;
+
+
+function OtherPart()
+{
+  //updating this SHOULD NOT require recompiling the customPart class above
+  Part.call( this );
+  
+  var subSphere = new Sphere(17,2);
+  this.add(subSphere);
+}
+OtherPart.prototype = Object.create( Part.prototype );
+OtherPart.prototype.constructor = OtherPart;
+
+
+//instanciate
+var youpi = new CustomPart();
+assembly.add(youpi);
+
+var youpla = new OtherPart();
+assembly.add(youpla);
+
+
+
+//OTHER
+
+//var farb = new Cube(2);
+//assembly.add(farb);
+
+//basics
+cube = new THREE.Mesh( new THREE.CubeGeometry( 50, 50, 50 ), new THREE.MeshNormalMaterial() );
+cube.position.x = 10;
+
+assembly.add(cube);
+
+
+*/
 
 /*user code*/
-/*function MyPart()
-{
-  THREE.Object3D.call( this );
-}
-MyPart.prototype = Object.create( THREE.Object3D.prototype );
-part = new MyPart();*/
 </script>
+
+  <polymer-element name="cube-editor" attributes="target w h d position rotation" >
+    <template>
+      w: {{w}}
+      h: {{h}}
+      d: {{d}}
+    </template>
+    <script>
+      Polymer("cube-editor",{});
+    </script>
+  </polymer-element>
 
 
   <polymer-element name="foo-editor">
     <template>
       <button on-click="{{compile}}"> Compile </button>
       <div>
-        <ace-element theme="solarized_dark" style="width:50%;top:40px" boundValue="{{source}}"  on-editor-input="{{editorChanged}}">
+        <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" on-editor-input="{{editorChanged}}" style="position: absolute;width:50%;top:40px;height:100%">
+function test() {
+        var x = true;
+      }
+        </code-mirror>
+
+        <!--<ace-element theme="solarized_dark" style="width:50%;top:40px" boundValue="{{source}}"  on-editor-input="{{editorChanged}}">
 
 
+//basic
 cube = new THREE.Mesh( new THREE.CubeGeometry( 50, 50, 50 ), new THREE.MeshNormalMaterial() );
 
 cube.position.x = 10;
 
 assembly.add(cube);
 
-        </ace-element>
-         <three-viewer id="viewer" style="position:absolute;left:50%;height:100%;width:50%"> </three-viewer>
+        </ace-element>-->
+         <three-viewer id="viewer" style="position:absolute;left:50%;height:100%;width:50%" > </three-viewer>
+
+        <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor>
+
       </div>
     </template>
     <script>
     Polymer("foo-editor",{
       source:null,
+      selection:null,
       /*project:{files:
         {"toto.js":"some code here"}
       },*/
@@ -88,6 +188,8 @@ assembly.add(cube);
     enteredView:function()
     {
       this.$.viewer.addToScene(this.assembly);
+
+      this.async(function(){ this.$.editor.refresh(); },200);
     },
     _wrapCode:function(code)
     {
@@ -109,13 +211,20 @@ assembly.add(cube);
           child = this.assembly.children[ i ];
           this.assembly.remove(child);
       }
-
       var endSource = this._wrapCode(this.source);
-      console.log("compiling")//,endSource);
-      var f = new Function(endSource);
-      var fn = f();
-      var result = fn.call(fn, this.exports, this.include, this.importGeom, this, this.name , this.assembly)
-      console.log("result", result,this.assembly);
+      console.log("compiling");
+
+      try
+      {
+        var f = new Function(endSource);
+        var fn = f();
+        var result = fn.call(fn, this.exports, this.include, this.importGeom, this, this.name , this.assembly)
+        console.log("result", result,this.assembly);
+      }
+      catch(error)
+      {
+        console.log("failed to compile:", error.messsage);
+      }
 
     },
     editorChanged:function(event, detail, sender)
@@ -123,7 +232,6 @@ assembly.add(cube);
       //console.log("sender",sender )
       //console.log("editorValue",sender.value )
       //console.log("editorValue2",sender.editorValue )//.templateInstance.model.impl.editorValue);
-    
       //this.source = sender.editorValue;
       //console.log("this.source", this.source);
       this.compile();
