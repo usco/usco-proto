@@ -8,7 +8,9 @@
     "ace": "Polymer/ace-element#master",
     "code-mirror": "Polymer/code-mirror#master",
     "polymer-ui-tabs": "Polymer/polymer-ui-tabs#master",
-
-    "usco-viewer-base": "usco/usco-viewer-base#master"
+    "usco-viewer-base": "usco/usco-viewer-base#master",
+    "esprima": "~1.0.4",
+    "escope": "~1.0.0",
+    "esrefactor": "ariya/esrefactor"
   }
 }

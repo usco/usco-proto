@@ -9,6 +9,11 @@
       <link rel="import" href="components/usco-viewer-base/three-viewer.html">
       <link rel="import" href="components/polymer-ui-tabs/polymer-ui-tabs.html">
      
+      <!--
+      <script src="components/esprima/esprima.js"></script>
+      <script src="components/estraverse/estraverse.js"></script>
+      <script src="components/escope/escope.js"></script>
+      <script src="components/esrefactor/lib/esrefactor.js"></script>-->
 
     <style>
       polymer-ui-tabs > * {
@@ -146,7 +151,7 @@ assembly.add(cube);
     <template>
       <button on-click="{{compile}}"> Compile </button>
       <div>
-        <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" on-editor-input="{{editorChanged}}" style="position: absolute;width:50%;top:40px;height:100%">
+        <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}" on-editor-input="{{editorChanged}}" style="position: absolute;width:50%;top:40px;height:100%">
 function test() {
         var x = true;
       }
@@ -165,14 +170,16 @@ assembly.add(cube);
         </ace-element>-->
          <three-viewer id="viewer" style="position:absolute;left:50%;height:100%;width:50%" > </three-viewer>
 
-        <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor>
+          <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor>
+
+        <div style="position:absolute; left:30%; top:0px"> Selected text: {{selectedText}}</div>
 
       </div>
     </template>
     <script>
     Polymer("foo-editor",{
       source:null,
-      selection:null,
+      selectedText:null,
       /*project:{files:
         {"toto.js":"some code here"}
       },*/
