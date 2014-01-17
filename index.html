@@ -27,28 +27,114 @@ border-radius: 4px 4px 0px 0px;
   </head>
 <body>
   
+<!--
   <polymer-ui-tabs selected="0">
     <span>myProject.coffee*</span>
     <span>SuperPart.coffee</span>
   </polymer-ui-tabs>
 
-  <div>
-    <ace-element mode="coffee" theme="solarized_dark" style="width:50%;top:40px">
-  class TestPart extends Part
-    constructor:->  
-    </ace-element>
-
-     <three-viewer style="position:absolute;left:50%;height:100%;width:50%"> </three-viewer>
-  </div>
-
-<!--
-
-    <ace-element mode="coffee" theme="solarized_dark" style="width:50%">
-  class TestPart extends Part
-    constructor:->  
-    </ace-element>
- 
+mode="coffee"
 -->
+
+<script>
+/*would be hidden*/
+function part()
+{
+  this._reflexed = null;
+} 
+
+/*user code*/
+/*function MyPart()
+{
+  THREE.Object3D.call( this );
+}
+MyPart.prototype = Object.create( THREE.Object3D.prototype );
+part = new MyPart();*/
+</script>
+
+
+  <polymer-element name="foo-editor">
+    <template>
+      <button on-click="{{compile}}"> Compile </button>
+      <div>
+        <ace-element theme="solarized_dark" style="width:50%;top:40px" boundValue="{{source}}"  on-editor-input="{{editorChanged}}">
+
+
+cube = new THREE.Mesh( new THREE.CubeGeometry( 50, 50, 50 ), new THREE.MeshNormalMaterial() );
+
+cube.position.x = 10;
+
+assembly.add(cube);
+
+        </ace-element>
+         <three-viewer id="viewer" style="position:absolute;left:50%;height:100%;width:50%"> </three-viewer>
+      </div>
+    </template>
+    <script>
+    Polymer("foo-editor",{
+      source:null,
+      /*project:{files:
+        {"toto.js":"some code here"}
+      },*/
+
+    created:function()
+    {
+      this.assembly = new THREE.Object3D();
+      this.exports = {};
+      this.include = function(){};
+      this.importGeom = function(){};
+      this.name = "totoModule";
+    },
+    enteredView:function()
+    {
+      this.$.viewer.addToScene(this.assembly);
+    },
+    _wrapCode:function(code)
+    {
+       //var pre = "var assembly =  THREE.Object3D();\n"
+       var pre = "return (function ( exports, include, importGeom, module, __filename, assembly)";
+        pre +="{";
+        pre += code;
+        pre += "});";
+
+       var result = pre;
+       console.log("result", result);
+       return result
+    },
+    compile:function()
+    {
+      //clear root assembly
+      var child, i;
+      for ( i = this.assembly.children.length - 1; i >= 0 ; i -- ) {
+          child = this.assembly.children[ i ];
+          this.assembly.remove(child);
+      }
+
+      var endSource = this._wrapCode(this.source);
+      console.log("compiling")//,endSource);
+      var f = new Function(endSource);
+      var fn = f();
+      var result = fn.call(fn, this.exports, this.include, this.importGeom, this, this.name , this.assembly)
+      console.log("result", result,this.assembly);
+
+    },
+    editorChanged:function(event, detail, sender)
+    {
+      //console.log("sender",sender )
+      //console.log("editorValue",sender.value )
+      //console.log("editorValue2",sender.editorValue )//.templateInstance.model.impl.editorValue);
+    
+      //this.source = sender.editorValue;
+      //console.log("this.source", this.source);
+      this.compile();
+    }
+    });
+    </script>
+  </polymer-element>
+  
+
+  
+<foo-editor> </foo-editor>
 
   
 
