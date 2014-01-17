@@ -9,11 +9,11 @@
       <link rel="import" href="components/usco-viewer-base/three-viewer.html">
       <link rel="import" href="components/polymer-ui-tabs/polymer-ui-tabs.html">
      
-      <!--
+     
       <script src="components/esprima/esprima.js"></script>
       <script src="components/estraverse/estraverse.js"></script>
       <script src="components/escope/escope.js"></script>
-      <script src="components/esrefactor/lib/esrefactor.js"></script>-->
+      <script src="components/esrefactor/lib/esrefactor.js"></script>
 
     <style>
       polymer-ui-tabs > * {
@@ -29,6 +29,7 @@ background-repeat: initial initial;
 border: 1px solid black;
 border-radius: 4px 4px 0px 0px;
 }
+
     </style>
   </head>
 <body>
@@ -41,6 +42,26 @@ border-radius: 4px 4px 0px 0px;
 
 mode="coffee"
 -->
+
+<script>
+//AST experiment input
+function test() {
+var x = true;
+
+  x = 23;	
+  
+  x+=1;
+var toto = 245;
+  
+  toto += 23;
+  
+  if(toto >5)
+  {
+   console.log("kj"); 
+  }
+}
+        
+</script>
 
 <script>
 /*would be hidden*/
@@ -117,7 +138,6 @@ var youpla = new OtherPart();
 assembly.add(youpla);
 
 
-
 //OTHER
 
 //var farb = new Cube(2);
@@ -150,11 +170,12 @@ assembly.add(cube);
   <polymer-element name="foo-editor">
     <template>
       <button on-click="{{compile}}"> Compile </button>
+      <button on-click="{{analyze}}"> Analyze </button>
       <div>
-        <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}" on-editor-input="{{editorChanged}}" style="position: absolute;width:50%;top:40px;height:100%">
-function test() {
-        var x = true;
-      }
+        <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}"
+cursor="{{cursorLocation}}" 
+on-editor-input="{{editorChanged}}" style="position: absolute;width:50%;top:40px;height:100%">function test() {
+var x = true;}
         </code-mirror>
 
         <!--<ace-element theme="solarized_dark" style="width:50%;top:40px" boundValue="{{source}}"  on-editor-input="{{editorChanged}}">
@@ -172,7 +193,7 @@ assembly.add(cube);
 
           <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor>
 
-        <div style="position:absolute; left:30%; top:0px"> Selected text: {{selectedText}}</div>
+        <div style="position:absolute; left:30%; top:0px"> Selected text: {{selectedText}}, cursor at: {{cursorLocation}}</div>
 
       </div>
     </template>
@@ -180,6 +201,7 @@ assembly.add(cube);
     Polymer("foo-editor",{
       source:null,
       selectedText:null,
+      cursorLocation : null,
       /*project:{files:
         {"toto.js":"some code here"}
       },*/
@@ -232,8 +254,46 @@ assembly.add(cube);
       {
         console.log("failed to compile:", error.messsage);
       }
-
     },
+    analyze:function()
+    {
+      try
+      {
+        console.log("bla",this.source)
+        var ast = esprima.parse(this.source,{loc:true, range:true, tolerant:true});
+        console.log("ast",ast, this.source)
+        this.ast = ast;
+      }
+      catch(error)
+      {
+          console.log("failed to generate ast:", error.messsage);
+        }
+    },
+    sourceChanged:function()
+    {
+       this.compile();
+       this.analyze();
+    },
+    cursorLocationChanged:function()
+    {
+      var context = new esrefactor.Context();
+      if(!(this.source)) return;
+      context.setCode(this.ast);
+      if(context)
+      {
+        var id = context.identify(this.cursorLocation);
+        console.log("selection info (from ast)",id)
+        this.$.editor.clearMarkers();
+        if( !(id && id.declaration)) { return;}
+
+        console.log("declaration", id.declaration); 
+        var pos = this.$.editor.mirror.posFromIndex(id.declaration.range[0]);
+        console.log("pos",pos)
+        this.$.editor.addMarker(pos.line);
+
+      }
+    },
+    
     editorChanged:function(event, detail, sender)
     {
       //console.log("sender",sender )
@@ -241,7 +301,6 @@ assembly.add(cube);
       //console.log("editorValue2",sender.editorValue )//.templateInstance.model.impl.editorValue);
       //this.source = sender.editorValue;
       //console.log("this.source", this.source);
-      this.compile();
     }
     });
     </script>
