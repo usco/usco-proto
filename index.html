@@ -242,7 +242,8 @@ assembly.add(cube);
       }
       var endSource = this._wrapCode(this.source);
       console.log("compiling");
-
+      
+      var startTime = new Date();
       try
       {
         var f = new Function(endSource);
@@ -252,11 +253,15 @@ assembly.add(cube);
       }
       catch(error)
       {
-        console.log("failed to compile:", error.messsage);
+        console.log("failed to compile:", error.name + ': ' + error.message);
       }
+      var endTime = new Date();
+      var elapsed = endTime - startTime;
+      console.log("code compiling took:"+ elapsed)
     },
     analyze:function()
     {
+      var startTime = new Date();
       try
       {
         console.log("bla",this.source)
@@ -266,8 +271,15 @@ assembly.add(cube);
       }
       catch(error)
       {
-          console.log("failed to generate ast:", error.messsage);
-        }
+          console.log("failed to generate ast:", error.name + ': ' + error.message);
+      }
+      var endTime = new Date();
+      var elapsed = endTime - startTime;
+      console.log("AST generation took:"+ elapsed)
+    },
+    showRecompiledCode:function()
+    {
+      //TODO: find a way to display exactly WHAT section of the code was changed
     },
     sourceChanged:function()
     {
