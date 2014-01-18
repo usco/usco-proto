@@ -1,3 +1,15 @@
+
+ui notes
+========
+
+heavy use of polymer elements 
+
+ui
+=======================
+- fix issues with polymer wrappers of ace and/or codemirror:
+  - ace crashed on scroll upwards
+  - codemirror is incomplete
+
   
 composition > inheritance
 =========================
