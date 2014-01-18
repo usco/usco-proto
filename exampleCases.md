@@ -41,3 +41,6 @@ independant recompile
   chassis            -> does not get recompiled
   battery holder     -> does not get recompiled
   
+1- first basic example to implement
+  - 2 big wheels
+  - chassis

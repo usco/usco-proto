@@ -7,6 +7,10 @@ We need to know for a given "visual" ITEM (part, shape)
 - where is the ITEM used
 if the ITEM is used nowhere: do not recompile? 
 
+if an item was added( to any object or main assembly), remove old instance, add new one
+alternatively : generate a "wrapper" around created objects, only replace the innards ??
+
+if an item has NO instance : do not recompile ???
 
 code -> visual
 --------------
