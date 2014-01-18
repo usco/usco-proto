@@ -40,15 +40,18 @@ alternatively : generate a "wrapper" around created objects, only replace the in
 if an item has NO instance : do not recompile ??? 
   see : http://ariya.ofilabs.com/2012/11/polluting-and-unused-javascript-variables.html
 
-ALTERNATIVE SOLUTION:
+very interesting read ( closely related):
+https://code.google.com/p/esprima/issues/detail?can=2&q=90&colspec=ID%20Type%20Status%20Priority%20Milestone%20Owner%20Summary&id=90
+
+ALTERNATIVE SOLUTIONS:
 ---------------------
 the problem is actually a SCOPE problem: 
 if you are editing a PART (within it) you are in the SCOPE of that part : ie we can disregard
 the rest of the code until editing it done
 
-we can draw a parallel to visual editing: double clicking on a part/shape would go into
-an edit mode where all other elements are grayed out, and we are in the local coordinate
-system of the element being edited
+we can draw a parallel to visual editing: 
+  - double clicking on a part/shape would go into an edit mode where all other elements are grayed out,
+  and we are in the local coordinate system of the element being edited
 
 classes and instances:
 ---------------------
