@@ -2,16 +2,6 @@
 Logic (code <-> visual)
 =======================
 
-We need to know for a given "visual" ITEM (part, shape)
-- where is the ITEM  defined
-- where is the ITEM used
-if the ITEM is used nowhere: do not recompile? 
-
-if an item was added( to any object or main assembly), remove old instance, add new one
-alternatively : generate a "wrapper" around created objects, only replace the innards ??
-
-if an item has NO instance : do not recompile ???
-
 code -> visual
 --------------
 - "compile" code, generate object instance(s)
@@ -35,6 +25,40 @@ visual -> code
   * operation order is important: translation , rotation scale order matters -> relatively trivial
   * how do we handle loops etc ? 
 
+
+syntaxic analysis and alteration
+================================
+
+We need to know for a given "visual" ITEM (part, shape)
+- where is the ITEM  defined
+- where is the ITEM used
+if the ITEM is used nowhere: do not recompile? 
+
+if an item was added( to any object or main assembly), remove old instance, add new one
+alternatively : generate a "wrapper" around created objects, only replace the innards ??
+
+if an item has NO instance : do not recompile ??? 
+  see : http://ariya.ofilabs.com/2012/11/polluting-and-unused-javascript-variables.html
+
+ALTERNATIVE SOLUTION:
+---------------------
+the problem is actually a SCOPE problem: 
+if you are editing a PART (within it) you are in the SCOPE of that part : ie we can disregard
+the rest of the code until editing it done
+
+we can draw a parallel to visual editing: double clicking on a part/shape would go into
+an edit mode where all other elements are grayed out, and we are in the local coordinate
+system of the element being edited
+
+classes and instances:
+---------------------
+it is important to make a distinction between classes (or functions etc) and their instances
+
+Instance differentiation:
+ - instances can be differentiated based on a hash generated from their input parameters (
+similarly to how the bom system handles it in the current implementation)
+  - depending on instance size (very variable based on geometric back end) 
+
 code analysis tools:
 ====================
 -esprima !:
@@ -46,6 +70,10 @@ code analysis tools:
 - esrefactor (alter code)
   https://github.com/ariya/esrefactor
 
+- falafel (alter code) https://github.com/substack/node-falafel
+
+- esgraph visualization https://github.com/Swatinem/esgraph
+
 2 main problems to resolve (seperate but tangentially related)
 -------------------------
 - bidirectional shape edition
@@ -53,8 +81,9 @@ code analysis tools:
  only an independant subset has changes)
 
 
-ui
-=======================
-- fix issues with polymer wrappers of ace and/or codemirror:
-  - ace crashed on scroll upwards
-  - codemirror is incomplete
+additional issues
+=================
+- coffeescript : are sourcemaps sufficient to get a precise level of control ?
+- intermediary coffee-> js step : could be circumvented with coffeescript-redux, but that 
+still lacks support for super() (!!!!!)
+
