@@ -1,0 +1,10 @@
+{
+  "name": "usco-proto",
+  "main": "index.js",
+  "author": "Mark kaosat-dev Moissette",
+  "license": "MIT",
+  "dependencies": {
+    "falafel": "~0.3.1"
+  },
+  "devDependencies": {}
+}
