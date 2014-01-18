@@ -26,7 +26,18 @@ Parts
 
   Not-printed
   -----------
+  - servo moto (X2)
   - ultrasound sensor (X1)
-  - electronics
-  - batteries
-  - nuts and bolts
+  - electronics (X1)
+  - batteries (X4)
+  - nuts and bolts (???)
+
+
+independant recompile
+=====================
+- working on big wheels:
+  2 instances        -> get changed
+  small wheel        -> does not get recompiled
+  chassis            -> does not get recompiled
+  battery holder     -> does not get recompiled
+  

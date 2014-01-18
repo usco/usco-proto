@@ -28,7 +28,7 @@ visual -> code
     
     translate([2,3,0])
   
-  * operation order is important: translation , rotation scale order matters
+  * operation order is important: translation , rotation scale order matters -> relatively trivial
   * how do we handle loops etc ? 
 
 code analysis tools:
