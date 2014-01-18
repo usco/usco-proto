@@ -10,7 +10,30 @@ ui
   - ace crashed on scroll upwards
   - codemirror is incomplete
 
-  
+
+- need :
+  * tabbed code editor with two-way databinnding
+  * rethink hover/selection of objects in 3d view : if hovering over SUB elements of a parent wrapper
+object the hovered object/ selected object should be the outermost parent in scope ie
+ 
+rootAssembly --> scope is here
+  -> part (name:foo) 
+    -> part (name:bar)
+           -> shape * THIS should hover/select foo
+           -> shape * THIS should hover/select foo
+
+rootAssembly 
+  -> part (name:foo) --> scope is here (ie editing foo)
+    -> part (name:bar)
+           -> shape * THIS should hover/select bar
+           -> shape * THIS should hover/select bar
+
+rootAssembly
+  -> part (name:foo) 
+    -> part (name:bar) --> scope is here (ie editing bar)
+           -> shape * THIS should hover/select the shape
+           -> shape * THIS should hover/select the shape
+
 composition > inheritance
 =========================
 
