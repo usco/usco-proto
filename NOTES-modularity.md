@@ -13,6 +13,10 @@ ui
 
 - need :
   * tabbed code editor with two-way databinnding
+  * shape creation ui
+    * 3d
+    * 2d
+  * improve hover/selection effects in 3d view : stack of effect to push/pop
   * rethink hover/selection of objects in 3d view : if hovering over SUB elements of a parent wrapper
 object the hovered object/ selected object should be the outermost parent in scope ie
  
