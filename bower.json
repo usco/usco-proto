@@ -11,6 +11,7 @@
     "usco-viewer-base": "usco/usco-viewer-base#master",
     "esprima": "~1.0.4",
     "escope": "~1.0.0",
-    "esrefactor": "ariya/esrefactor"
+    "esrefactor": "ariya/esrefactor",
+    "esmorph": "ariya/esmorph"
   }
 }

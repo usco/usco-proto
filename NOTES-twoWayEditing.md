@@ -90,3 +90,8 @@ additional issues
 - intermediary coffee-> js step : could be circumvented with coffeescript-redux, but that 
 still lacks support for super() (!!!!!)
 
+
+Prototyping (various)
+=====================
+- when selecting an object in 3D view, show its location in the code view
+- when selecting an object instance or class in code view, highlight it in 3D view

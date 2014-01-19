@@ -14,6 +14,7 @@
       <script src="components/estraverse/estraverse.js"></script>
       <script src="components/escope/escope.js"></script>
       <script src="components/esrefactor/lib/esrefactor.js"></script>
+      <script src="components/esmorph/lib/esmorph.js"></script>
 
     <style>
       polymer-ui-tabs > * {
@@ -63,23 +64,11 @@ var toto = 245;
         
 </script>
 
-
-  <polymer-element name="cube-editor" attributes="target w h d position rotation" >
-    <template>
-      w: {{w}}
-      h: {{h}}
-      d: {{d}}
-    </template>
-    <script>
-      Polymer("cube-editor",{});
-    </script>
-  </polymer-element>
-
-
   <polymer-element name="foo-editor">
     <template>
       <button on-click="{{compile}}"> Compile </button>
       <button on-click="{{analyze}}"> Analyze </button>
+      <button on-click="{{traverseAst}}"> Traverse </button>
       <div>
         <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}"
 cursor="{{cursorLocation}}" 
@@ -99,10 +88,17 @@ assembly.add(cube);
 
         </ace-element>-->
          <three-viewer id="viewer" style="position:absolute;left:50%;height:90%;width:50%" > </three-viewer>
-
-          <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor>
-
+         <!-- <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor> -->
         <div style="position:absolute; left:30%; top:0px"> Selected text: {{selectedText}}, cursor at: {{cursorLocation}}</div>
+
+        <div style="position:absolute; right:10px; top:0px"> Shapes list
+            <ul>
+              <li>Cube</li>
+              <li>Sphere</li>
+              <li>Cylinder</li>
+            </ul>
+        </div>
+
 
       </div>
     </template>
@@ -160,10 +156,7 @@ assembly.add(cube);
         var fn = f();
         var result = fn.call(fn, this.exports, this.include, this.importGeom, this, this.name , this.assembly)
         console.log("result", result,this.assembly);
-
         //this.$.viewer.rootAssembly.children = this.assembly.children;
-        
-
       }
       catch(error)
       {
@@ -195,6 +188,78 @@ assembly.add(cube);
     {
       //TODO: find a way to display exactly WHAT section of the code was changed
     },
+    traverseAst:function()
+    {
+      console.log("traversing ast")
+      var functions = {};
+      var classes = {};
+
+      estraverse.traverse(this.ast, {
+          enter: function (node, parent) {
+              //console.log("node",node)
+              if (node.type == 'FunctionExpression' || node.type == 'FunctionDeclaration')
+              {
+                var name = node.id.name;
+                functions[name] = {range:node.range};
+                console.log("function",name, "range", node.range, "node",node);
+                return estraverse.VisitorOption.skip;
+              }
+              else if(node.type == 'Identifier' && node.name in functions)
+              {
+                //console.log("blahh",node.name);
+              }
+              else if(node.type=='AssignmentExpression' && node.operator === '='  )
+              { 
+                //"class detection"
+                var className = node.left.object.name;
+                var bla = node.right.type == "CallExpression" && node.right.arguments[0].property && node.right.arguments[0].property.name =="prototype"
+
+                if( className in functions && node.left.property.name === "prototype" && bla)
+                {
+                  var className = node.left.object.name;
+                  //var range = functions[]
+                  classes[className]={range:functions[className].range};
+                }
+              }
+          },
+          leave: function (node, parent) {
+            if (node.type == 'FunctionExpression' || node.type == 'FunctionDeclaration')
+                //console.log("leaving function",node);
+                return estraverse.VisitorOption.Skip;
+              /*if (node.type == 'VariableDeclarator')
+                console.log(node.id.name);*/
+          }
+      });
+      console.log("Functions",functions);
+      console.log("classes",classes);
+      this._classes = classes;
+      this.injectTracing();
+
+    },
+    injectTracing: function()
+    {
+      //function entry/exit experiments
+      functionEntrytracer = esmorph.Tracer.FunctionEntrance(function(fn) {
+            var signature;
+            console.log("function:",fn,"\n");
+            return ""
+             /*if (fn.name !== "ctor") {
+              return signature = "this.meta = {\n  lineNumber: " + fn.line + ", \n  range: [ " + fn.range[0] + ", " + fn.range[1] + "]\n}";
+            } else {
+              return "";
+            }*/
+          });
+      functionEndtracer = esmorph.Tracer.FunctionExit(function(fn) {
+            var signature;
+            //return "this.bloo = 34 \n";
+            if (fn.name === "Part") return "";
+            return "   this.meta = {\n  lineNumber: " + fn.line + ", \n  range: [ " + fn.range[0] + ", " + fn.range[1] + "]\n}";
+          });
+
+      var outSource = esmorph.modify(this.source, [functionEntrytracer, functionEndtracer])
+      console.log("outputSource",outSource);
+
+    },
     sourceChanged:function()
     {
        this.compile();
@@ -205,6 +270,7 @@ assembly.add(cube);
       var context = new esrefactor.Context();
       if(!(this.source)) return;
       context.setCode(this.ast);
+      console.log("this.ast",this.ast);
       if(context)
       {
         var id = context.identify(this.cursorLocation);
