@@ -141,7 +141,7 @@ assembly.add(cube);
         pre += "});";
 
        var result = pre;
-       console.log("result", result);
+       //console.log("result", result);
        return result
     },
     compile:function()
@@ -188,7 +188,7 @@ assembly.add(cube);
       {
         var ast = esprima.parse(this.source,{loc:true, range:true, tolerant:true});
         var scope = escope.analyze(ast);
-        console.log("ast",ast,"scope", scope);
+        //console.log("ast",ast,"scope", scope);
         this.ast = ast;
       }
       catch(error)
@@ -209,22 +209,39 @@ assembly.add(cube);
       var functions = {};
       var classes = {};
 
-      estraverse.traverse(this.ast, {
+      var source = this.source;
+
+      estraverse.replace(this.ast, {
           enter: function (node, parent) {
               //console.log("node",node)
               if (node.type == 'FunctionExpression' || node.type == 'FunctionDeclaration')
               {
                 var name = node.id.name;
                 functions[name] = {range:node.range};
-                console.log("function",name, "range", node.range, "node",node);
+                //console.log("function",name, "range", node.range, "node",node);
                 return estraverse.VisitorOption.skip;
               }
               else if(node.type == 'Identifier' && node.name in functions)
               {
                 //console.log("blahh",node.name);
               }
+              else if(node.type == 'VariableDeclarator' && node.init.callee && (node.init.callee.name in classes))
+              {
+                var instanceName = node.id.name;
+                var className = node.init.callee.name;
+                console.log("created one instance of", className);
+                var nodeSrc = source.slice(node.range[0],node.range[1]);
+                console.log("node", node, "source", nodeSrc );
+                nodeSrc += ";\n"+instanceName+".meta.foo=42";
+                var tempAst = esprima.parse(nodeSrc);
+                //node.replace(tempAst);
+                //return tempAst;
+
+              }
               else if(node.type=='AssignmentExpression' && node.operator === '='  )
               { 
+                //console.log("asignment", node);
+
                 //"class detection"
                 var className = node.left.object.name;
                 var bla = node.right.type == "CallExpression" && node.right.arguments[0].property && node.right.arguments[0].property.name =="prototype"
@@ -274,11 +291,13 @@ assembly.add(cube);
 
             //positional metadata
             additions += "   this.meta = {\n  lineNumber: " + fn.line + ", \n  range: [ " + fn.range[0] + ", " + fn.range[1] + "]\n}";
+            //TODO: add instance tracing
+            additions += "";
             return additions;
           });
 
       var outSource = esmorph.modify(this.source, [functionEntrytracer, functionEndtracer])
-      console.log("outputSource",outSource);
+      //console.log("outputSource",outSource);
       return outSource;
     },
     sourceChanged:function()
