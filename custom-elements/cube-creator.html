@@ -1,0 +1,12 @@
+<polymer-element name="cube-editor" attributes="target w h d position rotation" >
+    <template>
+      w: {{w}} <input type="text" value="{{target.w}}">
+      d: {{d}} <input type="text" value="{{target.d}}">
+      h: {{h}} <input type="text" value="{{target.h}}">
+
+      <div>Generate code</div>
+    </template>
+    <script>
+      Polymer("cube-editor",{});
+    </script>
+</polymer-element>
