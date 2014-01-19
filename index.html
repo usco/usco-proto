@@ -87,10 +87,10 @@ cube.position.x = 10;
 assembly.add(cube);
 
         </ace-element>-->
-         <three-viewer id="viewer" style="position:absolute;left:50%;height:90%;width:50%" > </three-viewer>
+         <three-viewer id="viewer" selectedObject="{{selectedMesh}}"style="position:absolute;left:50%;height:90%;width:50%" > </three-viewer>
          <!-- <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor> -->
         <div style="position:absolute; left:30%; top:0px"> Selected text: {{selectedText}}, cursor at: {{cursorLocation}}</div>
-
+        <div style="position:absolute; right:300px; top:0px"> Selected mesh: {{selectedMesh.name}} {{selectedMesh.id}}</div>
         <div style="position:absolute; right:10px; top:0px"> Shapes list
             <ul>
               <li>Cube</li>
@@ -107,6 +107,7 @@ assembly.add(cube);
       source:null,
       selectedText:null,
       cursorLocation : null,
+      selectedMesh : null,
       /*project:{files:
         {"toto.js":"some code here"}
       },*/
@@ -140,13 +141,16 @@ assembly.add(cube);
     },
     compile:function()
     {
+      this.analyze();
+      this.traverseAst();
+      var alteredSource = this.injectTracing();
       //clear root assembly
       var child, i;
       for ( i = this.assembly.children.length - 1; i >= 0 ; i -- ) {
           child = this.assembly.children[ i ];
           this.assembly.remove(child);
       }
-      var endSource = this._wrapCode(this.source);
+      var endSource = this._wrapCode(alteredSource);
       console.log("compiling");
       
       var startTime = new Date();
@@ -233,8 +237,6 @@ assembly.add(cube);
       console.log("Functions",functions);
       console.log("classes",classes);
       this._classes = classes;
-      this.injectTracing();
-
     },
     injectTracing: function()
     {
@@ -252,18 +254,28 @@ assembly.add(cube);
       functionEndtracer = esmorph.Tracer.FunctionExit(function(fn) {
             var signature;
             //return "this.bloo = 34 \n";
-            if (fn.name === "Part") return "";
+            //if (fn.name === "Part") return "";
             return "   this.meta = {\n  lineNumber: " + fn.line + ", \n  range: [ " + fn.range[0] + ", " + fn.range[1] + "]\n}";
           });
 
       var outSource = esmorph.modify(this.source, [functionEntrytracer, functionEndtracer])
       console.log("outputSource",outSource);
-
+      return outSource;
     },
     sourceChanged:function()
     {
        this.compile();
-       this.analyze();
+       //this.analyze();
+    },
+    selectedMeshChanged:function()
+    {
+        //console.log("declaration", id.declaration); 
+        this.$.editor.clearMarkers();
+        var mesh = this.selectedMesh;
+        if(!(mesh)) return;
+        var pos = this.$.editor.mirror.posFromIndex(mesh.meta.range[0]);
+        console.log("current mesh code position",pos)
+        this.$.editor.addMarker(pos.line);
     },
     cursorLocationChanged:function()
     {
