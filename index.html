@@ -114,11 +114,15 @@ assembly.add(cube);
 
     created:function()
     {
+      //for module system
       this.assembly = new THREE.Object3D();
       this.exports = {};
       this.include = function(){};
       this.importGeom = function(){};
       this.name = "totoModule";
+
+      //for part instance tracing
+      this.partInstancesByType = {};
     },
     enteredView:function()
     {
@@ -132,6 +136,7 @@ assembly.add(cube);
        //var pre = "var assembly =  THREE.Object3D();\n"
        var pre = "return (function ( exports, include, importGeom, module, __filename, assembly)";
         pre +="{";
+        pre += "var partInstancesByType = module.partInstancesByType;\n";
         pre += code;
         pre += "});";
 
@@ -144,12 +149,19 @@ assembly.add(cube);
       this.analyze();
       this.traverseAst();
       var alteredSource = this.injectTracing();
+
+      //reset everything before compiling again
       //clear root assembly
       var child, i;
       for ( i = this.assembly.children.length - 1; i >= 0 ; i -- ) {
           child = this.assembly.children[ i ];
           this.assembly.remove(child);
       }
+      //reset instances count
+      this.partInstancesByType={};
+      /////////////////////////////////////
+
+      //wrap modified source with module elements       
       var endSource = this._wrapCode(alteredSource);
       console.log("compiling");
       
@@ -159,8 +171,7 @@ assembly.add(cube);
         var f = new Function(endSource);
         var fn = f();
         var result = fn.call(fn, this.exports, this.include, this.importGeom, this, this.name , this.assembly)
-        console.log("result", result,this.assembly);
-        //this.$.viewer.rootAssembly.children = this.assembly.children;
+        console.log("result",this.assembly,this.partInstancesByType);
       }
       catch(error)
       {
@@ -253,9 +264,17 @@ assembly.add(cube);
           });
       functionEndtracer = esmorph.Tracer.FunctionExit(function(fn) {
             var signature;
-            //return "this.bloo = 34 \n";
             //if (fn.name === "Part") return "";
-            return "   this.meta = {\n  lineNumber: " + fn.line + ", \n  range: [ " + fn.range[0] + ", " + fn.range[1] + "]\n}";
+            var additions = "";
+            //instance metadata
+            //TODO: cleanup : we don't need could, instances list.length should be enough
+            additions += "if(! ('"+fn.name +"' in partInstancesByType)) partInstancesByType['"+fn.name+"']={count:0,instances:[]};\n"; 
+            additions += "partInstancesByType['"+fn.name+"'].count+=1;\n";
+            additions += "partInstancesByType['"+fn.name+"'].instances.push(this);\n";
+
+            //positional metadata
+            additions += "   this.meta = {\n  lineNumber: " + fn.line + ", \n  range: [ " + fn.range[0] + ", " + fn.range[1] + "]\n}";
+            return additions;
           });
 
       var outSource = esmorph.modify(this.source, [functionEntrytracer, functionEndtracer])
@@ -282,7 +301,22 @@ assembly.add(cube);
       var context = new esrefactor.Context();
       if(!(this.source)) return;
       context.setCode(this.ast);
-      console.log("this.ast",this.ast);
+
+      //TODO: refactor: this clears all current visual selections
+      var oldSelections = this.currentSelections;
+      if(!(this.currentSelections)) this.currentSelections = [];
+      if( oldSelections)
+      {
+        for(var i=0; i< oldSelections.length;i++)
+        {
+          var old = oldSelections[i];
+          old.remove(old.outline);
+          old.outline = null;
+        }
+      }
+      //////////////////////////////////////////////////////
+
+
       if(context)
       {
         var id = context.identify(this.cursorLocation);
@@ -295,6 +329,33 @@ assembly.add(cube);
         console.log("pos",pos)
         this.$.editor.addMarker(pos.line);
 
+        //now select the instances in 3D view
+        var type = id.declaration.name;
+        this.selectedMesh = null;
+
+
+        if(type in this.partInstancesByType)
+        {
+          var selectedMesh = this.selectedMesh;
+          //selectedMesh = this.partInstancesByType[type].instances[0];
+
+          for(var i=0; i< this.partInstancesByType[type].instances.length;i++)
+          {
+            var newSelection = this.partInstancesByType[type].instances[i];
+            this.currentSelections.push(newSelection);
+            var outlineMaterial = new THREE.MeshBasicMaterial({
+              color: 0xff0000,//0xffc200,
+              side: THREE.BackSide
+            });
+            outline = new THREE.Mesh(newSelection.geometry, outlineMaterial);
+            outline.name = "selectOutline";
+            outline.scale.multiplyScalar(1.02);
+            newSelection.outline = outline;
+            newSelection.add(outline);
+          }
+
+        }
+        
         //var code = context.rename(id, 'answer');
       }
     },
@@ -306,7 +367,33 @@ assembly.add(cube);
       //console.log("editorValue2",sender.editorValue )//.templateInstance.model.impl.editorValue);
       //this.source = sender.editorValue;
       //console.log("this.source", this.source);
+    },
+  
+    addSelectionEffect:function(oldSelection, newSelection)
+    {
+      this.selectionColor = 0xfffccc;
+      //remove from old selection
+      if(oldSelection != null)
+      {
+        oldSelection.remove(oldSelection.outline);
+        oldSelection.cage = null;
+        oldSelection.outline = null;
+      }
+      //add to new selection
+      if(newSelection != null)
+      {
+          var outlineMaterial = new THREE.MeshBasicMaterial({
+            color: 0xff0000,//0xffc200,
+            side: THREE.BackSide
+          });
+          outline = new THREE.Mesh(newSelection.geometry, outlineMaterial);
+          outline.name = "selectOutline";
+          outline.scale.multiplyScalar(1.02);
+          newSelection.outline = outline;
+          newSelection.add(outline);
+      }
     }
+  
     });
     </script>
   </polymer-element>
