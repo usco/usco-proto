@@ -16,6 +16,8 @@
       <script src="components/esrefactor/lib/esrefactor.js"></script>
       <script src="components/esmorph/lib/esmorph.js"></script>
 
+      <script src="vendor/coffee-script.js"></script>
+
     <style>
       polymer-ui-tabs > * {
 height: 30px;
@@ -69,6 +71,11 @@ var toto = 245;
       <button on-click="{{compile}}"> Compile </button>
       <button on-click="{{analyze}}"> Analyze </button>
       <button on-click="{{traverseAst}}"> Traverse </button>
+
+      <select value="{{sourceLanguage}}">
+        <option value="js"> Js </option>
+        <option value="coffee"> Coffee </option>
+      </select>
       <div>
         <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}"
 cursor="{{cursorLocation}}" 
@@ -123,6 +130,9 @@ assembly.add(cube);
 
       //for part instance tracing
       this.partInstancesByType = {};
+
+      //language detec
+      this.sourceLanguage = "js";
     },
     enteredView:function()
     {
@@ -144,11 +154,43 @@ assembly.add(cube);
        //console.log("result", result);
        return result
     },
+
+    //Determine if coffeescript or javascript
+    _detectLanguage:function()
+    {
+      var source = this.source;
+      var coffeeSymbols = ["class", "->", "=>", "extends"];//not totally true for harmony
+      var jsSymbols = ["var", "function"];
+      for(var i=0;i<jsSymbols.length;i++)
+      {
+        var token = jsSymbols[i];
+        if( source.indexOf(token) != -1 ){
+          this.sourceLanguage = "js";
+          return; }
+      } 
+
+      for(var i=0;i<coffeeSymbols.length;i++)
+      {
+        var token = coffeeSymbols[i];
+        if( source.indexOf(token) != -1 ){
+          this.sourceLanguage = "coffee";
+          
+          this.$.editor.mode = "coffeescript";
+          return;}
+      } 
+    },
     compile:function()
     {
-      this.analyze();
+      if(this.sourceLanguage == "coffee")
+      {
+        console.log("using coffeescript on",this.source);
+        var compiledSourceData = CoffeeScript.compile(this.source,{bare:true,sourceMap:true,filename:this.name});
+        var compiledSource = compiledSourceData.js;
+        console.log("compiled coffee", compiledSourceData);
+      }
+      this.analyze(compiledSource);
       this.traverseAst();
-      var alteredSource = this.injectTracing();
+      var alteredSource = this.injectTracing(compiledSource);
 
       //reset everything before compiling again
       //clear root assembly
@@ -181,12 +223,12 @@ assembly.add(cube);
       var elapsed = endTime - startTime;
       console.log("code compiling took:"+ elapsed)
     },
-    analyze:function()
+    analyze:function(source)
     {
       var startTime = new Date();
       try
       {
-        var ast = esprima.parse(this.source,{loc:true, range:true, tolerant:true});
+        var ast = esprima.parse(source,{loc:true, range:true, tolerant:true});
         var scope = escope.analyze(ast);
         //console.log("ast",ast,"scope", scope);
         this.ast = ast;
@@ -211,21 +253,24 @@ assembly.add(cube);
 
       var source = this.source;
 
-      estraverse.replace(this.ast, {
+      estraverse.traverse(this.ast, {
           enter: function (node, parent) {
               //console.log("node",node)
               if (node.type == 'FunctionExpression' || node.type == 'FunctionDeclaration')
               {
+                if(node.id !== null && node.id !== undefined )
+                {
                 var name = node.id.name;
                 functions[name] = {range:node.range};
                 //console.log("function",name, "range", node.range, "node",node);
                 return estraverse.VisitorOption.skip;
+                }
               }
               else if(node.type == 'Identifier' && node.name in functions)
               {
                 //console.log("blahh",node.name);
               }
-              else if(node.type == 'VariableDeclarator' && node.init.callee && (node.init.callee.name in classes))
+              else if(node.type == 'VariableDeclarator' && node.init && node.init.callee && (node.init.callee.name in classes))
               {
                 var instanceName = node.id.name;
                 var className = node.init.callee.name;
@@ -240,17 +285,21 @@ assembly.add(cube);
               }
               else if(node.type=='AssignmentExpression' && node.operator === '='  )
               { 
-                //console.log("asignment", node);
+                console.log("asignment", node.right.arguments, node);
 
                 //"class detection"
-                var className = node.left.object.name;
-                var bla = node.right.type == "CallExpression" && node.right.arguments[0].property && node.right.arguments[0].property.name =="prototype"
-
-                if( className in functions && node.left.property.name === "prototype" && bla)
+                
+                if(node.left.object && node.left.object.name && node.right.arguments && node.right.arguments.length >0 && node.right.arguments[0].property && node.right.arguments[0].property.name)
                 {
                   var className = node.left.object.name;
-                  //var range = functions[]
-                  classes[className]={range:functions[className].range};
+                  var bla = node.right.type == "CallExpression" && node.right.arguments[0].property && node.right.arguments[0].property.name =="prototype"
+
+                  if( className in functions && node.left.property.name === "prototype" && bla)
+                  {
+                    var className = node.left.object.name;
+                    //var range = functions[]
+                    classes[className]={range:functions[className].range};
+                  }
                 }
               }
           },
@@ -266,7 +315,7 @@ assembly.add(cube);
       console.log("classes",classes);
       this._classes = classes;
     },
-    injectTracing: function()
+    injectTracing: function(source)
     {
       //function entry/exit experiments
       functionEntrytracer = esmorph.Tracer.FunctionEntrance(function(fn) {
@@ -296,12 +345,19 @@ assembly.add(cube);
             return additions;
           });
 
-      var outSource = esmorph.modify(this.source, [functionEntrytracer, functionEndtracer])
+      var outSource = esmorph.modify(source, [functionEntrytracer, functionEndtracer])
       //console.log("outputSource",outSource);
       return outSource;
     },
+
+    //change handlers
+    sourceLanguageChanged:function()
+    {
+      this.compile();
+    },
     sourceChanged:function()
     {
+       this._detectLanguage();
        this.compile();
        //this.analyze();
     },
@@ -317,6 +373,9 @@ assembly.add(cube);
     },
     cursorLocationChanged:function()
     {
+      //TODO: for coffeescript we need to re-map coordinates of code
+      //cursor location (0 based index, in coffeescript) to js
+
       var context = new esrefactor.Context();
       if(!(this.source)) return;
       context.setCode(this.ast);
@@ -334,8 +393,6 @@ assembly.add(cube);
         }
       }
       //////////////////////////////////////////////////////
-
-
       if(context)
       {
         var id = context.identify(this.cursorLocation);
