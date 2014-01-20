@@ -17,6 +17,7 @@
       <script src="components/esmorph/lib/esmorph.js"></script>
 
       <script src="vendor/coffee-script.js"></script>
+      <script src="vendor/source-map.js"></script>
 
     <style>
       polymer-ui-tabs > * {
@@ -37,15 +38,6 @@ border-radius: 4px 4px 0px 0px;
   </head>
 <body>
   
-<!--
-  <polymer-ui-tabs selected="0">
-    <span>myProject.coffee*</span>
-    <span>SuperPart.coffee</span>
-  </polymer-ui-tabs>
-
-mode="coffee"
--->
-
 <script>
 //AST experiment input
 function test() {
@@ -84,15 +76,6 @@ var x = true;}
         </code-mirror>
 
         <!--<ace-element theme="solarized_dark" style="width:50%;top:40px" boundValue="{{source}}"  on-editor-input="{{editorChanged}}">
-
-
-//basic
-cube = new THREE.Mesh( new THREE.CubeGeometry( 50, 50, 50 ), new THREE.MeshNormalMaterial() );
-
-cube.position.x = 10;
-
-assembly.add(cube);
-
         </ace-element>-->
          <three-viewer id="viewer" selectedObject="{{selectedMesh}}"style="position:absolute;left:50%;height:90%;width:50%" > </three-viewer>
          <!-- <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor> -->
@@ -183,10 +166,18 @@ assembly.add(cube);
     {
       if(this.sourceLanguage == "coffee")
       {
-        console.log("using coffeescript on",this.source);
-        var compiledSourceData = CoffeeScript.compile(this.source,{bare:true,sourceMap:true,filename:this.name});
+        var pseudoModuleName = this.name+".coffee";
+        console.log("using coffeescript on",this.source,"pseudo module name", pseudoModuleName);
+        var compiledSourceData = CoffeeScript.compile(this.source,{bare:true,sourceMap:true,filename:pseudoModuleName});
         var compiledSource = compiledSourceData.js;
         console.log("compiled coffee", compiledSourceData);
+
+        var srcMap = JSON.parse(compiledSourceData.v3SourceMap);
+        srcMap.sources = []
+        srcMap.sources.push( pseudoModuleName ) 
+
+        this.sourcemapConsumer = new sourceMap.SourceMapConsumer(srcMap);
+        console.log("sourcemapConsumer",this.sourcemapConsumer);
       }
       this.analyze(compiledSource);
       this.traverseAst();
@@ -395,7 +386,35 @@ assembly.add(cube);
       //////////////////////////////////////////////////////
       if(context)
       {
-        var id = context.identify(this.cursorLocation);
+        var cursorLocation = this.cursorLocation
+        if( this.sourceLanguage == "coffee" )
+        {
+          var coffeeCursorLocationData = this.$.editor.mirror.posFromIndex(this.cursorLocation);
+          coffeeCursorLocationData.line +=1
+          coffeeCursorLocationData.column = coffeeCursorLocationData.ch;
+          coffeeCursorLocationData.source = this.name+".coffee";
+          delete coffeeCursorLocationData.ch;
+
+          var cursorPosJs = this.sourcemapConsumer.generatedPositionFor(coffeeCursorLocationData);
+          cursorPosJs.ch = cursorPosJs.column;
+          cursorPosJs.line -=1;
+
+          //TODO: map back to zero based index
+          //convert to index ?
+          /*coords = clipPos(this, coords);
+          var index = coords.ch;
+          if (coords.line < this.first || coords.ch < 0) return 0;
+          this.iter(this.first, coords.line, function (line) {
+            index += line.text.length + 1;
+          });
+          return index;*/
+          this.sourcemapConsumer.eachMapping(function(mapping){console.log("got mapping", mapping);});
+
+          //cursorLocation = cursorPosJs;//this.$.editor.mirror.indexFromPos(cursorPosJs);
+          console.log("cursor(coffee)",coffeeCursorLocationData, "js cursor pos", cursorPosJs, "cursorLocation",cursorLocation);
+        }
+         
+        var id = context.identify(cursorLocation);
         console.log("selection info (from ast)",id)
         this.$.editor.clearMarkers();
         if( !(id && id.declaration)) { return;}

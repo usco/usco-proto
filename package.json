@@ -4,7 +4,8 @@
   "author": "Mark kaosat-dev Moissette",
   "license": "MIT",
   "dependencies": {
-    "falafel": "~0.3.1"
+    "falafel": "~0.3.1",
+    "source-map": "~0.1.31"
   },
   "devDependencies": {}
 }
