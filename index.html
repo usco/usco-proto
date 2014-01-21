@@ -171,7 +171,8 @@ var x = true;}
         var compiledSourceData = CoffeeScript.compile(this.source,{bare:true,sourceMap:true,filename:pseudoModuleName});
         var compiledSource = compiledSourceData.js;
         console.log("compiled coffee", compiledSourceData);
-
+        this.compiledSource = compiledSource;//we keep the generate js
+  
         var srcMap = JSON.parse(compiledSourceData.v3SourceMap);
         srcMap.sources = []
         srcMap.sources.push( pseudoModuleName ) 
@@ -320,7 +321,7 @@ var x = true;}
             }*/
           });
       functionEndtracer = esmorph.Tracer.FunctionExit(function(fn) {
-            var signature;
+            if(fn.name == "[Anonymous]" || fn.name == "__extends") return "";//for coffeescript
             //if (fn.name === "Part") return "";
             var additions = "";
             //instance metadata
@@ -401,17 +402,33 @@ var x = true;}
 
           //TODO: map back to zero based index
           //convert to index ?
+          var compiledSource = this.compiledSource;
+          console.log("compiledSource length,",compiledSource.length);
+          function coordToIndex(coords)
+          {
+              //console.log("compiled source", compiledSource);
+              var lines = compiledSource.split("\n");
+              var index = coords.ch;
+              //if (coords.line < this.first || coords.ch < 0) return 0;
+
+              for(var i= 0;i<coords.line;i++)
+              {
+                index+=lines[i].length +1;
+              }
+              return index;
+          }
           /*coords = clipPos(this, coords);
           var index = coords.ch;
-          if (coords.line < this.first || coords.ch < 0) return 0;
+          
           this.iter(this.first, coords.line, function (line) {
             index += line.text.length + 1;
           });
           return index;*/
-          this.sourcemapConsumer.eachMapping(function(mapping){console.log("got mapping", mapping);});
+          //this.sourcemapConsumer.eachMapping(function(mapping){console.log("got mapping", mapping);});
 
-          //cursorLocation = cursorPosJs;//this.$.editor.mirror.indexFromPos(cursorPosJs);
-          console.log("cursor(coffee)",coffeeCursorLocationData, "js cursor pos", cursorPosJs, "cursorLocation",cursorLocation);
+          var finalPos = coordToIndex(cursorPosJs);
+          //cursorLocation = cursorPosJs;//
+          console.log("cursor(coffee)",coffeeCursorLocationData, "js cursor pos", cursorPosJs, "cursorLocation",finalPos);
         }
          
         var id = context.identify(cursorLocation);
@@ -420,6 +437,7 @@ var x = true;}
         if( !(id && id.declaration)) { return;}
 
         console.log("declaration", id.declaration); 
+        //TODO: converte coordinates back to coffee/original code
         var pos = this.$.editor.mirror.posFromIndex(id.declaration.range[0]);
         console.log("pos",pos)
         this.$.editor.addMarker(pos.line);
