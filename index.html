@@ -176,15 +176,14 @@ var x = true;}
         
         console.log("using coffeescript on",this.source,"pseudo module name", pseudoModuleName);
         //coffeescript redux only
-        //weird spaces issue
-        //this.source = this.source.replace(/'\u00BF'/g, ' ');
-        //this.source = this.source.replace(/'¿'/g, ' ');
-        
-        this.source= "class foo\n\tconstructor:->\n\t\t@toto = 23\nclass bar extends foo\n";
-
-        var csAST = CoffeeScript.parse(this.source, {optimise: false, raw: false});
+        var csAST = CoffeeScript.parse(this.source, {optimise: false, raw: true});
         console.log("coffee ast", csAST);
+        var jsAST = CoffeeScript.compile(csAST, {bare: true});
+        var compiledSource = this.compiledSource = CoffeeScript.js(jsAST, {compact: false,sourceMap:true,sourceMapFile:pseudoModuleName});
+        console.log("compiledSource", compiledSource);
+        this.ast = jsAST;
 
+        /*
         var compiledSourceData = CoffeeScript.compile(this.source,{bare:true,sourceMap:true,filename:pseudoModuleName});
         var compiledSource = compiledSourceData.js;
         console.log("compiled coffee", compiledSourceData);
@@ -195,9 +194,10 @@ var x = true;}
         srcMap.sources.push( pseudoModuleName ) 
 
         this.sourcemapConsumer = new sourceMap.SourceMapConsumer(srcMap);
-        console.log("sourcemapConsumer",this.sourcemapConsumer);
+        console.log("sourcemapConsumer",this.sourcemapConsumer);*/
       }
-      this.analyze(compiledSource);
+      else
+      { this.analyze(compiledSource); }
       this.traverseAst();
       var alteredSource = this.injectTracing(compiledSource);
 
