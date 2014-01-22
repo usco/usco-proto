@@ -16,7 +16,8 @@
       <script src="components/esrefactor/lib/esrefactor.js"></script>
       <script src="components/esmorph/lib/esmorph.js"></script>
 
-      <script src="vendor/CoffeeScriptRedux.js"></script>
+      <script src="vendor/coffee-script.js"></script>
+      <!--<script src="vendor/CoffeeScriptRedux.js"></script>-->
       <script src="vendor/source-map.js"></script>
 
     <style>
@@ -175,15 +176,16 @@ var x = true;}
         var pseudoModuleName = this.name+".coffee";
         
         console.log("using coffeescript on",this.source,"pseudo module name", pseudoModuleName);
+
         //coffeescript redux only
+        /*
         var csAST = CoffeeScript.parse(this.source, {optimise: false, raw: true});
         console.log("coffee ast", csAST);
         var jsAST = CoffeeScript.compile(csAST, {bare: true});
         var compiledSource = this.compiledSource = CoffeeScript.js(jsAST, {compact: false,sourceMap:true,sourceMapFile:pseudoModuleName});
         console.log("compiledSource", compiledSource);
-        this.ast = jsAST;
-
-        /*
+        this.ast = jsAST;*/
+        
         var compiledSourceData = CoffeeScript.compile(this.source,{bare:true,sourceMap:true,filename:pseudoModuleName});
         var compiledSource = compiledSourceData.js;
         console.log("compiled coffee", compiledSourceData);
@@ -194,10 +196,10 @@ var x = true;}
         srcMap.sources.push( pseudoModuleName ) 
 
         this.sourcemapConsumer = new sourceMap.SourceMapConsumer(srcMap);
-        console.log("sourcemapConsumer",this.sourcemapConsumer);*/
+        console.log("sourcemapConsumer",this.sourcemapConsumer);
       }
-      else
-      { this.analyze(compiledSource); }
+
+      this.analyze(compiledSource);
       this.traverseAst();
       var alteredSource = this.injectTracing(compiledSource);
 
