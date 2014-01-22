@@ -16,7 +16,7 @@
       <script src="components/esrefactor/lib/esrefactor.js"></script>
       <script src="components/esmorph/lib/esmorph.js"></script>
 
-      <script src="vendor/coffee-script.js"></script>
+      <script src="vendor/CoffeeScriptRedux.js"></script>
       <script src="vendor/source-map.js"></script>
 
     <style>
@@ -70,16 +70,19 @@ var toto = 245;
       </select>
       <div>
         <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}"
-cursor="{{cursorLocation}}" 
-on-editor-input="{{editorChanged}}" style="position: absolute;width:50%;top:40px;height:90%">function test() {
+cursorPos="{{cursorLocation}}" 
+on-editor-input="{{editorChanged}}" style="position: absolute;width:25%;top:40px;height:90%">function test() {
 var x = true;}
         </code-mirror>
+
+        <code-mirror id="transpiledEditor" theme="monokai" mode="javascript" value="{{compiledSource}}" cursorPos="{{compiledCursorLocation}}"
+         style="position: absolute;width:25%;top:40px;left:25%;height:90%"></code-mirror>
 
         <!--<ace-element theme="solarized_dark" style="width:50%;top:40px" boundValue="{{source}}"  on-editor-input="{{editorChanged}}">
         </ace-element>-->
          <three-viewer id="viewer" selectedObject="{{selectedMesh}}"style="position:absolute;left:50%;height:90%;width:50%" > </three-viewer>
          <!-- <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor> -->
-        <div style="position:absolute; left:30%; top:0px"> Selected text: {{selectedText}}, cursor at: {{cursorLocation}}</div>
+        <div style="position:absolute; left:30%; top:0px"> Selected text: {{selectedText}}, cursor at: {{cursorLocation}} transpiled cursor at: {{compiledCursorLocation}}</div>
         <div style="position:absolute; right:300px; top:0px"> Selected mesh: {{selectedMesh.name}} {{selectedMesh.id}}</div>
         <div style="position:absolute; right:10px; top:0px"> Shapes list
             <ul>
@@ -98,6 +101,9 @@ var x = true;}
       selectedText:null,
       cursorLocation : null,
       selectedMesh : null,
+
+      compiledSource:null,
+      compiledCursorLocation:null,
       /*project:{files:
         {"toto.js":"some code here"}
       },*/
@@ -167,7 +173,18 @@ var x = true;}
       if(this.sourceLanguage == "coffee")
       {
         var pseudoModuleName = this.name+".coffee";
+        
         console.log("using coffeescript on",this.source,"pseudo module name", pseudoModuleName);
+        //coffeescript redux only
+        //weird spaces issue
+        //this.source = this.source.replace(/'\u00BF'/g, ' ');
+        //this.source = this.source.replace(/'¿'/g, ' ');
+        
+        this.source= "class foo\n\tconstructor:->\n\t\t@toto = 23\nclass bar extends foo\n";
+
+        var csAST = CoffeeScript.parse(this.source, {optimise: false, raw: false});
+        console.log("coffee ast", csAST);
+
         var compiledSourceData = CoffeeScript.compile(this.source,{bare:true,sourceMap:true,filename:pseudoModuleName});
         var compiledSource = compiledSourceData.js;
         console.log("compiled coffee", compiledSourceData);
@@ -379,9 +396,11 @@ var x = true;}
       {
         for(var i=0; i< oldSelections.length;i++)
         {
+          try{
           var old = oldSelections[i];
           old.remove(old.outline);
           old.outline = null;
+          }catch(error){}
         }
       }
       //////////////////////////////////////////////////////
@@ -424,10 +443,10 @@ var x = true;}
             index += line.text.length + 1;
           });
           return index;*/
-          //this.sourcemapConsumer.eachMapping(function(mapping){console.log("got mapping", mapping);});
+          this.$.transpiledEditor.mirror.doc.setCursor({line:cursorPosJs.line-1, ch:cursorPosJs.ch})          
 
           var finalPos = coordToIndex(cursorPosJs);
-          //cursorLocation = cursorPosJs;//
+          cursorLocation = finalPos;
           console.log("cursor(coffee)",coffeeCursorLocationData, "js cursor pos", cursorPosJs, "cursorLocation",finalPos);
         }
          
@@ -455,6 +474,7 @@ var x = true;}
           for(var i=0; i< this.partInstancesByType[type].instances.length;i++)
           {
             var newSelection = this.partInstancesByType[type].instances[i];
+            if(!(newSelection instanceof THREE.Object3D)) continue;
             this.currentSelections.push(newSelection);
             var outlineMaterial = new THREE.MeshBasicMaterial({
               color: 0xff0000,//0xffc200,
