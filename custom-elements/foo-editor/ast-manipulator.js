@@ -2,9 +2,12 @@ function ASTManipulator(source)
 {
   this.source = source;
   this.ast = null;
+  
+  this._functions = null;
+  this._classes = null;
 }
 
-ASTManipulator.prototype.analyze=function(source)
+ASTManipulator.prototype.generateAst=function(source)
 {
   var startTime = new Date();
   try

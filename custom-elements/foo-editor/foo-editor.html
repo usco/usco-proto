@@ -11,18 +11,24 @@
         <option value="coffee"> Coffee </option>
       </select>
       <div>
-        <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}"
-cursorPos="{{cursorLocation}}" 
-on-editor-input="{{editorChanged}}" style="position: absolute;width:25%;top:40px;height:90%">function test() {
+
+        <!----------------------------------Code editors---------------------------------------->
+        <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}" 
+cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="position: absolute;width:25%;top:40px;height:90%">
+function test() {
 var x = true;}
         </code-mirror>
-
         <code-mirror id="transpiledEditor" theme="monokai" mode="javascript" value="{{compiledSource}}" cursorPos="{{compiledCursorLocation}}"
          style="position: absolute;width:25%;top:40px;left:25%;height:90%"></code-mirror>
 
         <!--<ace-element theme="solarized_dark" style="width:50%;top:40px" boundValue="{{source}}"  on-editor-input="{{editorChanged}}">
         </ace-element>-->
+        <!--------------------------------------------------------------------------------------->
+
+        <!----------------------------------3d viewer-------------------------------------------->
          <three-viewer id="viewer" selectedObject="{{selectedMesh}}"style="position:absolute;left:50%;height:90%;width:50%" > </three-viewer>
+        <!--------------------------------------------------------------------------------------->
+
          <!-- <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor> -->
         <div style="position:absolute; left:30%; top:0px"> Selected text: {{selectedText}}, cursor at: {{cursorLocation}} transpiled cursor at: {{compiledCursorLocation}}</div>
         <div style="position:absolute; right:300px; top:0px"> Selected mesh: {{selectedMesh.name}} {{selectedMesh.id}}</div>
@@ -112,7 +118,7 @@ var x = true;}
     },
     compile:function()
     {
-      this.astUtil.source = this.source;
+      var source = this.source;
       if(this.sourceLanguage == "coffee")
       {
         var pseudoModuleName = this.name+".coffee";
@@ -141,10 +147,16 @@ var x = true;}
         console.log("sourcemapConsumer",this.sourcemapConsumer);
       }
 
-      this.astUtil.analyze(compiledSource);
-      this.astUtil.traverseAst();
-      var alteredSource = this.astUtil.injectTracing(compiledSource);
+      this.astUtil.source = source;
 
+      //this.astUtil.analyze(compiledSource);
+      this.astUtil.generateAst(source);
+      this.astUtil.traverseAst();
+      var alteredSource = this.astUtil.injectTracing(source);
+
+      console.log("AlteredSource", alteredSource);
+
+      //////////////////////////////////////////
       //reset everything before compiling again
       //clear root assembly
       var child, i;
@@ -154,7 +166,7 @@ var x = true;}
       }
       //reset instances count
       this.partInstancesByType={};
-      /////////////////////////////////////
+      ////////////////////////////////////////////
 
       //wrap modified source with module elements       
       var endSource = this._wrapCode(alteredSource);
@@ -176,6 +188,15 @@ var x = true;}
       var elapsed = endTime - startTime;
       console.log("code compiling took:"+ elapsed)
     },
+    analyze:function()
+    {
+      this.astUtil.generateAst(this.compiledSource);
+    },
+    traverseAst:function()
+    {
+        this.astUtil.traverseAst();
+    },
+    //////////////////
     showRecompiledCode:function()
     {
       //TODO: find a way to display exactly WHAT section of the code was changed
@@ -195,20 +216,13 @@ var x = true;}
         //console.log("declaration", id.declaration); 
         this.$.editor.clearMarkers();
         var mesh = this.selectedMesh;
-        if(!(mesh)) return;
+        if(!(mesh && mesh.meta)) return;
         var pos = this.$.editor.mirror.posFromIndex(mesh.meta.range[0]);
         console.log("current mesh code position",pos)
         this.$.editor.addMarker(pos.line);
     },
-    cursorLocationChanged:function()
+    _clearVisualSelections: function()
     {
-      //TODO: for coffeescript we need to re-map coordinates of code
-      //cursor location (0 based index, in coffeescript) to js
-
-      var context = new esrefactor.Context();
-      if(!(this.source)) return;
-      context.setCode(this.astUtil.ast);
-
       //TODO: refactor: this clears all current visual selections
       var oldSelections = this.currentSelections;
       if(!(this.currentSelections)) this.currentSelections = [];
@@ -223,6 +237,24 @@ var x = true;}
           }catch(error){}
         }
       }
+    },
+    compiledCursorLocationChanged:function()
+    {
+      console.log("compiled cursor location changed");
+    },
+    cursorLocationChanged:function()
+    {
+      //TODO: for coffeescript we need to re-map coordinates of code
+      //cursor location (0 based index, in coffeescript) to js
+      console.log("cursor location changed");
+
+      this._clearVisualSelections();
+
+      var context = new esrefactor.Context();
+      if(!(this.source)) return;
+      context.setCode(this.astUtil.ast);
+
+     
       //////////////////////////////////////////////////////
       if(context)
       {
