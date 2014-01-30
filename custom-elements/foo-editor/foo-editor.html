@@ -5,6 +5,7 @@
       <button on-click="{{compile}}"> Compile </button>
       <button on-click="{{analyze}}"> Analyze </button>
       <button on-click="{{traverseAst}}"> Traverse </button>
+      <button on-click="{{experiment}}"> Experimental </button>
 
       <select value="{{sourceLanguage}}">
         <option value="js"> Js </option>
@@ -23,11 +24,9 @@ var x = true;}
 
         <!--<ace-element theme="solarized_dark" style="width:50%;top:40px" boundValue="{{source}}"  on-editor-input="{{editorChanged}}">
         </ace-element>-->
-        <!--------------------------------------------------------------------------------------->
 
         <!----------------------------------3d viewer-------------------------------------------->
          <three-viewer id="viewer" selectedObject="{{selectedMesh}}"style="position:absolute;left:50%;height:90%;width:50%" > </three-viewer>
-        <!--------------------------------------------------------------------------------------->
 
          <!-- <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor> -->
         <div style="position:absolute; left:30%; top:0px"> Selected text: {{selectedText}}, cursor at: {{cursorLocation}} transpiled cursor at: {{compiledCursorLocation}}</div>
@@ -84,6 +83,7 @@ var x = true;}
        var pre = "return (function ( exports, include, importGeom, module, __filename, assembly)";
         pre +="{";
         pre += "var partInstancesByType = module.partInstancesByType;\n";
+        pre += "var codeLocToinstances = module.codeLocToinstances;\n";
         pre += code;
         pre += "});";
 
@@ -118,6 +118,19 @@ var x = true;}
     },
     compile:function()
     {
+      //////////////////////////////////////////
+      //reset everything before compiling again
+      //clear root assembly
+      var child, i;
+      for ( i = this.assembly.children.length - 1; i >= 0 ; i -- ) {
+          child = this.assembly.children[ i ];
+          this.assembly.remove(child);
+      }
+      //reset instances count
+      this.partInstancesByType={};
+      this.codeLocToinstances = {};
+      ////////////////////////////////////////////
+
       var source = this.source;
       if(this.sourceLanguage == "coffee")
       {
@@ -152,21 +165,11 @@ var x = true;}
       //this.astUtil.analyze(compiledSource);
       this.astUtil.generateAst(source);
       this.astUtil.traverseAst();
-      var alteredSource = this.astUtil.injectTracing(source);
-
-      console.log("AlteredSource", alteredSource);
-
-      //////////////////////////////////////////
-      //reset everything before compiling again
-      //clear root assembly
-      var child, i;
-      for ( i = this.assembly.children.length - 1; i >= 0 ; i -- ) {
-          child = this.assembly.children[ i ];
-          this.assembly.remove(child);
-      }
-      //reset instances count
-      this.partInstancesByType={};
-      ////////////////////////////////////////////
+      var alteredSource = source;
+      alteredSource = this.astUtil.fallafelTest(source);
+      console.log("AlteredSource, first pass:\n", alteredSource);
+      alteredSource = this.astUtil.injectTracing(alteredSource);
+      console.log("AlteredSource, second pass:\n", alteredSource);
 
       //wrap modified source with module elements       
       var endSource = this._wrapCode(alteredSource);
@@ -194,7 +197,11 @@ var x = true;}
     },
     traverseAst:function()
     {
-        this.astUtil.traverseAst();
+      this.astUtil.traverseAst();
+    },
+    experiment:function()
+    {
+      this.astUtil.fallafelTest(this.source);
     },
     //////////////////
     showRecompiledCode:function()
@@ -217,9 +224,16 @@ var x = true;}
         this.$.editor.clearMarkers();
         var mesh = this.selectedMesh;
         if(!(mesh && mesh.meta)) return;
+
+        //this would highlight the class of the current selected object (from 3d view)
         var pos = this.$.editor.mirror.posFromIndex(mesh.meta.range[0]);
-        console.log("current mesh code position",pos)
+        console.log("current mesh CLASS code position",pos)
         this.$.editor.addMarker(pos.line);
+
+        //this would highlight the declaration point of the instance of the selected object (from 3d view)
+        var pos2 = this.$.editor.mirror.posFromIndex(mesh.meta.instancesData[0].range[0]);
+        console.log("current mesh INSTANCE code position",pos2)
+        this.$.editor.addMarker(pos2.line);
     },
     _clearVisualSelections: function()
     {
@@ -317,7 +331,7 @@ var x = true;}
         var type = id.declaration.name;
         this.selectedMesh = null;
 
-
+        //select all instances in 3d view of the currently selected class
         if(type in this.partInstancesByType)
         {
           var selectedMesh = this.selectedMesh;
@@ -338,8 +352,20 @@ var x = true;}
             newSelection.outline = outline;
             newSelection.add(outline);
           }
-
         }
+
+        //select a specific instance
+        /*
+        var bli = id.declaration.range;
+        for (var key in this.codeLocToinstances) 
+        {
+           var range = key.replace(" ","").split(",");
+           console.log("range",range);
+          //var start = 
+          //this.codeLocToinstances['471, 475']=toto;
+        }*/
+        
+
         
         //var code = context.rename(id, 'answer');
       }

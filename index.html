@@ -18,6 +18,9 @@
       <script src="components/esrefactor/lib/esrefactor.js"></script>
       <script src="components/esmorph/lib/esmorph.js"></script>
 
+      <script src="vendor/falafel.js"></script>
+
+      <!--everything related to transpilers and source maps-->
       <script src="vendor/coffee-script.js"></script>
       <!--<script src="vendor/CoffeeScriptRedux.js"></script>-->
       <script src="vendor/source-map.js"></script>
@@ -44,16 +47,10 @@ border-radius: 4px 4px 0px 0px;
   
 <foo-editor> </foo-editor>
   
-
   <script>
     window.addEventListener('polymer-ready', function() {
-
       console.log("web components ready");
       document.body.style.opacity = 1; // show body now that registration is done.
-	    //var aceEditor = document.querySelector('ace-element');
-      //workaround for node-webkit 0.6.3      
-      //aceEditor.style.opacity = 1;
-
     });
   </script>  
 </body>
