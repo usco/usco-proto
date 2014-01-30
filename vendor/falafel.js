@@ -1,4 +1,4 @@
-;(function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
+!function(e){"object"==typeof exports?module.exports=e():"function"==typeof define&&define.amd?define(e):"undefined"!=typeof window?window.falafel=e():"undefined"!=typeof global?global.falafel=e():"undefined"!=typeof self&&(self.falafel=e())}(function(){var define,module,exports;return (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);throw new Error("Cannot find module '"+o+"'")}var f=n[o]={exports:{}};t[o][0].call(f.exports,function(e){var n=t[o][1][e];return s(n?n:e)},f,f.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 var parse = require('esprima').parse;
 var objectKeys = Object.keys || function (obj) {
     var keys = [];
@@ -30,7 +30,10 @@ module.exports = function (src, opts, fn) {
     opts.range = true;
     if (typeof src !== 'string') src = String(src);
     
-    var ast = parse(src, opts);
+    //var ast = parse(src, opts);
+
+    var ast = opts.ast || parse(src, opts);
+    delete opts.ast;
     
     var result = {
         chunks : src.split(''),
@@ -3964,4 +3967,6 @@ parseStatement: true, parseSourceElement: true */
 /* vim: set sw=4 ts=4 et tw=80 : */
 
 },{}]},{},[1])
+(1)
+});
 ;
