@@ -118,6 +118,7 @@ var x = true;}
     },
     compile:function()
     {
+      console.log("Language",this.sourceLanguage);
       //////////////////////////////////////////
       //reset everything before compiling again
       //clear root assembly
@@ -135,8 +136,7 @@ var x = true;}
       if(this.sourceLanguage == "coffee")
       {
         var pseudoModuleName = this.name+".coffee";
-        
-        console.log("using coffeescript on",this.source,"pseudo module name", pseudoModuleName);
+        console.log("generating from coffeescript, pseudo module name", pseudoModuleName);
 
         //coffeescript redux only
         /*
@@ -147,9 +147,9 @@ var x = true;}
         console.log("compiledSource", compiledSource);
         this.ast = jsAST;*/
         
-        var compiledSourceData = CoffeeScript.compile(this.source,{bare:true,sourceMap:true,filename:pseudoModuleName});
+        var compiledSourceData = CoffeeScript.compile(source,{bare:true,sourceMap:true,filename:pseudoModuleName});
         var compiledSource = compiledSourceData.js;
-        console.log("compiled coffee", compiledSourceData);
+        console.log("compiled coffee", compiledSource);
         this.compiledSource = compiledSource;//we keep the generate js
   
         var srcMap = JSON.parse(compiledSourceData.v3SourceMap);
@@ -158,23 +158,29 @@ var x = true;}
 
         this.sourcemapConsumer = new sourceMap.SourceMapConsumer(srcMap);
         console.log("sourcemapConsumer",this.sourcemapConsumer);
+
+        this.astUtil.source = compiledSource;
+        source = compiledSource;
+      }
+      else
+      {
+        this.astUtil.source = source;
       }
 
-      this.astUtil.source = source;
-
-      //this.astUtil.analyze(compiledSource);
+      //generate ast, transform it
       this.astUtil.generateAst(source);
       this.astUtil.traverseAst();
       var alteredSource = source;
       alteredSource = this.astUtil.fallafelTest(source);
-      console.log("AlteredSource, first pass:\n", alteredSource);
+      //console.log("AlteredSource, first pass:\n", alteredSource);
       alteredSource = this.astUtil.injectTracing(alteredSource);
-      console.log("AlteredSource, second pass:\n", alteredSource);
+      //console.log("AlteredSource, second pass:\n", alteredSource);
 
       //wrap modified source with module elements       
       var endSource = this._wrapCode(alteredSource);
+
+      //compile "module"
       console.log("compiling");
-      
       var startTime = new Date();
       try
       {

@@ -35,7 +35,7 @@ ASTManipulator.prototype._isNodeAFunctionDeclaration = function(node, functions)
   return false;
 }
 
-ASTManipulator.prototype._isNodeAClassDeclaration = function(node, classes)
+ASTManipulator.prototype._isNodeAClassDeclaration_pureJS = function(node, functions, classes)
 {
   if(node.type=='AssignmentExpression' && node.operator === '='  )
   { 
@@ -56,6 +56,30 @@ ASTManipulator.prototype._isNodeAClassDeclaration = function(node, classes)
   }
   return false;
 }
+
+
+ASTManipulator.prototype._isNodeAClassDeclaration_fromCoffee = function(node, functions, classes)
+{
+  if(node.type=='AssignmentExpression' && node.operator === '='  )
+  { 
+    //console.log("asignment", node.right.arguments, node);
+    //"class detection"
+    if(node.left.object && node.left.object.name && node.right.arguments && node.right.arguments.length >0 && node.right.arguments[0].property && node.right.arguments[0].property.name)
+    {
+      var className = node.left.object.name;
+      var isValid = node.right.type == "CallExpression" && node.right.arguments[0].property && node.right.arguments[0].property.name =="prototype"
+
+      if( className in functions && node.left.property.name === "prototype" && isValid)
+      {
+        var className = node.left.object.name;
+        classes[className]={range:functions[className].range};
+        return true;
+      }
+    }
+  }
+  return false;
+}
+
 
 
 //MAIN METHODS

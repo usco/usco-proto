@@ -101,5 +101,12 @@ still lacks support for super() (!!!!!)
 
 Prototyping (various)
 =====================
-- when selecting an object in 3D view, show its location in the code view
-- when selecting an object instance or class in code view, highlight it in 3D view
+Step1 (js)
+- when selecting an object in 3D view, show its location in the code view -> done, for javascript
+- when selecting an object instance or class in code view, highlight it in 3D view -> done, for javascript
+
+
+Step2 (coffee)
+- all of the above should work with coffeescript too: work on remaping coffee -> js coordinates
+- define a set of helpers in ast-manipulator for detecting class instances (for now should be seperate from pure js node type detection)
+
