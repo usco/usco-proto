@@ -44,9 +44,9 @@ ASTManipulator.prototype._isNodeAClassDeclaration = function(node, classes)
     if(node.left.object && node.left.object.name && node.right.arguments && node.right.arguments.length >0 && node.right.arguments[0].property && node.right.arguments[0].property.name)
     {
       var className = node.left.object.name;
-      var bla = node.right.type == "CallExpression" && node.right.arguments[0].property && node.right.arguments[0].property.name =="prototype"
+      var isValid = node.right.type == "CallExpression" && node.right.arguments[0].property && node.right.arguments[0].property.name =="prototype"
 
-      if( className in functions && node.left.property.name === "prototype" && bla)
+      if( className in functions && node.left.property.name === "prototype" && isValid)
       {
         var className = node.left.object.name;
         classes[className]={range:functions[className].range};
@@ -110,7 +110,7 @@ ASTManipulator.prototype.traverseAst=function()
               console.log("created one instance of", className);
               var nodeSrc = source.slice(node.range[0],node.range[1]);
               console.log("node", node, "source", nodeSrc );
-              nodeSrc += ";\n"+instanceName+".meta.foo=42";
+              nodeSrc += ";\n"+instanceName+".__meta.foo=42";
               var tempAst = esprima.parse(nodeSrc);
               console.log("tempAst",tempAst);
               //node.replace(tempAst);
@@ -160,7 +160,7 @@ ASTManipulator.prototype.injectTracing= function(source)
         console.log("function:",fn,"\n");
         return ""
          /*if (fn.name !== "ctor") {
-          return signature = "this.meta = {\n  lineNumber: " + fn.line + ", \n  range: [ " + fn.range[0] + ", " + fn.range[1] + "]\n}";
+          return signature = "this.__meta = {\n  lineNumber: " + fn.line + ", \n  range: [ " + fn.range[0] + ", " + fn.range[1] + "]\n}";
         } else {
           return "";
         }*/
@@ -176,7 +176,7 @@ ASTManipulator.prototype.injectTracing= function(source)
         additions += "partInstancesByType['"+fn.name+"'].instances.push(this);\n";
 
         //positional metadata
-        additions += "   this.meta = {\n  lineNumber: " + fn.line + ", \n  range: [ " + fn.range[0] + ", " + fn.range[1] + "]\n}";
+        additions += "   this.__meta = {\n  lineNumber: " + fn.line + ", \n  range: [ " + fn.range[0] + ", " + fn.range[1] + "]\n}";
         //TODO: add instance tracing
         additions += "";
         return additions;
@@ -228,8 +228,8 @@ ASTManipulator.prototype.fallafelTest = function(source)
           console.log("node", node);
 
           var updatedSource = node.source();
-          updatedSource += ";\n if(!('instancesData' in "+instanceName+".meta)){"+instanceName+".meta.instancesData=[]}"
-          updatedSource += ";\n"+instanceName+".meta.instancesData.push({range: [ " + node.id.range[0] + ", " + node.id.range[1] + "]})\n"
+          updatedSource += ";\n if(!('instancesData' in "+instanceName+".__meta)){"+instanceName+".__meta.instancesData=[]}"
+          updatedSource += ";\n"+instanceName+".__meta.instancesData.push({range: [ " + node.id.range[0] + ", " + node.id.range[1] + "]})\n"
 
           //instances tracking
           updatedSource += "codeLocToinstances['"+node.id.range[0] + ", " + node.id.range[1]+"']="+ instanceName +";\n";

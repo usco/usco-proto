@@ -218,20 +218,40 @@ var x = true;}
        this._detectLanguage();
        this.compile();
     },
-    selectedMeshChanged:function()
+    selectedMeshChanged:function(oldSelection,newSelection)
     {
         //console.log("declaration", id.declaration); 
+        if(oldSelection)
+        {
+          oldSelection.remove(oldSelection.outline);
+          delete oldSelection.outline;
+        }
+
+        if(newSelection)
+        {
+          var outlineMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff00,//0xffc200,
+            side: THREE.BackSide
+          });
+          outline = new THREE.Mesh(newSelection.geometry, outlineMaterial);
+          outline.name = "selectOutline";
+          outline.scale.multiplyScalar(1.02);
+          newSelection.outline = outline;
+          newSelection.add(outline);
+        }
+
+
         this.$.editor.clearMarkers();
         var mesh = this.selectedMesh;
-        if(!(mesh && mesh.meta)) return;
+        if(!(mesh && mesh.__meta)) return;
 
         //this would highlight the class of the current selected object (from 3d view)
-        var pos = this.$.editor.mirror.posFromIndex(mesh.meta.range[0]);
+        var pos = this.$.editor.mirror.posFromIndex(mesh.__meta.range[0]);
         console.log("current mesh CLASS code position",pos)
         this.$.editor.addMarker(pos.line);
 
         //this would highlight the declaration point of the instance of the selected object (from 3d view)
-        var pos2 = this.$.editor.mirror.posFromIndex(mesh.meta.instancesData[0].range[0]);
+        var pos2 = this.$.editor.mirror.posFromIndex(mesh.__meta.instancesData[0].range[0]);
         console.log("current mesh INSTANCE code position",pos2)
         this.$.editor.addMarker(pos2.line);
     },
