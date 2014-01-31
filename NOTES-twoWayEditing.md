@@ -98,6 +98,15 @@ useable by the various esprima tools we need:
 - intermediary coffee-> js step : could be circumvented with coffeescript-redux, but that 
 still lacks support for super() (!!!!!)
 
+- for now only this tracking works:
+
+    var myCube = new Cube();
+
+but this does not
+
+    myCube = new Cube(); 
+
+assignments should be checked, not just instanciations
 
 Prototyping (various)
 =====================

@@ -1,10 +1,13 @@
 function ASTManipulator(source)
 {
   this.source = source;
-  this.ast = null;
+  this.ast    = null;
+  this.lang   = "js";
   
   this._functions = null;
   this._classes = null;
+
+  
 }
 
 //NODE Identification methods : TODO: expand on this
@@ -15,6 +18,23 @@ ASTManipulator.prototype._isNodeAVariableDeclaration = function(node, classes)
   {
     return true;
   }
+  return false;
+}
+
+ASTManipulator.prototype._isNodeAVariableAsignment = function(node, classes)
+{
+  if(node.type == 'ExpressionStatement' && node.expression)
+  {
+    var expression = node.expression;
+    if(expression.type == "AssignmentExpression" && expression.operator === '=' && expression.left.type == "Identifier")
+    {
+        if(expression.left.name in classes)
+        {
+          console.log("asignement to class");
+          return true;
+        }
+    }
+  } 
   return false;
 }
 
@@ -43,7 +63,6 @@ ASTManipulator.prototype._addNodeToClasses = function(node, functions, classes)
    var className = node.left.object.name;
    classes[className]={range:functions[className].range};
 }
-
 
 ASTManipulator.prototype._addNodeToClasses_fromCoffee = function(node, functions, classes)
 {
@@ -83,12 +102,30 @@ ASTManipulator.prototype._isNodeAClassDeclaration_fromCoffee = function(node, fu
     { 
       var className = node.left.name;
       console.log("className", className);
+    
       try{
-        if(node.right.type == "CallExpression" && node.right.callee.body.body[0].type=="FunctionDeclaration" && node.right.callee.body.body[0].id.name == className)
+        //TODO: do this better
+        if(node.right.type == "CallExpression" )
         {
+          try{
+          var isSimpleClass = node.right.callee.body.body[0].type=="FunctionDeclaration" && node.right.callee.body.body[0].id.name == className;
+
           console.log("FOUND className!", className);
           return true;
+          
+          }catch(error){}
+          console.log("lmmlk");
+          try{
+          console.log("klmk");
+          var isExtendClass = node.right.callee.body.body[1].type=="FunctionDeclaration" && node.right.callee.body.body[1].id.name == className;
+          console.log("FOUND className!", className);
+          return true;
+          }catch(error){}
+
+          return false;
         }
+         
+
        }
        catch(error)
         {
@@ -107,8 +144,19 @@ ASTManipulator.prototype._isNodeAClassDeclaration_fromCoffee = function(node, fu
 */
 ASTManipulator.prototype.injectInstanceTracingCode = function(node, functions, classes)
 {
-  var instanceName = node.id.name;
-  var className = node.init.callee.name;
+  if(node.id)
+  { //in a declaration assignement
+    var instanceName = node.id.name;
+    var className = node.init.callee.name;
+  }
+  else if(node.expression.left)
+  {
+    //simple assignement
+    var instanceName = node.expression.left.name;
+    return;
+    var className = node.init.callee.name;
+  }
+  else{return}
   console.log("created one instance of", className);
   console.log("node", node);
 
@@ -151,11 +199,12 @@ ASTManipulator.prototype.traverseAst=function()
     var functions = {};
     var classes = {};
 
-    var lang = "coffee";
+    var lang   = this.lang;
     var source = this.source;
 
     //shortcuts to helpers
     var isInst  = this._isNodeAVariableDeclaration;
+    var isAsign = this._isNodeAVariableAsignment;
     var isFunct = this._isNodeAFunctionDeclaration;
     var isClass = this._isNodeAClassDeclaration_pureJS;
 
@@ -168,7 +217,6 @@ ASTManipulator.prototype.traverseAst=function()
       isClass  = this._isNodeAClassDeclaration_fromCoffee;
       addClass = this._addNodeToClasses_fromCoffee;
     }
-
 
     estraverse.traverse(this.ast, {
         enter: function (node, parent) {
@@ -215,7 +263,7 @@ ASTManipulator.prototype.injectTracing= function(source)
         }*/
       });
   functionEndtracer = esmorph.Tracer.FunctionExit(function(fn) {
-        if(fn.name == "[Anonymous]" || fn.name == "__extends") return "";//for coffeescript
+        if(fn.name == "[Anonymous]" || fn.name == "__extends" || fn.name == "ctor") return "";//for coffeescript
         //if (fn.name === "Part") return "";
         var additions = "";
         //instance metadata
@@ -239,7 +287,7 @@ ASTManipulator.prototype.injectTracing= function(source)
 ASTManipulator.prototype.fallafelTest = function(source)
 {
     console.log("fallafel test");
-    console.log("functions", this._functions, "classes", this._classes);
+    //console.log("functions", this._functions, "classes", this._classes);
     /*TWO SEPERATE ASPECTS: (therefore splitable into seperate methods)
       - node identification
       - node alteration
@@ -250,6 +298,7 @@ ASTManipulator.prototype.fallafelTest = function(source)
 
     //shortcuts to helpers
     var isInst  = this._isNodeAVariableDeclaration;
+    var isAsign = this._isNodeAVariableAsignment;
     var isFunct = this._isNodeAFunctionDeclaration;
     var isClass = this._isNodeAClassDeclaration_pureJS;
     //
@@ -262,14 +311,19 @@ ASTManipulator.prototype.fallafelTest = function(source)
       //console.log("node", node);
       if(node.type == 'VariableDeclaration')
       {
-          console.log("var declaration", node);
+          //console.log("var declaration", node);
       }
       if(isInst( node, classes))
       {
-          addInstTracing( node, functions, classes );
+        addInstTracing( node, functions, classes );
+      }
+      if(isAsign( node, classes ))
+      {
+        console.log("gne");
+        addInstTracing( node, functions, classes );
       }
     });
-    console.log("output", output);
+    //console.log("output", output);
     var result = output.toString();
     //console.log("result", result);
     return result;

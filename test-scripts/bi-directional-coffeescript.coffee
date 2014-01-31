@@ -2,7 +2,7 @@ class Foo
   constructor:->
     @var = 15
 
-class Bar
+class Bar extends Foo
 	constructor:->
     @boo = "woa"
   
@@ -11,3 +11,5 @@ class Bar
   
 myFoo = new Foo()
 myBar = new Bar()
+
+

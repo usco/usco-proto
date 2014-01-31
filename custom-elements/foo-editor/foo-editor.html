@@ -174,7 +174,7 @@ var x = true;}
       alteredSource = this.astUtil.fallafelTest(source);
       //console.log("AlteredSource, first pass:\n", alteredSource);
       alteredSource = this.astUtil.injectTracing(alteredSource);
-      //console.log("AlteredSource, second pass:\n", alteredSource);
+      console.log("AlteredSource, second pass:\n", alteredSource);
 
       //wrap modified source with module elements       
       var endSource = this._wrapCode(alteredSource);
@@ -218,6 +218,7 @@ var x = true;}
     sourceLanguageChanged:function()
     {
       this.compile();
+      this.astUtil.lang = this.sourceLanguage;
     },
     sourceChanged:function()
     {
@@ -257,9 +258,11 @@ var x = true;}
         this.$.editor.addMarker(pos.line);
 
         //this would highlight the declaration point of the instance of the selected object (from 3d view)
-        var pos2 = this.$.editor.mirror.posFromIndex(mesh.__meta.instancesData[0].range[0]);
-        console.log("current mesh INSTANCE code position",pos2)
-        this.$.editor.addMarker(pos2.line);
+        try{
+          var pos2 = this.$.editor.mirror.posFromIndex(mesh.__meta.instancesData[0].range[0]);
+          console.log("current mesh INSTANCE code position",pos2)
+          this.$.editor.addMarker(pos2.line);
+        }catch(error){}
     },
     _clearVisualSelections: function()
     {
@@ -339,7 +342,8 @@ var x = true;}
             index += line.text.length + 1;
           });
           return index;*/
-          this.$.transpiledEditor.mirror.doc.setCursor({line:cursorPosJs.line-1, ch:cursorPosJs.ch})          
+          //TODO: fix this: something is not right
+          this.$.transpiledEditor.mirror.doc.setCursor({line:cursorPosJs.line, ch:cursorPosJs.ch})          
 
           var finalPos = coordToIndex(cursorPosJs);
           cursorLocation = finalPos;
@@ -411,7 +415,7 @@ var x = true;}
           });
           outline = new THREE.Mesh(newSelection.geometry, outlineMaterial);
           outline.name = "selectOutline";
-          outline.scale.multiplyScalar(1.02);
+          outline.scale.multiplyScalar(1.1);
           newSelection.outline = outline;
           newSelection.add(outline);
         }
