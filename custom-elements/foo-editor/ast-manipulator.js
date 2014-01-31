@@ -8,34 +8,51 @@ function ASTManipulator(source)
 }
 
 //NODE Identification methods : TODO: expand on this
+//TODO : seperate filling data (classes, function, instances) from determining if a node is of a given type
 ASTManipulator.prototype._isNodeAVariableDeclaration = function(node, classes)
 {
   if(node.type == 'VariableDeclarator' && node.init && node.init.callee && (node.init.callee.name in classes))
   {
-    var instanceName = node.id.name;
-    var className = node.init.callee.name;
-    console.log("created one instance of", className);
     return true;
   }
   return false;
 }
 
-ASTManipulator.prototype._isNodeAFunctionDeclaration = function(node, functions)
+
+ASTManipulator.prototype._isNodeAFunctionDeclaration = function(node)
 {
   if (node.type == 'FunctionExpression' || node.type == 'FunctionDeclaration')
   {
     if(node.id !== null && node.id !== undefined )
     {
-      var name = node.id.name;
-      functions[name] = {range:node.range};
-      //console.log("function",name, "range", node.range, "node",node);
       return true;
     }
   }
   return false;
 }
 
-ASTManipulator.prototype._isNodeAClassDeclaration_pureJS = function(node, functions, classes)
+ASTManipulator.prototype._addNodeToFunctions = function(node, functions)
+{
+    var name = node.id.name;
+    functions[name] = {range:node.range};
+    //console.log("function",name, "range", node.range, "node",node);
+}
+
+ASTManipulator.prototype._addNodeToClasses = function(node, functions, classes)
+{
+   var className = node.left.object.name;
+   classes[className]={range:functions[className].range};
+}
+
+
+ASTManipulator.prototype._addNodeToClasses_fromCoffee = function(node, functions, classes)
+{
+   var className = node.left.name;
+   classes[className]={range:node.range};
+}
+
+
+ASTManipulator.prototype._isNodeAClassDeclaration_pureJS = function(node, functions)
 {
   if(node.type=='AssignmentExpression' && node.operator === '='  )
   { 
@@ -48,8 +65,6 @@ ASTManipulator.prototype._isNodeAClassDeclaration_pureJS = function(node, functi
 
       if( className in functions && node.left.property.name === "prototype" && isValid)
       {
-        var className = node.left.object.name;
-        classes[className]={range:functions[className].range};
         return true;
       }
     }
@@ -62,22 +77,50 @@ ASTManipulator.prototype._isNodeAClassDeclaration_fromCoffee = function(node, fu
 {
   if(node.type=='AssignmentExpression' && node.operator === '='  )
   { 
-    //console.log("asignment", node.right.arguments, node);
+    console.log("class detection attempt, from COFFEE", node.right.arguments, node);
     //"class detection"
-    if(node.left.object && node.left.object.name && node.right.arguments && node.right.arguments.length >0 && node.right.arguments[0].property && node.right.arguments[0].property.name)
-    {
-      var className = node.left.object.name;
-      var isValid = node.right.type == "CallExpression" && node.right.arguments[0].property && node.right.arguments[0].property.name =="prototype"
-
-      if( className in functions && node.left.property.name === "prototype" && isValid)
-      {
-        var className = node.left.object.name;
-        classes[className]={range:functions[className].range};
-        return true;
-      }
+    if(node.left.name)
+    { 
+      var className = node.left.name;
+      console.log("className", className);
+      try{
+        if(node.right.type == "CallExpression" && node.right.callee.body.body[0].type=="FunctionDeclaration" && node.right.callee.body.body[0].id.name == className)
+        {
+          console.log("FOUND className!", className);
+          return true;
+        }
+       }
+       catch(error)
+        {
+        return false;
+        }
     }
   }
   return false;
+}
+
+
+/*Add tracing code to a "class" instance declaration node
+* @param: node : the node into which to inject the tracing code
+* @param: functions : a list of pre-parsed functions
+* @param: classes : a list of pre-parsed classes
+*/
+ASTManipulator.prototype.injectInstanceTracingCode = function(node, functions, classes)
+{
+  var instanceName = node.id.name;
+  var className = node.init.callee.name;
+  console.log("created one instance of", className);
+  console.log("node", node);
+
+  var updatedSource = node.source();
+  updatedSource += ";\n if(!('instancesData' in "+instanceName+".__meta)){"+instanceName+".__meta.instancesData=[]}"
+  updatedSource += ";\n"+instanceName+".__meta.instancesData.push({range: [ " + node.id.range[0] + ", " + node.id.range[1] + "]})\n"
+
+  //instances tracking
+  updatedSource += "codeLocToinstances['"+node.id.range[0] + ", " + node.id.range[1]+"']="+ instanceName +";\n";
+
+  console.log("updated source to inject instance tracking", updatedSource);
+  node.update(updatedSource);
 }
 
 
@@ -108,65 +151,47 @@ ASTManipulator.prototype.traverseAst=function()
     var functions = {};
     var classes = {};
 
+    var lang = "coffee";
     var source = this.source;
+
+    //shortcuts to helpers
+    var isInst  = this._isNodeAVariableDeclaration;
+    var isFunct = this._isNodeAFunctionDeclaration;
+    var isClass = this._isNodeAClassDeclaration_pureJS;
+
+    var addFunct = this._addNodeToFunctions;
+    var addClass = this._addNodeToClasses;
+
+    //
+    if(lang == "coffee")
+    {
+      isClass  = this._isNodeAClassDeclaration_fromCoffee;
+      addClass = this._addNodeToClasses_fromCoffee;
+    }
+
 
     estraverse.traverse(this.ast, {
         enter: function (node, parent) {
             //console.log("node",node)
-            if (node.type == 'FunctionExpression' || node.type == 'FunctionDeclaration')
+            if( isFunct(node) )
             {
-              if(node.id !== null && node.id !== undefined )
-              {
-              var name = node.id.name;
-              functions[name] = {range:node.range};
-              //console.log("function",name, "range", node.range, "node",node);
+              addFunct( node, functions);
               return estraverse.VisitorOption.skip;
-              }
             }
             else if(node.type == 'Identifier' && node.name in functions)
             {
-              //console.log("blahh",node.name);
             }
-            else if(node.type == 'VariableDeclarator' && node.init && node.init.callee && (node.init.callee.name in classes))
+            else if( isInst( node, classes ) )
             {
-              var instanceName = node.id.name;
-              var className = node.init.callee.name;
-              console.log("created one instance of", className);
-              var nodeSrc = source.slice(node.range[0],node.range[1]);
-              console.log("node", node, "source", nodeSrc );
-              nodeSrc += ";\n"+instanceName+".__meta.foo=42";
-              var tempAst = esprima.parse(nodeSrc);
-              console.log("tempAst",tempAst);
-              //node.replace(tempAst);
-              //return tempAst;
-
             }
-            else if(node.type=='AssignmentExpression' && node.operator === '='  )
+            else if( isClass(node, functions) )
             { 
-              console.log("asignment", node.right.arguments, node);
-
-              //"class detection"
-              
-              if(node.left.object && node.left.object.name && node.right.arguments && node.right.arguments.length >0 && node.right.arguments[0].property && node.right.arguments[0].property.name)
-              {
-                var className = node.left.object.name;
-                var bla = node.right.type == "CallExpression" && node.right.arguments[0].property && node.right.arguments[0].property.name =="prototype"
-
-                if( className in functions && node.left.property.name === "prototype" && bla)
-                {
-                  var className = node.left.object.name;
-                  //var range = functions[]
-                  classes[className]={range:functions[className].range};
-                }
-              }
+              addClass( node, functions, classes );
             }
         },
         leave: function (node, parent) {
           if (node.type == 'FunctionExpression' || node.type == 'FunctionDeclaration')
-              //console.log("leaving function",node);
               return estraverse.VisitorOption.Skip;
-            /*if (node.type == 'VariableDeclarator')
-              console.log(node.id.name);*/
         }
     });
     console.log("Functions",functions);
@@ -215,55 +240,77 @@ ASTManipulator.prototype.fallafelTest = function(source)
 {
     console.log("fallafel test");
     console.log("functions", this._functions, "classes", this._classes);
-    var output = "";
-
-    function isKeyword (id) {
-        if (id === 'beep') return true;
-    }
-    /*
-    var src = 'console.log(beep "boop", "BOOP");';
-    var output = falafel(src, { isKeyword: isKeyword }, function (node) {
-        if (node.type === 'UnaryExpression'
-        && node.keyword === 'beep') {
-            node.update(
-                'String(' + node.argument.source() + ').toUpperCase()'
-            );
-        }
-    });
-    */
     /*TWO SEPERATE ASPECTS: (therefore splitable into seperate methods)
       - node identification
       - node alteration
     */
+    var output = "";
     var functions = this._functions;
     var classes = this._classes;
 
-     var output = falafel(source, {ast:this.ast, isKeyword: isKeyword }, function (node) {
-        //console.log("node", node);
-        if(node.type == 'VariableDeclaration')
-        {
-            console.log("var declaration", node);
-        }
-        if(node.type == 'VariableDeclarator' && node.init && node.init.callee && (node.init.callee.name in classes))
-        {
-          var instanceName = node.id.name;
-          var className = node.init.callee.name;
-          console.log("created one instance of", className);
-          console.log("node", node);
+    //shortcuts to helpers
+    var isInst  = this._isNodeAVariableDeclaration;
+    var isFunct = this._isNodeAFunctionDeclaration;
+    var isClass = this._isNodeAClassDeclaration_pureJS;
+    //
+    var addFunct = this._addNodeToFunctions;
+    var addClass = this._addNodeToClasses;
+    //
+    var addInstTracing = this.injectInstanceTracingCode;
 
-          var updatedSource = node.source();
-          updatedSource += ";\n if(!('instancesData' in "+instanceName+".__meta)){"+instanceName+".__meta.instancesData=[]}"
-          updatedSource += ";\n"+instanceName+".__meta.instancesData.push({range: [ " + node.id.range[0] + ", " + node.id.range[1] + "]})\n"
-
-          //instances tracking
-          updatedSource += "codeLocToinstances['"+node.id.range[0] + ", " + node.id.range[1]+"']="+ instanceName +";\n";
-
-          console.log("updated source to inject instance tracking", updatedSource);
-          node.update(updatedSource);
-        }
+   var output = falafel(source, {ast:this.ast}, function (node) {
+      //console.log("node", node);
+      if(node.type == 'VariableDeclaration')
+      {
+          console.log("var declaration", node);
+      }
+      if(isInst( node, classes))
+      {
+          addInstTracing( node, functions, classes );
+      }
     });
     console.log("output", output);
     var result = output.toString();
     //console.log("result", result);
     return result;
 }
+
+
+/*old stuff, kept for reference for now
+
+if (node.type == 'FunctionExpression' || node.type == 'FunctionDeclaration')
+            {
+              if(node.id !== null && node.id !== undefined )
+              {
+              var name = node.id.name;
+              functions[name] = {range:node.range};
+              //console.log("function",name, "range", node.range, "node",node);
+              return estraverse.VisitorOption.skip;
+              }
+            }
+
+
+JS "class" detection
+console.log("asignment", node.right.arguments, node);
+
+              //"class detection"
+              
+              if(node.left.object && node.left.object.name && node.right.arguments && node.right.arguments.length >0 && node.right.arguments[0].property && node.right.arguments[0].property.name)
+              {
+                var className = node.left.object.name;
+                var bla = node.right.type == "CallExpression" && node.right.arguments[0].property && node.right.arguments[0].property.name =="prototype"
+
+                if( className in functions && node.left.property.name === "prototype" && bla)
+                {
+                  var className = node.left.object.name;
+                  //var range = functions[]
+                  classes[className]={range:functions[className].range};
+                }
+              }
+            }
+
+//used in falafel for keyword detection:
+    function isKeyword (id) {
+        if (id === 'beep') return true;
+    }
+*/
