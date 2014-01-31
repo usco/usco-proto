@@ -260,6 +260,9 @@ var x = true;}
     {
       //TODO: for coffeescript we need to re-map coordinates of code
       //cursor location (0 based index, in coffeescript) to js
+
+      //TODO: add selection behaviour when cursor is WITHIN the definition of an object
+
       console.log("cursor location changed");
 
       this._clearVisualSelections();
@@ -354,18 +357,37 @@ var x = true;}
           }
         }
 
+
         //select a specific instance
-        /*
-        var bli = id.declaration.range;
+        //TODO: refactor : perhaps just using the variable id + scope would be better
+        var instanceSelect = id.declaration.range;
+        if(!(instanceSelect)) return;
+        console.log("instanceSelect",instanceSelect);
+
         for (var key in this.codeLocToinstances) 
         {
            var range = key.replace(" ","").split(",");
            console.log("range",range);
-          //var start = 
+           var start = parseInt(range[0]);
+           var end = parseInt(range[1]);
+            console.log("start",start,"end", end);
+           
           //this.codeLocToinstances['471, 475']=toto;
-        }*/
-        
+          if(!(start == instanceSelect[0] && end == instanceSelect[1])) continue
 
+          var newSelection = this.codeLocToinstances[key];
+          if(!(newSelection instanceof THREE.Object3D)) continue;
+          this.currentSelections.push(newSelection);
+          var outlineMaterial = new THREE.MeshBasicMaterial({
+            color: 0x00ff00,//0xffc200,
+            side: THREE.BackSide
+          });
+          outline = new THREE.Mesh(newSelection.geometry, outlineMaterial);
+          outline.name = "selectOutline";
+          outline.scale.multiplyScalar(1.02);
+          newSelection.outline = outline;
+          newSelection.add(outline);
+        }
         
         //var code = context.rename(id, 'answer');
       }
