@@ -189,7 +189,7 @@ var x = true;}
         var f = new Function(endSource);
         var fn = f();
         var result = fn.call(fn, this.exports, this.include, this.importGeom, this, this.name , this.assembly)
-        console.log("result",this.assembly,this.partInstancesByType);
+        console.log("result",this.assembly,this.partInstancesByType, this.codeLocToinstances);
       }
       catch(error)
       {
@@ -395,7 +395,7 @@ var x = true;}
         //TODO: refactor : perhaps just using the variable id + scope would be better
         var instanceSelect = id.declaration.range;
         if(!(instanceSelect)) return;
-        console.log("instanceSelect",instanceSelect);
+        console.log("instanceSelect",instanceSelect,this.codeLocToinstances);
 
         for (var key in this.codeLocToinstances) 
         {

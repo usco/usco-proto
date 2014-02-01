@@ -24,13 +24,14 @@ ASTManipulator.prototype.injectInstanceTracingCode = function(node, functions, c
   { //in a declaration assignement
     var instanceName = node.id.name;
     var className = node.init.callee.name;
+    var instanceRange = node.id.range;
   }
   else if(node.expression.left)
   {
     //simple assignement
     var instanceName = node.expression.left.name;
-    return;
-    var className = node.init.callee.name;
+    var className = node.expression.right.callee.name;
+    var instanceRange = node.expression.left.range;
   }
   else{return}
   console.log("created one instance of", className);
@@ -38,10 +39,10 @@ ASTManipulator.prototype.injectInstanceTracingCode = function(node, functions, c
 
   var updatedSource = node.source();
   updatedSource += ";\n if(!('instancesData' in "+instanceName+".__meta)){"+instanceName+".__meta.instancesData=[]}"
-  updatedSource += ";\n"+instanceName+".__meta.instancesData.push({range: [ " + node.id.range[0] + ", " + node.id.range[1] + "]})\n"
+  updatedSource += ";\n"+instanceName+".__meta.instancesData.push({range: [ " + instanceRange[0] + ", " + instanceRange[1] + "]})\n"
 
   //instances tracking
-  updatedSource += "codeLocToinstances['"+node.id.range[0] + ", " + node.id.range[1]+"']="+ instanceName +";\n";
+  updatedSource += "codeLocToinstances['"+instanceRange[0] + ", " + instanceRange[1]+"']="+ instanceName +";\n";
 
   console.log("updated source to inject instance tracking", updatedSource);
   node.update(updatedSource);
@@ -178,7 +179,7 @@ ASTManipulator.prototype.fallafelTest = function(source)
     var addInstTracing = this.injectInstanceTracingCode;
 
    var output = falafel(source, {ast:this.ast}, function (node) {
-      //console.log("node", node);
+      console.log("node", node);
       if(node.type == 'VariableDeclaration')
       {
           //console.log("var declaration", node);
@@ -189,7 +190,7 @@ ASTManipulator.prototype.fallafelTest = function(source)
       }
       if(isAsign( node, classes ))
       {
-        console.log("gne");
+        console.log("gne",node);
         addInstTracing( node, functions, classes );
       }
     });

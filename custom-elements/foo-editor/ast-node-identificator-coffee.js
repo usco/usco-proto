@@ -7,9 +7,12 @@ function ASTNodeIdentificatorCoffee()
 //TODO : seperate filling data (classes, function, instances) from determining if a node is of a given type
 ASTNodeIdentificatorCoffee.prototype._isNodeAVariableDeclaration = function(node, classes)
 {
-  if(node.type == 'VariableDeclarator' && node.init && node.init.callee && (node.init.callee.name in classes))
+  if(node.type == 'VariableDeclarator')
   {
-    return true;
+    if(node.init && node.init.callee && (node.init.callee.name in classes) )
+    {
+      return true;
+    }
   }
   return false;
 }
@@ -21,7 +24,9 @@ ASTNodeIdentificatorCoffee.prototype._isNodeAVariableAsignment = function(node, 
     var expression = node.expression;
     if(expression.type == "AssignmentExpression" && expression.operator === '=' && expression.left.type == "Identifier")
     {
-        if(expression.left.name in classes)
+      console.log("poop");
+      console.log("right", expression.right)
+        if(expression.right.callee && expression.right.callee.name in classes)
         {
           console.log("asignement to class");
           return true;
