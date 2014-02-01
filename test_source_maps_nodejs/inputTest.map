@@ -1,0 +1,10 @@
+{
+  "version": 3,
+  "file": "inputTest.js",
+  "sourceRoot": "",
+  "sources": [
+    "inputTest.coffee"
+  ],
+  "names": [],
+  "mappings":";AAAA,IAAA,sBAAA;;AAAA;mBAAA;;aAAA;;IAAA,CAAA;;AAAA;mBAEA;;aAAA;;IAFA,CAAA;;AAAA,KAKA,GAAY,IAAA,GAAA,CAAA,CALZ,CAAA;;AAAA,KAMA,GAAY,IAAA,GAAA,CAAA,CANZ,CAAA"
+}

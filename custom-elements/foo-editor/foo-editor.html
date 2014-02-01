@@ -139,7 +139,7 @@ cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="positi
       var source = this.source;
       if(this.sourceLanguage == "coffee")
       {
-        var pseudoModuleName = "http://localhost/"+this.name+".coffee";
+        var pseudoModuleName = this.name+".coffee";
         console.log("generating from coffeescript, pseudo module name", pseudoModuleName);
 
         //coffeescript redux only
@@ -149,7 +149,8 @@ cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="positi
         var jsAST = CoffeeScript.compile(csAST, {bare: true});
         var compiledSource = this.compiledSource = CoffeeScript.js(jsAST, {compact: false,sourceMap:true,sourceMapFile:pseudoModuleName});
         console.log("compiledSource", compiledSource);
-        this.ast = jsAST;*/
+        this.compiledSource = compiledSource;//we keep the generate js
+        //this.ast = jsAST;*/
         
         var compiledSourceData = CoffeeScript.compile(source,{bare:true,sourceMap:true,filename:pseudoModuleName});
         var compiledSource = compiledSourceData.js;
@@ -314,12 +315,14 @@ cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="positi
         var cursorLocation = this.cursorLocation
         if( this.sourceLanguage == "coffee" )
         {
+          var pseudoModuleName = this.name+".coffee";
+          
           var coffeeCursorLocationData = this.$.editor.mirror.posFromIndex(this.cursorLocation);
           console.log("coffeePos raw", coffeeCursorLocationData);
 
           coffeeCursorLocationData.line +=1
           coffeeCursorLocationData.column = coffeeCursorLocationData.ch+1;
-          coffeeCursorLocationData.source = "http://localhost/"+this.name+".coffee";
+          coffeeCursorLocationData.source = pseudoModuleName;
           delete coffeeCursorLocationData.ch;
           console.log("coffeePos", coffeeCursorLocationData);
 
@@ -327,11 +330,6 @@ cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="positi
           cursorPosJs.ch = cursorPosJs.column;
           cursorPosJs.line -=1;
           console.log("cursorPosJs",cursorPosJs);
-
-          var cursorPosALT = this.sourcemapConsumer.originalPositionFor(cursorPosJs);
-          console.log("cursorPosALT", cursorPosALT);
-
-          //compiledCursorLocation
 
           //TODO: map back to zero based index
           //convert to index ?
@@ -362,7 +360,6 @@ cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="positi
           var finalPos = coordToIndex(cursorPosJs);
           cursorLocation = finalPos-1;
           console.log("cursor(coffee): original",this.cursorLocation,"coffee",coffeeCursorLocationData, "js cursor pos", cursorPosJs, "cursorLocation",finalPos);
-          return;
         }
          
         var id = context.identify(cursorLocation);
