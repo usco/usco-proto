@@ -8,10 +8,12 @@
     "ace": "Polymer/ace-element#master",
     "code-mirror": "kaosat-dev/code-mirror#master",
     "polymer-ui-tabs": "Polymer/polymer-ui-tabs#master",
-    "usco-viewer-base": "usco/usco-viewer-base#master",
+    "polymer-localstorage":"Polymer/polymer-localstorage#master",
     "esprima": "~1.0.4",
     "escope": "~1.0.0",
     "esrefactor": "ariya/esrefactor",
-    "esmorph": "ariya/esmorph"
+    "esmorph": "ariya/esmorph",
+
+    "usco-viewer-base": "usco/usco-viewer-base#master"
   }
 }

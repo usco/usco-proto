@@ -1,9 +1,13 @@
 <script src="ast-node-identificator.js" ></script>
 <script src="ast-node-identificator-coffee.js" ></script>
 <script src="ast-manipulator.js" ></script>  
+<link rel="import" href="../../components/polymer-localstorage/polymer-localstorage.html">
 
 <polymer-element name="foo-editor">
     <template>
+      <polymer-localstorage name="usco-proto-language"   value="{{sourceLanguage}}"></polymer-localstorage>
+      <polymer-localstorage name="usco-proto-source"     value="{{source}}"></polymer-localstorage>
+
       <button on-click="{{compile}}"> Compile </button>
       <button on-click="{{analyze}}"> Analyze </button>
       <button on-click="{{traverseAst}}"> Traverse </button>
@@ -18,8 +22,6 @@
         <!----------------------------------Code editors---------------------------------------->
         <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}" 
 cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="position: absolute;width:25%;top:40px;height:90%">
-function test() {
-var x = true;}
         </code-mirror>
         <code-mirror id="transpiledEditor" theme="monokai" mode="javascript" value="{{compiledSource}}" cursorPos="{{compiledCursorLocation}}"
          style="position: absolute;width:25%;top:40px;left:25%;height:90%"></code-mirror>
@@ -137,7 +139,7 @@ var x = true;}
       var source = this.source;
       if(this.sourceLanguage == "coffee")
       {
-        var pseudoModuleName = this.name+".coffee";
+        var pseudoModuleName = "http://localhost/"+this.name+".coffee";
         console.log("generating from coffeescript, pseudo module name", pseudoModuleName);
 
         //coffeescript redux only
@@ -155,6 +157,7 @@ var x = true;}
         this.compiledSource = compiledSource;//we keep the generate js
   
         var srcMap = JSON.parse(compiledSourceData.v3SourceMap);
+        console.log("source map", srcMap);
         srcMap.sources = []
         srcMap.sources.push( pseudoModuleName ) 
 
@@ -311,26 +314,31 @@ var x = true;}
         if( this.sourceLanguage == "coffee" )
         {
           var coffeeCursorLocationData = this.$.editor.mirror.posFromIndex(this.cursorLocation);
+          console.log("coffeePos raw", coffeeCursorLocationData);
+
           coffeeCursorLocationData.line +=1
-          coffeeCursorLocationData.column = coffeeCursorLocationData.ch;
-          coffeeCursorLocationData.source = this.name+".coffee";
+          coffeeCursorLocationData.column = coffeeCursorLocationData.ch+1;
+          coffeeCursorLocationData.source = "http://localhost/"+this.name+".coffee";
           delete coffeeCursorLocationData.ch;
+          console.log("coffeePos", coffeeCursorLocationData);
 
           var cursorPosJs = this.sourcemapConsumer.generatedPositionFor(coffeeCursorLocationData);
           cursorPosJs.ch = cursorPosJs.column;
           cursorPosJs.line -=1;
+          console.log("cursorPosJs",cursorPosJs);
+
+          //compiledCursorLocation
 
           //TODO: map back to zero based index
           //convert to index ?
           var compiledSource = this.compiledSource;
-          console.log("compiledSource length,",compiledSource.length);
+          //console.log("compiledSource length,",compiledSource.length);
           function coordToIndex(coords)
           {
               //console.log("compiled source", compiledSource);
               var lines = compiledSource.split("\n");
               var index = coords.ch;
               //if (coords.line < this.first || coords.ch < 0) return 0;
-
               for(var i= 0;i<coords.line;i++)
               {
                 index+=lines[i].length +1;
@@ -349,7 +357,8 @@ var x = true;}
 
           var finalPos = coordToIndex(cursorPosJs);
           cursorLocation = finalPos;
-          console.log("cursor(coffee)",coffeeCursorLocationData, "js cursor pos", cursorPosJs, "cursorLocation",finalPos);
+          console.log("cursor(coffee): original",this.cursorLocation,"coffee",coffeeCursorLocationData, "js cursor pos", cursorPosJs, "cursorLocation",finalPos);
+          return;
         }
          
         var id = context.identify(cursorLocation);
