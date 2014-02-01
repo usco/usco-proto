@@ -34,8 +34,8 @@ ASTManipulator.prototype.injectInstanceTracingCode = function(node, functions, c
     var instanceRange = node.expression.left.range;
   }
   else{return}
-  console.log("created one instance of", className);
-  console.log("node", node);
+  //console.log("created one instance of", className);
+  //console.log("node", node);
 
   var updatedSource = node.source();
   updatedSource += ";\n if(!('instancesData' in "+instanceName+".__meta)){"+instanceName+".__meta.instancesData=[]}"
@@ -124,7 +124,7 @@ ASTManipulator.prototype.injectTracing= function(source)
   //function entry/exit experiments
   functionEntrytracer = esmorph.Tracer.FunctionEntrance(function(fn) {
         var signature;
-        console.log("function:",fn,"\n");
+        //console.log("function:",fn,"\n");
         return ""
          /*if (fn.name !== "ctor") {
           return signature = "this.__meta = {\n  lineNumber: " + fn.line + ", \n  range: [ " + fn.range[0] + ", " + fn.range[1] + "]\n}";
@@ -179,7 +179,7 @@ ASTManipulator.prototype.fallafelTest = function(source)
     var addInstTracing = this.injectInstanceTracingCode;
 
    var output = falafel(source, {ast:this.ast}, function (node) {
-      console.log("node", node);
+      //console.log("node", node);
       if(node.type == 'VariableDeclaration')
       {
           //console.log("var declaration", node);
@@ -190,7 +190,6 @@ ASTManipulator.prototype.fallafelTest = function(source)
       }
       if(isAsign( node, classes ))
       {
-        console.log("gne",node);
         addInstTracing( node, functions, classes );
       }
     });

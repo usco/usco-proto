@@ -159,7 +159,8 @@ cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="positi
         var srcMap = JSON.parse(compiledSourceData.v3SourceMap);
         console.log("source map", srcMap);
         srcMap.sources = []
-        srcMap.sources.push( pseudoModuleName ) 
+        srcMap.sources.push( pseudoModuleName )
+        srcMap.file = "out.js"; 
 
         this.sourcemapConsumer = new sourceMap.SourceMapConsumer(srcMap);
         console.log("sourcemapConsumer",this.sourcemapConsumer);
@@ -327,6 +328,9 @@ cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="positi
           cursorPosJs.line -=1;
           console.log("cursorPosJs",cursorPosJs);
 
+          var cursorPosALT = this.sourcemapConsumer.originalPositionFor(cursorPosJs);
+          console.log("cursorPosALT", cursorPosALT);
+
           //compiledCursorLocation
 
           //TODO: map back to zero based index
@@ -356,7 +360,7 @@ cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="positi
           this.$.transpiledEditor.mirror.doc.setCursor({line:cursorPosJs.line, ch:cursorPosJs.ch})          
 
           var finalPos = coordToIndex(cursorPosJs);
-          cursorLocation = finalPos;
+          cursorLocation = finalPos-1;
           console.log("cursor(coffee): original",this.cursorLocation,"coffee",coffeeCursorLocationData, "js cursor pos", cursorPosJs, "cursorLocation",finalPos);
           return;
         }

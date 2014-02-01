@@ -1,6 +1,5 @@
 function ASTNodeIdentificatorCoffee()
 {
-
 }
 
 //NODE Identification methods : TODO: expand on this
@@ -24,11 +23,8 @@ ASTNodeIdentificatorCoffee.prototype._isNodeAVariableAsignment = function(node, 
     var expression = node.expression;
     if(expression.type == "AssignmentExpression" && expression.operator === '=' && expression.left.type == "Identifier")
     {
-      console.log("poop");
-      console.log("right", expression.right)
         if(expression.right.callee && expression.right.callee.name in classes)
         {
-          console.log("asignement to class");
           return true;
         }
     }
@@ -68,13 +64,11 @@ ASTNodeIdentificatorCoffee.prototype._isNodeAClassDeclaration = function(node, f
 {
   if(node.type=='AssignmentExpression' && node.operator === '='  )
   { 
-    console.log("class detection attempt, from COFFEE", node.right.arguments, node);
+    //console.log("class detection attempt, from COFFEE", node.right.arguments, node);
     //"class detection"
     if(node.left.name)
     { 
       var className = node.left.name;
-      console.log("className", className);
-    
       try{
         //TODO: do this better
         if(node.right.type == "CallExpression" )
@@ -82,22 +76,18 @@ ASTNodeIdentificatorCoffee.prototype._isNodeAClassDeclaration = function(node, f
           try{
           var isSimpleClass = node.right.callee.body.body[0].type=="FunctionDeclaration" && node.right.callee.body.body[0].id.name == className;
 
-          console.log("FOUND className!", className);
+          //console.log("FOUND className!", className);
           return true;
           
           }catch(error){}
-          console.log("lmmlk");
           try{
-          console.log("klmk");
           var isExtendClass = node.right.callee.body.body[1].type=="FunctionDeclaration" && node.right.callee.body.body[1].id.name == className;
-          console.log("FOUND className!", className);
+          //console.log("FOUND className!", className);
           return true;
           }catch(error){}
 
           return false;
         }
-         
-
        }
        catch(error)
         {
