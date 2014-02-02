@@ -1,38 +1,46 @@
+<script src="../../components/esprima/esprima.js"></script>
+<script src="../../components/estraverse/estraverse.js"></script>
+<script src="../../components/escope/escope.js"></script>
+<script src="../../components/esrefactor/lib/esrefactor.js"></script>
+<script src="../../components/esmorph/lib/esmorph.js"></script>
+
+<script src="../../vendor/falafel.js"></script>
+
+<!--everything related to transpilers and source maps-->
+<script src="../../vendor/coffee-script.js"></script>
+<!--<script src="vendor/CoffeeScriptRedux.js"></script>-->
+<script src="../../vendor/source-map.js"></script>
+
+<link rel="import" href="../../components/polymer/polymer.html">
+<link rel="import" href="../../components/polymer-localstorage/polymer-localstorage.html">
+<link rel="import" href="../../components/polymer-ui-splitter/polymer-ui-splitter.html">
+<link rel="stylesheet" href="../../components/polymer-flex-layout/polymer-flex-layout.css">
+<link rel="import" href="../../components/polymer-ui-tabs/polymer-ui-tabs.html">
+
+<link rel="import" href="../../components/ace/ace-element.html">
+<link rel="import" href="../../components/code-mirror/code-mirror.html">
+<link rel="import" href="../../components/usco-viewer-base/three-viewer.html">
+
 <script src="ast-node-identificator.js" ></script>
 <script src="ast-node-identificator-coffee.js" ></script>
 <script src="ast-manipulator.js" ></script>  
-<link rel="import" href="../../components/polymer-localstorage/polymer-localstorage.html">
 
 <polymer-element name="foo-editor">
     <template>
       <polymer-localstorage name="usco-proto-language"   value="{{sourceLanguage}}"></polymer-localstorage>
       <polymer-localstorage name="usco-proto-source"     value="{{source}}"></polymer-localstorage>
 
-      <button on-click="{{compile}}"> Compile </button>
-      <button on-click="{{analyze}}"> Analyze </button>
-      <button on-click="{{traverseAst}}"> Traverse </button>
-      <button on-click="{{experiment}}"> Experimental </button>
+      <div id="editorToolBar">
+        <button on-click="{{compile}}"> Compile </button>
+        <button on-click="{{analyze}}"> Analyze </button>
+        <button on-click="{{traverseAst}}"> Traverse </button>
+        <button on-click="{{experiment}}"> Experimental </button>
 
-      <select value="{{sourceLanguage}}">
-        <option value="js"> Js </option>
-        <option value="coffee"> Coffee </option>
-      </select>
-      <div>
+        <select value="{{sourceLanguage}}">
+          <option value="js"> Js </option>
+          <option value="coffee"> Coffee </option>
+        </select>
 
-        <!----------------------------------Code editors---------------------------------------->
-        <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}" 
-cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="position: absolute;width:25%;top:40px;height:90%">
-        </code-mirror>
-        <code-mirror id="transpiledEditor" theme="monokai" mode="javascript" value="{{compiledSource}}" cursorPos="{{compiledCursorLocation}}"
-         style="position: absolute;width:25%;top:40px;left:25%;height:90%"></code-mirror>
-
-        <!--<ace-element theme="solarized_dark" style="width:50%;top:40px" boundValue="{{source}}"  on-editor-input="{{editorChanged}}">
-        </ace-element>-->
-
-        <!----------------------------------3d viewer-------------------------------------------->
-         <three-viewer id="viewer" selectedObject="{{selectedMesh}}"style="position:absolute;left:50%;height:90%;width:50%" > </three-viewer>
-
-         <!-- <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor> -->
         <div style="position:absolute; left:30%; top:0px"> Selected text: {{selectedText}}, cursor at: {{cursorLocation}} transpiled cursor at: {{compiledCursorLocation}}</div>
         <div style="position:absolute; right:300px; top:0px"> Selected mesh: {{selectedMesh.name}} {{selectedMesh.id}}</div>
         <div style="position:absolute; right:10px; top:0px"> Shapes list
@@ -43,7 +51,27 @@ cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="positi
             </ul>
         </div>
 
+      </div>
+      <div id="editorBody" >
+        <!----------------------------------Code editors---------------------------------------->
+        <div class="flexbox" style="width:50%;height:95%">
+          <div>
+          <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}" 
+  cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="width:98%;height:98%">
+          </code-mirror>
+          </div>
+          <polymer-ui-splitter direction="left"></polymer-ui-splitter>
+          <div flex>
+            <code-mirror id="transpiledEditor" theme="monokai" mode="javascript" value="{{compiledSource}}" cursorPos="{{compiledCursorLocation}}" style="width:98%;height:98%"
+           ></code-mirror>
+          </div>
+        </div>
+        <!--<ace-element theme="solarized_dark" style="width:50%;top:40px" boundValue="{{source}}"  on-editor-input="{{editorChanged}}">
+        </ace-element>-->
 
+        <!----------------------------------3d viewer-------------------------------------------->
+         <three-viewer id="viewer" selectedObject="{{selectedMesh}}"style="position:absolute;top:30px;left:50%;height:90%;width:50%" > </three-viewer>
+         <!-- <cube-editor style="position: absolute;right:30px;z-index:999999"> </cube-editor> -->
       </div>
     </template>
     <script>

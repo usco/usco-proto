@@ -5,10 +5,14 @@
   "dependencies": {
     "platform": "Polymer/platform#master",
     "polymer": "Polymer/polymer#master",
+    
+    "polymer-ui-tabs": "Polymer/polymer-ui-tabs#master",
+    "polymer-ui-splitter": "Polymer/polymer-ui-splitter#master",
+    "polymer-localstorage":"Polymer/polymer-localstorage#master",
+
     "ace": "Polymer/ace-element#master",
     "code-mirror": "kaosat-dev/code-mirror#master",
-    "polymer-ui-tabs": "Polymer/polymer-ui-tabs#master",
-    "polymer-localstorage":"Polymer/polymer-localstorage#master",
+
     "esprima": "~1.0.4",
     "escope": "~1.0.0",
     "esrefactor": "ariya/esrefactor",
