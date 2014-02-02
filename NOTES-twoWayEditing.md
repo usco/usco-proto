@@ -117,7 +117,7 @@ Step1 (js)
 
 Step2 (coffee)
 - all of the above should work with coffeescript too: 
-- work on remaping coffee <-> js coordinates -> will not work
+- work on remaping coffee <-> js coordinates -> !!!!!!! will not work
 - define a set of helpers in ast-manipulator for detecting class instances (for now should be seperate from pure js node type detection) ->done
 
 

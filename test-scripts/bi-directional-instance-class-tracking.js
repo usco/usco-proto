@@ -19,7 +19,17 @@ function Cube(w,h,d)
 Cube.prototype = Object.create( Part.prototype );
 Cube.prototype.constructor = Cube;
 
-var foo = new Cube();
+function Sphere(r)
+{
+  this.r = r || 25;
+
+  Part.call( this );
+  this.geometry = new THREE.SphereGeometry( this.r, 30, 30 );
+}
+Sphere.prototype = Object.create( Part.prototype );
+Sphere.prototype.constructor = Sphere;
+
+var foo = new Sphere();
 var bar = new Cube(50,10,20);
 bar.position.y = 30;
 

@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="../../components/polymer-flex-layout/polymer-flex-layout.css">
 <link rel="import" href="../../components/polymer-ui-tabs/polymer-ui-tabs.html">
 
+
 <link rel="import" href="../../components/ace/ace-element.html">
 <link rel="import" href="../../components/code-mirror/code-mirror.html">
 <link rel="import" href="../../components/usco-viewer-base/three-viewer.html">
@@ -31,17 +32,6 @@
       <polymer-localstorage name="usco-proto-source"     value="{{source}}"></polymer-localstorage>
 
       <div id="editorToolBar">
-        <button on-click="{{compile}}"> Compile </button>
-        <button on-click="{{analyze}}"> Analyze </button>
-        <button on-click="{{traverseAst}}"> Traverse </button>
-        <button on-click="{{experiment}}"> Experimental </button>
-
-        <select value="{{sourceLanguage}}">
-          <option value="js"> Js </option>
-          <option value="coffee"> Coffee </option>
-        </select>
-
-        <div style="position:absolute; left:30%; top:0px"> Selected text: {{selectedText}}, cursor at: {{cursorLocation}} transpiled cursor at: {{compiledCursorLocation}}</div>
         <div style="position:absolute; right:300px; top:0px"> Selected mesh: {{selectedMesh.name}} {{selectedMesh.id}}</div>
         <div style="position:absolute; right:10px; top:0px"> Shapes list
             <ul>
@@ -52,18 +42,38 @@
         </div>
 
       </div>
+      <div id="selectionEditor">
+         <code-mirror id="selectEdit" theme="monokai" mode="javascript" value="{{selectedMeshSource}}" 
+          style="position:absolute;top:20px;right:20px;width:300px;height:200px;z-index:9999">
+          </code-mirror>
+      </div>
+
       <div id="editorBody" >
         <!----------------------------------Code editors---------------------------------------->
-        <div class="flexbox" style="width:50%;height:95%">
+        <div id="codeEditor"><!--TODO:put this into a seperate element-->
           <div>
-          <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}" 
-  cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="width:98%;height:98%">
-          </code-mirror>
+            <button on-click="{{compile}}"> Compile </button>
+            <button on-click="{{analyze}}"> Analyze </button>
+            <button on-click="{{traverseAst}}"> Traverse </button>
+            <button on-click="{{experiment}}"> Experimental </button>
+
+            <select value="{{sourceLanguage}}">
+              <option value="js"> Js </option>
+              <option value="coffee"> Coffee </option>
+            </select>
+            <div style="position:absolute; left:30%; top:0px"> Selection: {{selectedText}}, cursor at: {{cursorLocation}} transpiled cursor at: {{compiledCursorLocation}}</div>
           </div>
-          <polymer-ui-splitter direction="left"></polymer-ui-splitter>
-          <div flex>
-            <code-mirror id="transpiledEditor" theme="monokai" mode="javascript" value="{{compiledSource}}" cursorPos="{{compiledCursorLocation}}" style="width:98%;height:98%"
-           ></code-mirror>
+          <div class="flexbox" style="width:50%;height:95%">
+            <div style="width:75%">
+            <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}" 
+    cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="width:98%;height:98%">
+            </code-mirror>
+            </div>
+            <polymer-ui-splitter direction="left"></polymer-ui-splitter>
+            <div flex>
+              <code-mirror id="transpiledEditor" theme="monokai" mode="javascript" value="{{compiledSource}}" cursorPos="{{compiledCursorLocation}}" style="width:98%;height:98%"
+             ></code-mirror>
+            </div>
           </div>
         </div>
         <!--<ace-element theme="solarized_dark" style="width:50%;top:40px" boundValue="{{source}}"  on-editor-input="{{editorChanged}}">
@@ -83,6 +93,9 @@
 
       compiledSource:null,
       compiledCursorLocation:null,
+
+      //this is used to display the code of the currently selected mesh
+      selectedMeshSource: null,
 
     created:function()
     {
@@ -285,7 +298,7 @@
 
         this.$.editor.clearMarkers();
         var mesh = this.selectedMesh;
-        if(!(mesh && mesh.__meta)) return;
+        if(!(mesh && mesh.__meta)) {this.selectedMeshSource=""; return;};
 
         //this would highlight the class of the current selected object (from 3d view)
         var pos = this.$.editor.mirror.posFromIndex(mesh.__meta.range[0]);
@@ -298,6 +311,13 @@
           console.log("current mesh INSTANCE code position",pos2)
           this.$.editor.addMarker(pos2.line);
         }catch(error){}
+
+        //display the current selected mesh's source
+        var startCode = mesh.__meta.range[0];
+        var endCode = mesh.__meta.range[1];
+        this.selectedMeshSource = this.source.substring(startCode,endCode);
+        //this.selectedMeshSource ="blablabla";
+
     },
     _clearVisualSelections: function()
     {
