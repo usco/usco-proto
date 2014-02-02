@@ -5,19 +5,17 @@
   "dependencies": {
     "platform": "Polymer/platform#master",
     "polymer": "Polymer/polymer#master",
-    
     "polymer-ui-tabs": "Polymer/polymer-ui-tabs#master",
     "polymer-ui-splitter": "Polymer/polymer-ui-splitter#master",
-    "polymer-localstorage":"Polymer/polymer-localstorage#master",
-
+    "polymer-localstorage": "Polymer/polymer-localstorage#master",
     "ace": "Polymer/ace-element#master",
     "code-mirror": "kaosat-dev/code-mirror#master",
-
     "esprima": "~1.0.4",
     "escope": "~1.0.0",
     "esrefactor": "ariya/esrefactor",
     "esmorph": "ariya/esmorph",
-
-    "usco-viewer-base": "usco/usco-viewer-base#master"
+    "usco-viewer-base": "usco/usco-viewer-base#master",
+    "polymer-ui-menu-item": "Polymer/polymer-ui-menu-item#~0.1.4",
+    "polymer-ui-menu-button": "Polymer/polymer-ui-menu-button#~0.1.4"
   }
 }

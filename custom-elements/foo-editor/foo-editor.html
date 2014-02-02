@@ -17,6 +17,11 @@
 <link rel="stylesheet" href="../../components/polymer-flex-layout/polymer-flex-layout.css">
 <link rel="import" href="../../components/polymer-ui-tabs/polymer-ui-tabs.html">
 
+<!--FIXM: breaks because of polymer & esprima collision ...
+<link rel="import" href="../../components/polymer-ui-menu-button/polymer-ui-menu-button.html">
+<link rel="import" href="../../components/polymer-ui-menu-item/polymer-ui-menu-item.html">
+<link rel="import" href="../../components/polymer-ui-toolbar/polymer-ui-toolbar.html">-->
+
 
 <link rel="import" href="../../components/ace/ace-element.html">
 <link rel="import" href="../../components/code-mirror/code-mirror.html">
@@ -33,13 +38,22 @@
 
       <div id="editorToolBar">
         <div style="position:absolute; right:300px; top:0px"> Selected mesh: {{selectedMesh.name}} {{selectedMesh.id}}</div>
-        <div style="position:absolute; right:10px; top:0px"> Shapes list
-            <ul>
-              <li>Cube</li>
-              <li>Sphere</li>
-              <li>Cylinder</li>
-            </ul>
+        <div style="position:absolute; right:200px; top:100px;z-index:999999">
+           
+          <polymer-ui-menu selected="0">
+
+          </polymer-ui-menu>
+            <polymer-ui-menu-button selected="0" halign="right">
+              <polymer-ui-menu-item label="Cube"></polymer-ui-menu-item>
+            </polymer-ui-menu-button>
+              <polymer-ui-menu-item icon="settings" label="Shapes">
+                <polymer-ui-menu-item label="Cube"></polymer-ui-menu-item>
+                <polymer-ui-menu-item label="Sphere"></polymer-ui-menu-item>
+                <polymer-ui-menu-item label="Cylinder"></polymer-ui-menu-item>
+              </polymer-ui-submenu-item>
+          
         </div>
+
 
       </div>
       <div id="selectionEditor">
