@@ -1,0 +1,45 @@
+<html>
+  <head>
+    <title>shape-creator</title>
+    <meta charset="utf-8">
+    <script src="../../components/platform/platform.js"></script>
+    <link rel="import" href="shape-creator.html">
+  </head>
+  <body>
+     <div id="foo" style="width:100%;height:300px;background:lightGray">
+
+
+     </div>
+
+     <shape-creator> </shape-creator>
+
+     <script>
+      window.addEventListener('polymer-ready', function() {
+        console.log("web components ready");
+        document.body.style.opacity = 1;
+        sC = document.querySelector('shape-creator');
+        
+        var foo = document.querySelector('#foo');
+
+        foo.addEventListener('contextmenu',function(event){
+          var event = event.impl || event;
+          console.log("context menu",event);
+          sC.enabled=true;
+          sC.style.opacity = 1;
+          sC.style.left = event.x;
+          sC.style.top = event.y;
+          event.preventDefault();
+          return false;
+        });
+
+        foo.addEventListener('click',function(event){
+          sC.style.opacity = 0;
+          sC.enabled=false;
+          
+        });
+
+
+      });
+    </script>  
+  </body>
+</html>

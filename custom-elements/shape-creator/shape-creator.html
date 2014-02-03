@@ -1,0 +1,79 @@
+<link rel="import" href="../../components/polymer/polymer.html">
+<link rel="stylesheet" href="../../components/polymer-flex-layout/polymer-flex-layout.css">
+<link rel="import" href="../../components/polymer-ui-menu-button/polymer-ui-menu-button.html">
+<link rel="import" href="../../components/polymer-ui-menu-item/polymer-ui-menu-item.html">
+<link rel="import" href="../../components/polymer-ui-submenu-item/polymer-ui-submenu-item.html">
+<link rel="import" href="../../components/polymer-ui-toolbar/polymer-ui-toolbar.html">
+
+<link rel="import"  href="../../components/polymer-ui-icon-button/polymer-ui-icon-button.html">
+
+<!--TODO: shape creator is a misnommer , should it be "shape chooser" ?-->
+
+<polymer-element name="shape-creator" attributes="enabled">
+  <template>
+    <style>
+      polymer-ui-submenu-item #menu { display:inline-block;}
+      polymer-ui-menu-item { font-size:12px;}
+
+    @host{
+      * {
+        position:absolute;
+        background:white;
+		    opacity:0;
+        -webkit-transition: opacity 0.3s ease-in;
+
+        font-size:12px;
+      }
+
+    }
+
+    /*:host {
+      position:absolute;
+      background:white;
+
+       opacity:0;
+        -webkit-transition: opacity 0.8s ease-in;
+
+      * {
+		    opacity:0;
+        -webkit-transition: opacity 0.8s ease-in;
+      }
+    }*/
+    </style>
+    <template if="{{enabled}}">
+      <section style="" theme="polymer-ui-light-theme">
+        <polymer-ui-submenu-item icon="menu" label="Shapes(3d)" active>
+             <polymer-ui-menu-item label="Cube"></polymer-ui-menu-item>
+             <polymer-ui-menu-item label="Sphere"> </polymer-ui-menu-item>
+              <div  class="polymer-ui-light-theme" style="cursor: pointer;">
+                  <span id="label" click="{{createDefault}}">Cylinder </span>
+                  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> 
+              </div>
+        </polymer-ui-submenu-item>
+        <polymer-ui-submenu-item icon="menu" label="Shapes(2d)" active>
+             <polymer-ui-menu-item label="Rectangle"></polymer-ui-menu-item>
+             <polymer-ui-menu-item label="Circle"> </polymer-ui-menu-item>
+        </polymer-ui-submenu-item>
+      </section>
+    </template>
+
+  </template>
+  <script>
+    Polymer("shape-creator",{
+    enabled:false,
+    createDefault:function(event,sender)
+    {
+      console.log("createDefaultShape",event, sender);
+      this.enabled = false;
+    },
+    createCustom:function(event,sender)
+    {
+      console.log("createCustomShape",event, sender);
+      this.enabled = false;
+    }
+    });
+  </script>
+</polymer-element>
+
+
+
