@@ -163,3 +163,16 @@ variables within our custom module class)
   * this will enable code --> visual tracking for a specific instance of a mesh
 
 
+Update:February 03 2014:
+========================
+
+Have not tried this out yet, but a possible workaround for the coffeescript issue could be:
+- use coffeescript redux's CST (coffeescript syntax tree ?) to do the same things currently done with the
+javascript AST
+- DO NOT use redux's javascript output , but use regular coffeescript's compiling ,as that one actually
+works with the super keyword etc
+- this would perhaps require a custom version of falafel that works with coffeescript syntax tree directly
+
+Of course this would be a bit of a heavyweight workaround, but it might make the same things possible in coffeescript
+which we now have in js , withouth the source mapping issues
+
