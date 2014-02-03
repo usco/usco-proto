@@ -15,13 +15,15 @@
       polymer-ui-submenu-item #menu { display:inline-block;}
       polymer-ui-menu-item { font-size:12px;}
 
-    @host{
-      * {
+      .shape-item{ font-size:12px;opacity: 0.5;padding-left: 10px; }
+      .shape-item:hover{opacity: 0.9;}
+
+    :host{
         position:absolute;
         background:white;
+      * {
 		    opacity:0;
         -webkit-transition: opacity 0.3s ease-in;
-
         font-size:12px;
       }
 
@@ -43,10 +45,16 @@
     <template if="{{enabled}}">
       <section style="" theme="polymer-ui-light-theme">
         <polymer-ui-submenu-item icon="menu" label="Shapes(3d)" active>
-             <polymer-ui-menu-item label="Cube"></polymer-ui-menu-item>
-             <polymer-ui-menu-item label="Sphere"> </polymer-ui-menu-item>
-              <div  class="polymer-ui-light-theme" style="cursor: pointer;">
-                  <span id="label" click="{{createDefault}}">Cylinder </span>
+              <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
+                  <span on-click="{{createDefault}}">Cube </span>
+                  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> 
+              </div>
+              <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
+                  <span on-click="{{createDefault}}">Sphere </span>
+                  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> 
+              </div>
+              <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
+                  <span on-click="{{createDefault}}">Cylinder </span>
                   <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> 
               </div>
         </polymer-ui-submenu-item>
