@@ -17,6 +17,15 @@
 
       .shape-item{ font-size:12px;opacity: 0.5;padding-left: 10px; }
       .shape-item:hover{opacity: 0.9;}
+      .shape-item:active{background-color: rgba(0, 0, 0, 0.0470588);
+box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.117647) 0px 0px 0px 1px;}
+
+
+      .shape-item-base{display: inline-block; width:50px;padding: 10px; }
+      .shape-item-base:hover{ box-shadow: rgba(0, 0, 0, 0.117647) 0px 1px 0px 0px, rgba(0, 0, 0, 0.0980392) 0px 0px 0px 1px;}
+
+
+      
 
     :host{
         position:absolute;
@@ -46,22 +55,42 @@
       <section style="" theme="polymer-ui-light-theme">
         <polymer-ui-submenu-item icon="menu" label="Shapes(3d)" active>
               <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
-                  <span on-click="{{createDefault}}">Cube </span>
-                  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> 
+                  <span on-click="{{createDefault}}" class="shape-item-base">Cube </span>
+                  <span><polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> </span>
               </div>
               <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
-                  <span on-click="{{createDefault}}">Sphere </span>
-                  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> 
+                  <span on-click="{{createDefault}}" class="shape-item-base">Sphere </span>
+                  <span> <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> </span>
               </div>
               <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
-                  <span on-click="{{createDefault}}">Cylinder </span>
-                  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> 
+                  <span on-click="{{createDefault}}" class="shape-item-base">Cylinder </span>
+                  <span>  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> </span>
+              </div>
+              <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
+                  <span on-click="{{createDefault}}" class="shape-item-base">Torus </span>
+                  <span>  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> </span>
               </div>
         </polymer-ui-submenu-item>
         <polymer-ui-submenu-item icon="menu" label="Shapes(2d)" active>
-             <polymer-ui-menu-item label="Rectangle"></polymer-ui-menu-item>
-             <polymer-ui-menu-item label="Circle"> </polymer-ui-menu-item>
+          <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
+            <span on-click="{{createDefault}}" class="shape-item-base">Rectangle </span>
+            <span>  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> </span>
+          </div>
+          <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
+            <span on-click="{{createDefault}}" class="shape-item-base">Circle </span>
+            <span>  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> </span>
+          </div>
+          <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
+            <span on-click="{{createDefault}}" class="shape-item-base">Text </span>
+            <span>  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> </span>
+          </div>
         </polymer-ui-submenu-item>
+        <polymer-ui-submenu-item icon="menu" label="Generic" active>
+           <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
+                  <span on-click="{{createDefault}}" class="shape-item-base">Part </span>
+                  <span>  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> </span>
+           </div>
+         </polymer-ui-submenu-item>
       </section>
     </template>
 
