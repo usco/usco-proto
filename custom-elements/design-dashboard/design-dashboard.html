@@ -1,15 +1,190 @@
 <link rel="import" href="../../components/polymer/polymer.html">
+<link rel="stylesheet" href="../../components/polymer-flex-layout/polymer-flex-layout.css">
+<link rel="import" href="../../components/polymer-ui-menu-button/polymer-ui-menu-button.html">
+<link rel="import" href="../../components/polymer-ui-menu-item/polymer-ui-menu-item.html">
+<link rel="import" href="../../components/polymer-ui-toolbar/polymer-ui-toolbar.html">
+<link rel="import" href="../../components/polymer-flex-layout/polymer-flex-layout.html">
 
 <polymer-element name="design-dashboard" >
   <template>
-    
-
+    <style>
+      :host{display:block;}
+      :host > polymer-ui-toolbar{
+        height:21px;
+      }
+      :host > polymer-ui-toolbar input{
+        border:none;background:#F1F1F1;
+        color:#414141;
+      }
+      :host > polymer-ui-toolbar input:focus {
+        outline: 1px solid #17a9f5;
+      }
+      :host > polymer-ui-toolbar input:hover {
+        -webkit-transition: outline 0.8s ease-in;
+        outline: 1px solid #17a9f5;
+      }
+      :host > section{
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+        display: inline-flex;
+        margin: auto;
+        justify-content: center;
+      }
+    </style>
+    <polymer-ui-toolbar theme="polymer-ui-dark-theme" > 
+      <polymer-ui-icon-button icon="menu"></polymer-ui-icon-button>
+      <div flex style="color:rgb(255, 204, 0)">Designs</div>
+      <polymer-ui-toolbar responsive>
+        <span><input id="searchField" type="text" on-keyup="{{search}}"/> </span>
+        <span id="results" style="position:absolute;top:40px;left:50%;z-index: 9999999;color:black;background:white">
+        <template repeat="{{result in searchResults}}">
+          <div style="cursor:pointer" on-tap="{{blah}}">{{result}}</div>
+        </template>
+        </span>
+        <polymer-ui-icon-button icon="search" on-tap="{{search}}"></polymer-ui-icon-button>
+        <polymer-ui-icon-button icon="trash"></polymer-ui-icon-button>
+  
+      </polymer-ui-toolbar>
+    </polymer-ui-toolbar>
+    <section >
+      <template repeat="{{design in filteredDesigns}}">
+        <design-card design="{{design}}"> </design-card>
+      </template>
+    </section>
   </template>
   <script>
     Polymer("design-dashboard",{
+      designs : [],
+      filteredDesigns: [],
+      searchItem: "",
+      created:function()
+      {
+        this.filteredDesigns = this.designs;
+      },
+      search:function()
+      {
+        var toSearch = this.$.searchField.value;
+        this.searchItem = toSearch;
+        var results = [];
+        for(var i=0;i<this.designs.length;i++)
+        {
+          var current = this.designs[i].name;
+          var searchC = toSearch.toLowerCase() 
+          var found = current.slice(0, searchC.length) == searchC;//startswith
+          if(found)  results.push( this.designs[i] );
+        }
+        this.filteredDesigns = results;
+      },
+      blah:function(event)
+      {
+        this.$.searchField.value = this.searchResults.pop();
+        this.filteredDesigns = [];
+      }
     });
   </script>
 </polymer-element>
 
+<polymer-element name="search-results" on-tap="{{tapped}}">
+  <template>
+    <template repeat="{{result in results}}">
+      {{result}}
+    </template>
+  </template>
+  <script>
+    Polymer("search-results",{
+      results : [],
+    });
+  </script>
+</polymer-element>
 
+<polymer-element name="design-card" attributes="design" on-tap="{{tapped}}">
+  <template >
+    <style>
+    :host{
+      display:inline-block;
+      opacity:0;
+      width:230px;
+      height:160px;
+      text-align:center;
+      font-weight:700;
+      border: 2px solid #414141;
+      margin: 10px 5px;
 
+      -webkit-touch-callout: none;
+		  -webkit-user-select: none;
+		  -khtml-user-select: none;
+		  -moz-user-select: none;
+		  -ms-user-select: none;
+		  user-select: none;
+
+    }
+    :host:hover{
+      cursor:pointer;
+      -webkit-transition: border 0.2s ease-in;
+      border: 2px solid #17a9f5;
+    }
+    :host:hover footer{ 
+          -webkit-transition: color 0.2s ease-in;
+    color :rgb(255, 204, 0);
+
+    }
+    article{
+      position:relative;
+            -webkit-transition: opacity 1.9s ease-in;
+    }
+    footer{
+        background:#414141;
+        color:white;
+        height:2em;
+        position: absolute;
+        top: 115px;
+        left: 0px;
+        width: 100%;
+      }
+    section > img{
+      width:100%;
+      height:100%;
+    }
+
+    </style>
+    <article>
+      <section id="main">
+        <img src="{{design.imgPath}}">
+        </img>  
+      </section>    
+      <footer>
+       <div>{{design.name | toUpperCase}}<div>
+       <div style="font-size: 10px;"> {{design.lastEdited}}</div>
+        <polymer-ui-menu-button valign="top" halign="right"  style="position:absolute;bottom:0px;right:10px;height:2em;color:black;font-size:12px!important">
+          <polymer-ui-menu-item icon="settings" label="Delete"></polymer-ui-menu-item>
+				  <polymer-ui-menu-item icon="settings" label="Fork"></polymer-ui-menu-item>
+        </polymer-ui-menu-button>
+      </footer>
+    </article>
+  </template>
+  <script>
+    Polymer("design-card",{
+      design:{name:"foobb",lastEdited:"19/07/2013",path:"/foo/bar",imgPath:"download.jpg"},
+      enteredView:function()
+      {
+        this.style.opacity = 1;
+      },
+      leftView:function()
+      {
+        this.style.opacity = 0;
+      },
+      toUpperCase:function(val)
+      {
+        return val.toUpperCase();
+      },
+      isRemoteStore:function(path)
+      {
+      },
+      tapped:function(event)
+      {
+        console.log("design tapped");
+      }
+    });
+  </script>
+</polymer-element>

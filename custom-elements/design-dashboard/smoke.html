@@ -1,16 +1,24 @@
 <html>
   <head>
-    <title>shape-creator</title>
+    <title>design-dashboard</title>
     <meta charset="utf-8">
     <script src="../../components/platform/platform.js"></script>
     <link rel="import" href="design-dashboard.html">
+    <link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
   </head>
   <body>
-     <design-dashboard> </design-dashboard>
+     <design-dashboard style="width:55%;"> </design-dashboard>
      <script>
       window.addEventListener('polymer-ready', function() {
         console.log("web components ready");
         document.body.style.opacity = 1;
+        var dashboard = document.querySelector('design-dashboard');
+        dashboard.designs.push({name:"foobb",lastEdited:"19/07/2013",path:"/foo/bar",imgPath:"download.jpg"} );
+        dashboard.designs.push({name:"food",lastEdited:"19/07/2014",path:"/foo/bar",imgPath:"download.jpg"} );
+        dashboard.designs.push({name:"fodder",lastEdited:"12/07/2013",path:"/foo/bar",imgPath:"download.jpg"} );
+        dashboard.designs.push({name:"abba",lastEdited:"19/07/2013",path:"/foo/bar",imgPath:"download.jpg"} );
+        dashboard.designs.push({name:"pump",lastEdited:"19/07/2013",path:"/foo/bar",imgPath:"download.jpg"} );
+        dashboard.designs.push({name:"peristaltic_pump",lastEdited:"19/07/2013",path:"/foo/bar",imgPath:"download.jpg"} );
       });
     </script>  
   </body>
