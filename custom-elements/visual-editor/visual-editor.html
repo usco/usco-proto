@@ -1,11 +1,70 @@
 <link rel="import" href="../../components/polymer/polymer.html">
+<link rel="import" href="../../components/usco-polymer-three-js/three-js.html">
+<link rel="import" href="./lib/grid-helper.html">
+<link rel="import" href="../shape-creator/shape-creator.html">
 
-<polymer-element name="shape-creator" >
+<polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" >
+  <template>
+    <shape-creator id="contextMenu"> </shape-creator>
+
+    <three-js postProcess fullscreen="{{fullscreen}}" selectedObjects="{{selectedObjects}}">
+          <three-stats id="stats" show></three-stats>
+          <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
+          <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate="{{autorotate}}"> </three-js-orbitControls>
+
+          <three-js-scene name="mainScene" active>
+            <three-js-object hierarchyRoot>
+              <three-js-sphere color="blue" r=30  > </three-js-sphere>
+              <three-js-sphere color="red" r=30  x="30"> </three-js-sphere>
+            </three-js-object>
+
+            <three-js-object helpersRoot>
+              <three-axis-helper show="{{axes}}"> </three-axis-helper>
+              <grid-helper size="200" step="10"> </grid-helper>
+              <three-js-light x="50" y="30" z="200"></three-js-light>
+              <three-js-light kind="spot" x="-150" y="350" rx="90" shadow></three-js-light>
+            </three-js-object>
+          </three-js-scene>
+
+          <three-effect-composer >
+            <vignette-fx darkness="{{darkness}}" offset="{{offset}}"> </vignette-fx>
+            <hueSaturation-fx hue="{{hue}}" saturation="{{saturation}}"> </hueSaturation-fx>
+            <!--<kaleido-fx> </kaleido-fx>-->
+          </three-effect-composer>
+     </three-js>
+  </template>
   <script>
-    Polymer("shape-creator",{
+    Polymer("visual-editor",{
+    autorotate:false,
+    selectedObjects:[],
+
+    selectedObjectsChanged:function(newSelection,oldSelection)
+    {
+      console.log("selection", this.selectedObjects);
+    },
+
+    enteredView:function()
+    {
+      var sC = this.$.contextMenu; //document.querySelector('shape-creator');
+
+      this.addEventListener('contextmenu',function(event){
+        var event = event.impl || event;
+        console.log("context menu",event);
+        sC.enabled=true;
+        sC.style.opacity = 1;
+        sC.style.left = event.x;
+        sC.style.top = event.y;
+        sC.style.zIndex = 99999;
+        event.preventDefault();
+        return false;
+      });
+
+      this.addEventListener('click',function(event){
+        sC.style.opacity = 0;
+        sC.enabled=false;
+      });
+    }
+
     });
   </script>
 </polymer-element>
-
-
-

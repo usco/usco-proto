@@ -1,0 +1,24 @@
+<script src="custom-grid-helper.js"></script>
+
+<polymer-element name="grid-helper" extends="three-js-object" attributes="size step ">
+  <script>Polymer('grid-helper',{
+      object:null,
+      size: 1000,
+      step: 100,
+      color: 0xFFFFFF,
+      opacity: 0.1,
+      addText: true,
+      textColor: "#FFFFFF",
+      textLocation: "f",
+      ready: function() {
+        this.object = new THREE.CustomGridHelper(this.size, this.step);//, this.color, this.opacity, this.addText, this.textColor, this.textLocation);
+        this.object.color = 0x00baff;
+        this.super();
+      },
+      enteredView:function()
+      {
+        this.super();
+      }
+    });
+  </script>
+</polymer-element>
