@@ -5,14 +5,13 @@
       object:null,
       size: 1000,
       step: 100,
-      color: 0xFFFFFF,
+      color: 0x00baff,
       opacity: 0.1,
       addText: true,
-      textColor: "#FFFFFF",
+      textColor: "#000000",
       textLocation: "f",
       ready: function() {
-        this.object = new THREE.CustomGridHelper(this.size, this.step);//, this.color, this.opacity, this.addText, this.textColor, this.textLocation);
-        this.object.color = 0x00baff;
+        this.object = new THREE.CustomGridHelper(this.size, this.step, new THREE.Vector3(0,0,1), this.color, this.opacity, this.addText, this.textColor, this.textLocation);
         this.super();
       },
       enteredView:function()

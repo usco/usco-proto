@@ -1,21 +1,39 @@
 <link rel="import" href="../../components/polymer/polymer.html">
 <link rel="import" href="../../components/usco-polymer-three-js/three-js.html">
-<link rel="import" href="./lib/grid-helper.html">
 <link rel="import" href="../shape-creator/shape-creator.html">
 
-<polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" >
+<link rel="import" href="./lib/grid-helper.html">
+
+<link rel="import" href="../../components/usco-command-manager/usco-command-manager.html">
+<script src="lib/commands.js"></script>
+
+<script src="lib/transformControls.js"></script>
+
+<polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
+on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
   <template>
+    <style>
+      history-editor{
+        color:black;
+        z-index:3;
+      }
+      shape-creator{
+        opacity : 0;
+        z-index : 4;
+      }
+    </style>
+
     <shape-creator id="contextMenu"> </shape-creator>
 
-    <three-js postProcess fullscreen="{{fullscreen}}" selectedObjects="{{selectedObjects}}">
+    <history-editor id="historyEditor"> </history-editor>
+
+    <three-js postProcess fullscreen="{{fullscreen}}" selectedObjects="{{selectedObjects}}" id="viewer" on-keyup="{{keyUp}}">
           <three-stats id="stats" show></three-stats>
           <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
           <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate="{{autorotate}}"> </three-js-orbitControls>
 
           <three-js-scene name="mainScene" active>
             <three-js-object hierarchyRoot>
-              <three-js-sphere color="blue" r=30  > </three-js-sphere>
-              <three-js-sphere color="red" r=30  x="30"> </three-js-sphere>
             </three-js-object>
 
             <three-js-object helpersRoot>
@@ -36,25 +54,28 @@
   <script>
     Polymer("visual-editor",{
     autorotate:false,
-    selectedObjects:[],
-
-    selectedObjectsChanged:function(newSelection,oldSelection)
+    selectedObjects:null,
+    selection:null,
+    created:function()
     {
-      console.log("selection", this.selectedObjects);
+      this.selectedObjects=[];
     },
-
     enteredView:function()
     {
+      this.viewer = this.$.viewer;
+      this.commandManager = this.$.historyEditor;
+
+      this.transformControls = new THREE.TransformControls(this.viewer.camera, this.$.viewer);
+      this.viewer.updatables.push( this.transformControls.update ) ;
+
       var sC = this.$.contextMenu; //document.querySelector('shape-creator');
 
       this.addEventListener('contextmenu',function(event){
         var event = event.impl || event;
-        console.log("context menu",event);
         sC.enabled=true;
         sC.style.opacity = 1;
         sC.style.left = event.x;
         sC.style.top = event.y;
-        sC.style.zIndex = 99999;
         event.preventDefault();
         return false;
       });
@@ -63,7 +84,118 @@
         sC.style.opacity = 0;
         sC.enabled=false;
       });
+      this.addEventListener('reqShapeCreation',function(event, bla, bli){
+        //console.log("shape creation request recieved", event, bla, bli);
+        var type= event.detail.type;
+        if(type)
+        {
+          //console.log("editor creating", type);
+          var instance = null;
+          switch(type)
+          {
+            case "Cube":
+              var instance = new THREE.Mesh( new THREE.CubeGeometry( 20, 20, 20 ), new THREE.MeshNormalMaterial() );
+            break;
+            case "Sphere":
+              var instance = new THREE.Mesh( new THREE.SphereGeometry( 10, 20, 20 ), new THREE.MeshNormalMaterial() );
+            break;
+            case "Cylinder":
+              var instance = new THREE.Mesh( new THREE.CylinderGeometry( 10, 20, 20 ), new THREE.MeshNormalMaterial() );
+            break;
+            case "Part":
+              //var instance = new THREE.Mesh();
+            break;
+          }
+          
+          if(instance!=null){
+            instance.name = type;
+            if(this.selectedObjects.length==1) //if we have a selection, add it to that selection
+            {
+             this.selectedObjects[0].add( instance ) ;
+            }
+            else
+            {
+              this.viewer.addToScene(instance);
+            }
+            this.commandManager.addCommand( new Creation(instance, instance.parent) );
+          }
+        }
+    });
+    },
+    selectedObjectsChanged:function(oldSelections, newSelections)
+    {
+      var newSelections = this.selectedObjects;
+      console.log("selection", newSelections,"old",oldSelections);
+      
+      if(!(oldSelections)) oldSelections = [];
+      if(!(newSelections)) newSelections = [];
+
+      //remove from old
+      for(var i=oldSelections.length-1;i>=0;i--)
+      {
+        var oldSelection = oldSelections[i];
+        
+        //this.transformControls.detach();
+        //this.viewer.removeFromScene(this.transformControls);
+        
+        //oldSelection.controls = null;
+        if(oldSelection.outline!=null)
+        { 
+          var outline = oldSelection.outline;
+          oldSelection.remove(outline);
+          delete oldSelection.outline;
+        }
+        //try{this.transformControls.update();}catch(error){}
+      }
+      //add to new selection
+      //FIXME: why is it different from newSelections ?
+      for(var i= newSelections.length-1 ;i>=0;i--)
+      {
+        var newSelection = newSelections[i];
+      
+        this.transformControls.attach( newSelections[0] );
+        this.viewer.addToScene(this.transformControls);
+        //this.viewer.scene.add(this.transformControls);
+        console.log("this.viewer",this.viewer);
+        //newSelection.controls = this.transformControls;
+        if(newSelection.outline) continue;
+        var outlineMaterial = new THREE.MeshBasicMaterial({
+          color: 0xff0000,//0xffc200,
+          side: THREE.BackSide
+        });
+        var outline = new THREE.Mesh(newSelection.geometry.clone(), outlineMaterial);
+        outline.name = "selectOutline";
+        outline.scale.multiplyScalar(1.03);
+        newSelection.outline = outline;
+        newSelection.add(outline);
+
+      }
+    },
+    onMouseWheel:function (event)
+    {
+      //this blocks page scrolling if mouse is within this element
+      event.preventDefault();
+      return false;
+    },
+    keyUp:function(event)
+    {
+      var keyCode = event.impl.keyCode;
+      var ctrlPressed = event.impl.ctrlKey;
+      var shiftPressed= event.impl.shiftKey;
+
+      if(keyCode == 46) //delete
+		  {
+        while((selectedObject=this.selectedObjects.pop()) != null){
+          var parent = selectedObject.parent
+          parent.remove(selectedObject);
+          //TODO: need a more generic system to publish operation into the history
+          this.commandManager.addCommand( new Deletion(selectedObject, parent) );
+        }
+		  }
     }
+
+
+    //going down "one level" into an object hierarchy
 
     });
   </script>

@@ -5,13 +5,18 @@
     <script src="../../components/platform/platform.js"></script>
     <link rel="import" href="visual-editor.html">
       <style>
-         html, body, three-js {
-          left:0px;top:0px;width:100%;height:100%;background-color:#ffffff; overflow:hidden;     
+        html, body{
+          width:100%;
+          height:100%;
+        }
+         three-js {
+          left:0px;top:0px;width:70%;height:70%;background-color:#ffffff;
     }
       </style>
   </head>
   <body>
      <visual-editor> </visual-editor>
+      <div style="height:600px"></div>
      <script>
       window.addEventListener('polymer-ready', function() {
         console.log("web components ready");
