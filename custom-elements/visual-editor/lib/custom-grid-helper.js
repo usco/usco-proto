@@ -82,6 +82,7 @@ THREE.CustomGridHelper.prototype._drawGrid = function() {
       planeFragmentShader = [
       "uniform vec3 diffuse;",
       "uniform float opacity;",
+      //"uniform vec3 shadowColor;",
       THREE.ShaderChunk["color_pars_fragment"],
       THREE.ShaderChunk["map_pars_fragment"],
       THREE.ShaderChunk["lightmap_pars_fragment"],
@@ -104,8 +105,13 @@ THREE.CustomGridHelper.prototype._drawGrid = function() {
       	"}"
       	].join("\n");
       	
+      //= vec3(0.0,0.0,0.0) 
+      var uniforms = THREE.ShaderLib['basic'].uniforms;
+      //if( ! ("shadowColor" in uniforms) ) {uniforms["shadowColor"] = {type:'c',value:new THREE.Color(0,1,1) } }
+      console.log("uniforms", uniforms);
+  
       planeMaterial = new THREE.ShaderMaterial({
-        uniforms: THREE.ShaderLib['basic'].uniforms,
+        uniforms: uniforms,
         vertexShader: THREE.ShaderLib['basic'].vertexShader,
         fragmentShader: planeFragmentShader,
         color: 0x0000FF,
