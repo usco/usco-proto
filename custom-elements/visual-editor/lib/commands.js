@@ -81,6 +81,27 @@ Scaling.prototype.redo = function()
   this.target.scale.z += this.value.z;
 }
 
+
+Subtract = function ( value, target)
+{
+  Command.call( this );
+  this.type = "Subtract";
+  this.value = value;
+  this.target = target;
+}
+Subtract.prototype = Object.create( Command.prototype );
+Subtract.prototype.constructor=Subtract;
+
+Subtract.prototype.undo = function()
+{
+}
+
+Subtract.prototype.redo = function()
+{
+}
+
+
+
 Creation = function (target, parentObject)
 {
   Command.call( this );

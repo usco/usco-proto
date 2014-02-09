@@ -2,12 +2,13 @@
 <link rel="import" href="../../components/usco-polymer-three-js/three-js.html">
 <link rel="import" href="../shape-creator/shape-creator.html">
 
-<link rel="import" href="./lib/grid-helper.html">
+<link rel="import" href="./sub-elements/grid-helper.html">
 
 <link rel="import" href="../../components/usco-command-manager/usco-command-manager.html">
 <script src="lib/commands.js"></script>
 
 <script src="lib/transformControls.js"></script>
+<script src="lib/THREECSG.js"></script>
 
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
 on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
@@ -61,9 +62,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
             </three-js-object>
           </three-js-scene>
 
-          <three-effect-composer >
+          <!--TODO: if no effects are added, effect composer/post process should deactivated 
+          <three-effect-composer>
             <vignette-fx darkness="5" offset="0.4"> </vignette-fx>
-          </three-effect-composer>
+          </three-effect-composer>-->
      </three-js>
   </template>
   <script>
@@ -73,7 +75,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
     selectedObject:null,
     created:function()
     {
-      this.selectedObjects=[];
+      this.selectedObjects = [];
     },
     enteredView:function()
     {
@@ -133,13 +135,13 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
         event.preventDefault();
         return false;
       });
+      this.contextMenu = sC;
 
       this.addEventListener('click',function(event){
         sC.style.opacity = 0;
         sC.enabled=false;
       });
-      this.addEventListener('reqShapeCreation',function(event, bla, bli){
-        //console.log("shape creation request recieved", event, bla, bli);
+      this.addEventListener('reqShapeCreation',function(event){
         var type= event.detail.type;
         if(type)
         {
@@ -178,7 +180,106 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
             this.commandManager.addCommand( new Creation(instance, instance.parent) );
           }
         }
+     });
+     
+     this.addEventListener('reqShapeOperation',function(event){
+        var type= event.detail.type;
+        var selections = this.selectedObjects;
+
+        function union(selections)
+        {
+          var bspFirst = new ThreeBSP( selections[0] );
+          var current = bspFirst;
+
+          for(var i=1; i<selections.length;i++)
+          {
+            var bsp = new ThreeBSP( selections[i] );
+            var current = current.union( bsp );
+          }
+          var result = current.toMesh();
+         result.geometry.computeVertexNormals()
+         result.geometry.computeBoundingBox()
+         result.geometry.computeCentroids()
+         result.geometry.computeFaceNormals();
+         result.geometry.computeBoundingSphere();
+
+         //selections[0].geometry = result.geometry;
+         return result;//selections[0];
+        }
+
+        function subtract(selections)
+        {
+          var bspFirst = new ThreeBSP( selections[0] );
+          var current = bspFirst;
+
+          for(var i=1; i<selections.length;i++)
+          {
+            var bsp = new ThreeBSP( selections[i] );
+            var current = current.subtract( bsp );
+          }
+
+         var result = current.toMesh();
+         result.geometry.computeVertexNormals()
+         result.geometry.computeBoundingBox()
+         result.geometry.computeCentroids()
+         result.geometry.computeFaceNormals();
+         result.geometry.computeBoundingSphere();
+         //selections[0].geometry = result.geometry;
+         return result;//selections[0];
+        }
+        function intersect(selections)
+        {
+          var bspFirst = new ThreeBSP( selections[0] );
+          var current = bspFirst;
+
+          for(var i=1; i<selections.length;i++)
+          {
+            var bsp = new ThreeBSP( selections[i] );
+            var current = current.intersect( bsp );
+          }
+
+         var result = current.toMesh();
+         result.geometry.computeVertexNormals()
+         result.geometry.computeBoundingBox()
+         result.geometry.computeCentroids()
+         result.geometry.computeFaceNormals();
+         result.geometry.computeBoundingSphere();
+         //selections[0].geometry = result.geometry;
+         return result;//selections[0];
+        }
+
+
+        if(type)
+        {
+          var result = null;
+          switch(type)
+          {
+            case 'union':
+              result = union( selections );
+            break;
+            case 'subtract':
+              result = subtract(selections);
+            break;
+            case 'intersect':
+              result = intersect(selections);
+            break;
+            
+          }
+          //FIXME: hack hack hack !
+          var old = selections[0];
+          this.viewer.removeFromScene( old );
+          result.uuid = old.uuid;
+          //res.children = old.children;
+          result.name = old.name;
+          result.material = old.material;
+          old = null;
+          selections[0] = result;
+          this.viewer.addToScene( result );
+          
+        }
     });
+
+
     },
     selectedObjectsChanged:function(oldSelections, newSelections)
     {
@@ -229,7 +330,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
         this.selectedObject.position = avgPosition;
       }*/
    
-      
+      if(newSelections.length>1)
+      {
+        this.contextMenu.mode = 'operations';
+      }
+      else
+      {
+        this.contextMenu.mode = 'creation';
+      }
       for(var i= newSelections.length-1 ;i>=0;i--)
       {
         var newSelection = newSelections[i];
