@@ -9,6 +9,7 @@
 
 <script src="lib/transformControls.js"></script>
 <script src="lib/THREECSG.js"></script>
+<script src="lib/meshWrapper.js"></script>
 
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
 on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
@@ -151,7 +152,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
           switch(type)
           {
             case "Cube":
-              var instance = new THREE.Mesh( new THREE.CubeGeometry( 20, 20, 20 ), material );
+              var instance = new THREE.Mesh( new THREE.CubeGeometry( 20, 20, 20 ), material );//new Part( new THREE.CubeGeometry( 20, 20, 20 ), material );
             break;
             case "Sphere":
               var instance = new THREE.Mesh( new THREE.SphereGeometry( 10, 20, 20 ), material );
@@ -263,18 +264,67 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
             case 'intersect':
               result = intersect(selections);
             break;
+
+            //specials
+            case 'clone':
+              result = selections[0].clone();
+            break;
+
+            case 'linkedClone':
+              result = selections[0].clone();
+              result.geometry = selections[0].geometry;
+            break;
             
           }
-          //FIXME: hack hack hack !
-          var old = selections[0];
-          this.viewer.removeFromScene( old );
-          result.uuid = old.uuid;
-          //res.children = old.children;
-          result.name = old.name;
-          result.material = old.material;
-          old = null;
-          selections[0] = result;
+
+          if(type != "clone" && type != "linkedClone")
+          {
+            //FIXME: hack hack hack !
+            /*var old = selections[0];
+            this.viewer.removeFromScene( old );
+            var material = old.material.clone();  
+            old.remove(old.children[0]);
+            old.geometry.dispose();
+            old.geometry = result.geometry;
+            console.log(" old", old);
+            old.material = material;
+            this.viewer.renderer.initWebGLObjects(this.viewer.scene);
+
+            this.viewer.addToScene( old );*/
+
+            /*var old = selections[0];
+            this.viewer.removeFromScene( old );
+            
+            old.geometry = result.geometry.clone();
+            this.viewer.renderer.initWebGLObjects(this.viewer.scene);
+            console.log("mlkml",this.viewer.renderer,this.viewer.scene);
+            this.viewer.addToScene( old );*/
+
+
+            var old = selections[0];
+            this.viewer.removeFromScene( old );
+            result.uuid = old.uuid;
+            //res.children = old.children;
+            result.name = old.name;
+            result.material = old.material;
+            old = null;
+            selections[0] = result;
+            this.viewer.addToScene( result );
+
+            /*var old = selections[0];
+            old.remove( old.innerMesh );
+            var nGeom = result.geometry.clone();
+            //old.innerMesh = new THREE.Mesh(nGeom,old.material);
+            old.geometry = nGeom;
+            //old.add( old.innerMesh ) ;*/
+          
+
+            return;
+          }
+
           this.viewer.addToScene( result );
+          
+          
           
         }
     });
