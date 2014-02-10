@@ -3,6 +3,7 @@
 <link rel="import" href="../shape-creator/shape-creator.html">
 
 <link rel="import" href="./sub-elements/grid-helper.html">
+<link rel="import" href="./sub-elements/drag-drop.html">
 
 <link rel="import" href="../../components/usco-command-manager/usco-command-manager.html">
 <script src="lib/commands.js"></script>
@@ -15,37 +16,57 @@
 <script src="lib/linked-clone-helper.js"></script>
 
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
-on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
-  <template>
+on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}">
+  <template >
     <style>
       :host{
         display:block;
-      }
-      history-editor{
-        display:block;
         position:absolute;
-        color:black;
-        z-index:2;
+        width:640px;
+        height:480px;
       }
       shape-creator{
         opacity : 0;
-        z-index : 3;
+        z-index : 4;
+      }
+      history-editor{
+         z-index:3;
+        display:block;
+        position:absolute;
+        color:black;
+        padding:5px;
+        height:100%;
+        width:200px
+      }
+      #commandsHistory{
+        height:100%;
+        overflow:auto;
+      }
+
+      drag-drop{
+        z-index:2;
+        display:block;
+        position:absolute;
+        width: 100%;
+        height:100%
       }
       three-js{
          /*display:inline-block;*/
-         width: 100%;
-         height:100%;
-         position: absolute;
          z-index : 1;
+         position: absolute;
+        width: 100%;
+         height:100%;
       }
 
     </style>
 
     <shape-creator id="contextMenu"> </shape-creator>
-
     <history-editor id="historyEditor"> </history-editor>
+    <!--<drag-drop id="dragDropLayer"> </drag-drop>-->
 
-    <three-js postProcess fullscreen="{{fullscreen}}" selectedObjects="{{selectedObjects}}" id="viewer" on-keyup="{{keyUp}}">
+    <three-js postProcess fullscreen="{{fullscreen}}" 
+    selectedObjects="{{selectedObjects}}" id="viewer" on-keydown="{{keyUp}}">
+      <!--<drag-drop id="dragDropLayer"> </drag-drop>-->
           <three-stats id="stats" show></three-stats>
           <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
           <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate="{{autorotate}}"> </three-js-orbitControls>
@@ -55,7 +76,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
             </three-js-object>
 
             <three-js-object helpersRoot>
-              <three-axis-helper show="{{axes}}"> </three-axis-helper>
+              <three-axis-helper show="{{showAxes}}"> </three-axis-helper>
               <grid-helper size="200" step="10" receiveShadow> </grid-helper>
 
               <three-js-light kind="ambient" color="0x161515" intensity="0.8"> </three-js-light>
@@ -75,6 +96,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
   <script>
     Polymer("visual-editor",{
     autorotate:false,
+    showAxes : false,
     selectedObjects:null,
     selectedObject:null,
     created:function()
@@ -92,7 +114,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
 
       function onControlsChange(event)
       {
-          if( this.selectedObjects[0].lClones || this.selectedObjects[0].parent.parent._original)
+          if( this.selectedObjects.length>0 && this.selectedObjects[0].lClones || this.selectedObjects[0].parent.parent._original)
           {
             if( this.selectedObjects[0].cloneLink) this.selectedObjects[0].remove( this.selectedObjects[0].cloneLink );
             drawLinkToLinkedClones(this.selectedObjects[0]);
@@ -111,15 +133,12 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
         switch(event.transform)
         {
           case "rotate":
-            //console.log("controls rotate",event.value);
             operation = new Rotation(event.value,this.selectedObjects[0]);
           break;
           case "translate":
-            //console.log("controls translate",event.value);
             operation = new Translation(event.value,this.selectedObjects[0]);
           break;
           case "scale":
-            //console.log("controls scale",event.value);
             operation = new Scaling(event.value,this.selectedObjects[0]);
           break;
         }
@@ -127,7 +146,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
         if( operation != null)
         {
           this.commandManager.addCommand( operation );
-          //hack, have not found a way to get a template instance (repeat) index, if there is one
           //operation.index = this.undos.length - 1;
         }
       }
@@ -561,16 +579,62 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
       var ctrlPressed = event.impl.ctrlKey;
       var shiftPressed= event.impl.shiftKey;
 
-      if(keyCode == 46) //delete
-		  {
-        while((selectedObject=this.selectedObjects.pop()) != null){
-          var parent = selectedObject.parent
-          parent.remove(selectedObject);
-          //TODO: need a more generic system to publish operation into the history
-          this.commandManager.addCommand( new Deletion(selectedObject, parent) );
-        }
-		  }
+      switch(keyCode)
+      {
+        case 68://d
+          console.log("pouet");
+          if(ctrlPressed){
+            this.fire("reqShapeOperation",{type:"clone"});
+            console.log("duplicating");
+            event.preventDefault();
+          }
+        break;
+        case 82://r
+          console.log("set to rotate");
+          this.transformControls.setMode("rotate");
+        break;
+        case 83:
+          if(ctrlPressed)
+          {
+            console.log("wanna save?");
+            event.preventDefault();
+          return false;
+          }
+          console.log("set to scale");
+          this.transformControls.setMode("scale");
+          this.transformControls.setSpace("local");
+          
+          break;
+        case 84:
+          console.log("set to translate");
+          this.transformControls.setMode("translate");
+        case 90:
+          if(ctrlPressed && shiftPressed) {
+            this.commandManager.redo();return;
+          } 
+          if(ctrlPressed)
+          {
+            console.log("undo");
+            // ctrl+z was typed.
+            this.commandManager.undo();return;
+          }
+          break; 
+        case 46:
+          while((selectedObject=this.selectedObjects.pop()) != null){
+            var parent = selectedObject.parent
+            parent.remove(selectedObject);
+            //TODO: need a more generic system to publish operation into the history
+            this.commandManager.addCommand( new Deletion(selectedObject, parent) );
+          }
+        break;
+      }
     },
+    handleDragOver:function(e) {
+    if (e.preventDefault) {
+      e.preventDefault();
+    }
+    console.log("drag over")
+  },
     //going down "one level" into an object hierarchy
     });
   </script>
