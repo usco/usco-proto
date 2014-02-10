@@ -82,24 +82,40 @@ Scaling.prototype.redo = function()
 }
 
 
-Subtract = function ( value, target)
+//FIXME: HAAACK !
+Subtraction = function ( target,originalGeometry)
 {
   Command.call( this );
-  this.type = "Subtract";
-  this.value = value;
+  this.type = "Subtraction";
   this.target = target;
-}
-Subtract.prototype = Object.create( Command.prototype );
-Subtract.prototype.constructor=Subtract;
+  this.original = originalGeometry;
 
-Subtract.prototype.undo = function()
+  this._undoBackup = null;
+}
+Subtraction.prototype = Object.create( Command.prototype );
+Subtraction.prototype.constructor=Subtraction;
+
+Subtraction.prototype.undo = function()
 {
+  var target = this.target;
+  this._undoBackup = target.innerMesh.geometry;
+  var pos = target.innerMesh.position.clone();
+  target.shape.remove( target.innerMesh);
+  target.innerMesh = new THREE.Mesh(this.original, target.material);
+  target.shape.add( target.innerMesh);
+  target.innerMesh.position=pos;
+  target.dispatchEvent( { type: 'shapeChanged' } );
 }
-
-Subtract.prototype.redo = function()
+Subtraction.prototype.redo = function()
 {
+  var target = this.target;
+  var pos = target.innerMesh.position.clone();
+  target.shape.remove( target.innerMesh);
+  target.innerMesh = new THREE.Mesh(this._undoBackup, target.material);
+  target.shape.add( target.innerMesh);
+  target.innerMesh.position=pos;
+  target.dispatchEvent( { type: 'shapeChanged' } );
 }
-
 
 
 Creation = function (target, parentObject)

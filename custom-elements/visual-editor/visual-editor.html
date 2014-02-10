@@ -11,6 +11,9 @@
 <script src="lib/THREECSG.js"></script>
 <script src="lib/meshWrapper.js"></script>
 
+<script src="lib/parent-child-links-helper.js"></script>
+<script src="lib/linked-clone-helper.js"></script>
+
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
 on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
   <template>
@@ -89,6 +92,11 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
 
       function onControlsChange(event)
       {
+          if( this.selectedObjects[0].lClones || this.selectedObjects[0].parent.parent._original)
+          {
+            if( this.selectedObjects[0].cloneLink) this.selectedObjects[0].remove( this.selectedObjects[0].cloneLink );
+            drawLinkToLinkedClones(this.selectedObjects[0]);
+          }
           this.viewer.controls.enabled = true;
           if(this.transformControls.axis != undefined)
           {
@@ -148,11 +156,12 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
         {
           //console.log("editor creating", type);
           var instance = null;
-          var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10, shading: THREE.FlatShading} );
+          var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
           switch(type)
           {
             case "Cube":
-              var instance = new THREE.Mesh( new THREE.CubeGeometry( 20, 20, 20 ), material );//new Part( new THREE.CubeGeometry( 20, 20, 20 ), material );
+              var instance =new Part( new THREE.CubeGeometry( 20, 20, 20 ), material );
+              //var instance = new THREE.Mesh( new THREE.CubeGeometry( 20, 20, 20 ), material );
             break;
             case "Sphere":
               var instance = new THREE.Mesh( new THREE.SphereGeometry( 10, 20, 20 ), material );
@@ -173,12 +182,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
             if(this.selectedObjects.length==1) //if we have a selection, add it to that selection
             {
              this.selectedObjects[0].add( instance ) ;
+             instance.position.x +=30;
             }
             else
             {
               this.viewer.addToScene(instance);
             }
             this.commandManager.addCommand( new Creation(instance, instance.parent) );
+            console.log("instance", instance, this.viewer.scene);
           }
         }
      });
@@ -213,11 +224,30 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
           var bspFirst = new ThreeBSP( selections[0] );
           var current = bspFirst;
 
+          var operands = [];
+
           for(var i=1; i<selections.length;i++)
           {
             var bsp = new ThreeBSP( selections[i] );
             var current = current.subtract( bsp );
+
+            operands.push( selections[i] );    
+            selections[i].material.transparent=true; 
+            selections[i].material.opacity =0.2;       
           }
+
+        //FIXME: visual effect to make csg effects more clear
+        setTimeout(function(){
+        for(var i=0;i<operands.length;i++)
+        {
+          operands[i].material.opacity = 1;
+        }
+
+        },10000);
+        
+        
+
+        
 
          var result = current.toMesh();
          result.geometry.computeVertexNormals()
@@ -227,6 +257,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
          result.geometry.computeBoundingSphere();
          //selections[0].geometry = result.geometry;
          return result;//selections[0];
+
+
         }
         function intersect(selections)
         {
@@ -266,18 +298,103 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
             break;
 
             //specials
+            case 'mirrorX':
+              var mesh = selections[0].parent.parent;
+              var geometry = mesh.innerMesh.geometry;
+              console.log("v",geometry);
+              //geom.applyMatrix(new THREE.Matrix4().makeScale(1, -1, 1));
+              //geom.computeFaceNormals();
+              //geom.computeVertexNormals();
+
+               var mS = (new THREE.Matrix4()).identity();
+                mS.elements[0] = -1;//flip x
+
+              var mat = new THREE.Matrix4().makeScale(-1, 1, 1);
+              geometry.applyMatrix(mat);
+              mesh.innerMesh.applyMatrix( mat );
+
+              geometry.verticesNeedUpdate = true;
+	            geometry.elementsNeedUpdate = true;
+	            geometry.normalsNeedUpdate = true;
+                //mesh.flipSided = true;
+
+                for(var i = 0; i<geometry.faces.length; i++) {
+                    geometry.faces[i].normal.x = -1*geometry.faces[i].normal.x;
+                   geometry.faces[i].normal.y = -1*geometry.faces[i].normal.y;
+                    geometry.faces[i].normal.z = -1*geometry.faces[i].normal.z;
+                }
+                geometry.computeVertexNormals();
+                geometry.computeFaceNormals();
+              mesh.innerMesh.material.side = THREE.DoubleSide;
+              
+            break;
             case 'clone':
               result = selections[0].clone();
             break;
 
             case 'linkedClone':
-              result = selections[0].clone();
-              result.geometry = selections[0].geometry;
+              selections[0].remove(selections[0].outline)
+              var original = selections[0].parent.parent;
+              result = original.clone();
+              selections[0].add(selections[0].outline);
+
+              //for visual helpers
+              original.innerMesh.lClones = [result];
+              result._original = original;
+
+              result.name = original.name+"linkedClone";
+              //console.log("result",result.shape,result.children[1]);
+              //result.remove(result.shape);
+              //result.remove(result.children[0]);
+              original.addEventListener('shapeChanged',function(event){
+                var source = event.target;
+                console.log("in",result,"originalShapeChanged",this);
+                var pos = result.innerMesh.position.clone();
+                result.shape.remove( result.innerMesh);
+                result.innerMesh = new THREE.Mesh(this.innerMesh.geometry.clone(), result.material);
+                result.shape.add( result.innerMesh);
+                result.innerMesh.position = pos;
+                
+                this.innerMesh.lClones = [result];
+                result._original = this;
+
+                var mS = (new THREE.Matrix4()).identity();
+                mS.elements[0] = -1;//flip x
+                //mS.elements[5] = -1;
+                //mS.elements[10] = -1;
+                //result.innerMesh.geometry.applyMatrix(mS);
+                //var mesh = result.innerMesh;
+
+                //mesh.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
+
+                //mesh.geometry.applyMatrix(mS);
+                //mesh.geometry.computeFaceNormals();
+//mesh.geometry.computeVertexNormals();
+    
+                /*
+                mesh.geometry.verticesNeedUpdate = true;
+	              mesh.geometry.elementsNeedUpdate = true;
+	              mesh.geometry.normalsNeedUpdate = true;
+                //mesh.flipSided = true;
+
+                for(var i = 0; i<mesh.geometry.faces.length; i++) {
+                    mesh.geometry.faces[i].normal.x = -1*mesh.geometry.faces[i].normal.x;
+                    mesh.geometry.faces[i].normal.y = -1*mesh.geometry.faces[i].normal.y;
+                    mesh.geometry.faces[i].normal.z = -1*mesh.geometry.faces[i].normal.z;
+                }*/
+                //mesh.geometry.computeVertexNormals();
+                //mesh.geometry.computeFaceNormals();
+  
+                //object.applyMatrix(mS);
+
+              });
+              //result.innerMesh = original.innerMesh;
+              //result.shape = original.shape;
             break;
             
           }
 
-          if(type != "clone" && type != "linkedClone")
+          if(type != "clone" && type != "linkedClone" && type!='mirrorX')
           {
             //FIXME: hack hack hack !
             /*var old = selections[0];
@@ -301,7 +418,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
             this.viewer.addToScene( old );*/
 
 
-            var old = selections[0];
+            /*var old = selections[0];
             this.viewer.removeFromScene( old );
             result.uuid = old.uuid;
             //res.children = old.children;
@@ -309,26 +426,42 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
             result.material = old.material;
             old = null;
             selections[0] = result;
-            this.viewer.addToScene( result );
+            this.viewer.addToScene( result );*/
 
-            /*var old = selections[0];
-            old.remove( old.innerMesh );
-            var nGeom = result.geometry.clone();
-            //old.innerMesh = new THREE.Mesh(nGeom,old.material);
-            old.geometry = nGeom;
-            //old.add( old.innerMesh ) ;*/
-          
+            //var old = selections[0];
+            //old.geometry.copy( result.geometry) ;//remove( old.innerMesh );
+            //var nGeom = result.geometry.clone();
+            var old = selections[0];
+            old = old.parent.parent;
+              var savedOldGeometry = old.innerMesh.geometry.clone();
+            console.log("old.shape",old.shape);
+            var pos = old.innerMesh.position.clone();
+            old.shape.remove( old.innerMesh);
+            old.innerMesh = new THREE.Mesh(result.geometry, old.material);
+            old.shape.add( old.innerMesh);
+            old.innerMesh.position=pos;
+            console.log("old.shape", old.shape);
+            old.dispatchEvent( { type: 'shapeChanged' } );
+            
+            this.commandManager.addCommand( new Subtraction(old, savedOldGeometry) );
+            
+            this.selectedObjects = [old.innerMesh];//make sure the new item is the selected one
+            //old.geometry.setWrap(result.geometry.clone());
+            //this.viewer.renderer.initWebGLObjects(this.viewer.scene);
 
             return;
           }
-
+          if(type == 'mirrorX')
+          {
+          }
+          else{
           this.viewer.addToScene( result );
+          this.commandManager.addCommand( new Creation(result, result.parent) );
+          this.selectedObjects = [result.innerMesh];//make sure the new item is the selected one
           
-          
-          
+          }
         }
     });
-
 
     },
     selectedObjectsChanged:function(oldSelections, newSelections)
@@ -347,6 +480,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
       for(var i=oldSelections.length-1;i>=0;i--)
       {
         var oldSelection = oldSelections[i];
+        if(!(oldSelection)) continue;
         //this.selectedObject.remove( oldSelection );
         //oldSelection.position.add( this.selectedObject.position );
         //this.viewer.addToScene( oldSelection );
@@ -380,7 +514,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
         this.selectedObject.position = avgPosition;
       }*/
    
-      if(newSelections.length>1)
+      if(newSelections.length>0)
       {
         this.contextMenu.mode = 'operations';
       }
@@ -391,6 +525,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" >
       for(var i= newSelections.length-1 ;i>=0;i--)
       {
         var newSelection = newSelections[i];
+        if(!(newSelection)) continue;
+        //helpers drawn on screen : TODO: cleanup
+        //drawParentChildLinks(newSelection);
+        //drawLinkToLinkedClones(newSelection);
 
         //if(this.selectedObject)this.selectedObject.add( newSelection );
 
