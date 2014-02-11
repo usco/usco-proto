@@ -9,17 +9,22 @@
 
 <!--TODO: shape creator is a misnommer , should it be "shape chooser" ?-->
 
-<polymer-element name="shape-creator" attributes="enabled">
+<polymer-element name="shape-creator" attributes="enabled" on-tap="{{headerTap}}">
   <template>
     <style>
-      polymer-ui-submenu-item #menu { display:inline-block;}
-      polymer-ui-menu-item { font-size:12px;}
+      polymer-ui-submenu-item #menu { display:inline-block;margin-top: 2px;}
+      polymer-ui-menu-item { font-size:12px; padding: 0px 5px;height: 20px;
+line-height: 20px;}
+      polymer-ui-submenu-item #menu {
+margin-left: 14px;
+      }
 
-      .shape-item{ font-size:12px;opacity: 0.5;padding-left: 10px; }
+
+      .shape-item{ font-size:12px;opacity: 0.5;padding-left: 0px; padding-top: 2px;}
       .shape-item:hover{opacity: 0.9;}
       .shape-item:active{background-color: rgba(0, 0, 0, 0.0470588);
 box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.117647) 0px 0px 0px 1px;}
-      .shape-item-base{display: inline-block; width:50px;padding: 10px; }
+      .shape-item-base{display: inline-block; width:80px;padding-left: 10px;padding-top: 2px; }
       .shape-item-base:hover{ box-shadow: rgba(0, 0, 0, 0.117647) 0px 1px 0px 0px, rgba(0, 0, 0, 0.0980392) 0px 0px 0px 1px;}
 
     :host{
@@ -34,7 +39,7 @@ box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.1176
     </style>
     <template if="{{enabled}}">
       <section style="" theme="polymer-ui-light-theme">
-        <polymer-ui-submenu-item icon="menu" label="Operations" active>
+        <polymer-ui-submenu-item icon="menu" label="Operations" active >
           <template if="{{mode == 'operations'}}">
             <template repeat="{{opName in operations}}">
               <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
@@ -75,10 +80,17 @@ box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.1176
     Polymer("shape-creator",{
     enabled:false,
     mode: "creation",
-    operations:["union", "subtract", "intersect","clone","linkedClone","mirrorX"],
-    shapes3d : ["Cube","Sphere", "Cylinder","Torus"],
+    operations:["union", "subtract", "intersect","clone","linkedClone","mirrorX","mirrorY","mirrorZ"],
+    shapes3d : ["Cube","Sphere", "Cylinder"],
     shapes2d : ["Rectangle","Circle","Text"],
     shapesGeneric: ["Connector","Part"],
+    headerTap:function(event)
+    {
+      //event.preventDefault();
+      event.stopPropagation();
+      console.log("here");
+      //return false;
+    },
     createDefault:function(event, detail, sender)
     {
       //console.log("createDefaultShape",event, detail, sender);
