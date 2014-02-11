@@ -12,8 +12,10 @@
 <script src="lib/THREECSG.js"></script>
 <script src="lib/meshWrapper.js"></script>
 
-<script src="lib/parent-child-links-helper.js"></script>
-<script src="lib/linked-clone-helper.js"></script>
+<script src="lib/helpers/parent-child-links-helper.js"></script>
+<script src="lib/helpers/linked-clone-helper.js"></script>
+
+<script src="lib/connectors/connector.js"></script>
 
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
 on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}">
@@ -164,7 +166,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       });
       this.contextMenu = sC;
 
-      this.addEventListener('click',function(event){
+      this.viewer.addEventListener('click',function(event){
         sC.style.opacity = 0;
         sC.enabled=false;
       });
@@ -190,6 +192,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             case "Part":
               //var instance = new THREE.Mesh();
             break;
+            case "Connector":
+              var instance = new Connector();
+            break;
+    
           }
           
           if(instance!=null){

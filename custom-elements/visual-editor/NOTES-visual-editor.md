@@ -27,6 +27,7 @@ going through some sort of wrapper around the geometry (problematic, as far as m
 no dark areas) way of drawing meshes : see here for example : http://www.clicktorelease.com/code/spherical-normal-mapping/#
 
 - more generic drag & drop support : should re-fire event so outer elements/pages can hook up to it( file upload ?)
+- find a way to determine surface normal under mouse, to "glue" objects, with correct up vector , at the specified point/surface
 
 How to deal with:
 - issue with lack of ability to swap out geometry with another one in three.js meshes:
