@@ -28,6 +28,10 @@ no dark areas) way of drawing meshes : see here for example : http://www.clickto
 
 - more generic drag & drop support : should re-fire event so outer elements/pages can hook up to it( file upload ?)
 - find a way to determine surface normal under mouse, to "glue" objects, with correct up vector , at the specified point/surface
+- find a way to "snap" to elements (notably, connectors):
+   * that might be a bit harder than expected: in order to do this, we need to search for "nearby" (close to mouse's 3d position)
+   elements (connectors), which means storing the available connectors in a given scope (or perhaps use THREE.octree)
+
 
 How to deal with:
 - issue with lack of ability to swap out geometry with another one in three.js meshes:

@@ -17,8 +17,11 @@
 
 <script src="lib/connectors/connector.js"></script>
 
+<!--<script src="lib/materials/materialTest.js"></script>-->
+
+
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
-on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}">
+on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}" on-pointermove="{{ptrMove}}">
   <template >
     <style>
       :host{
@@ -81,16 +84,18 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               <three-axis-helper show="{{showAxes}}"> </three-axis-helper>
               <grid-helper size="200" step="10" receiveShadow> </grid-helper>
 
+            <three-js-light kind="dir" color="0xffEEEE" intensity="0.2" shadow y=50 z=300 > </three-js-light> 
+             
               <three-js-light kind="ambient" color="0x161515" intensity="0.8"> </three-js-light>
-              <three-js-light kind="hemi" color="0xffEEEE" secColor="0xffEEEE" intensity="0.2" y="1200" z="5000"> </three-js-light>
-              <three-js-light kind="dir" color="0xffEEEE" intensity="0.2" shadow y=50 z=300 > </three-js-light> 
+               <three-js-light kind="hemi" color="0xffffff" secColor="0xffffff" intensity="0.5" y="1200" z="5000"> </three-js-light>
+              <!--
               <three-js-light kind="dir" color="0xfcfc7e" intensity="0.5" x=100 y=150 z=200> </three-js-light>
-              <three-js-light kind="dir" color="0xfcfc7e" intensity="0.5" x=100 y=-150 z=200> </three-js-light>
+              <three-js-light kind="dir" color="0xfcfc7e" intensity="0.5" x=100 y=-150 z=200> </three-js-light>-->
             </three-js-object>
           </three-js-scene>
 
-          <!--TODO: if no effects are added, effect composer/post process should deactivated 
-          <three-effect-composer>
+          <!--TODO: if no effects are added, effect composer/post process should deactivated -->
+          <!--<three-effect-composer>
             <vignette-fx darkness="5" offset="0.4"> </vignette-fx>
           </three-effect-composer>-->
      </three-js>
@@ -105,6 +110,55 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     {
       this.selectedObjects = [];
     },
+    ptrMove:function(event)
+    {
+      //console.log("blm");
+      var event = event.impl || event;
+        event = normalizeEvent(event);
+        var x = event.offsetX;
+        var y = event.offsetY;
+
+      this.projector = new THREE.Projector();
+    	var	v = new THREE.Vector3((x / this.viewer.width) * 2 - 1, -(y / this.viewer.height) * 2 + 1, 1);
+      this.projector.unprojectVector(v, this.viewer.camera);
+		  var raycaster = new THREE.Raycaster(this.viewer.camera.position, v.sub(this.viewer.camera.position).normalize());
+		  var intersects = raycaster.intersectObjects(this.viewer.hierarchyRoot.children, true);
+      if (intersects.length > 0) {
+        var inter = intersects[0];
+        //console.log("intersects", inter);
+        if(!(inter.face)) return;
+        var face = inter.face;
+        var normal = inter.face.normal;
+        var object = inter.object;
+
+        var normalMatrix = new THREE.Matrix3().getNormalMatrix( object.matrixWorld );
+        var worldNormal = normal.clone().applyMatrix3( normalMatrix ).normalize().multiplyScalar(50);
+
+        //console.log("v1", worldNormal);
+        //v1.add( inter.point);
+        var geometry = new THREE.Geometry();
+        //var bli = objectTest.position.clone();
+        //geometry.vertices.push( objectTest.position.clone() );
+        //geometry.vertices.push( inter.point.clone().sub( bli ).multiplyScalar( 100 ) );
+
+        var start = inter.point.clone();
+        var end   = inter.point.clone().add( worldNormal );
+        console.log("start", start, "end", end, worldNormal, object);
+
+        delete this.fakeCursor.__webglInit;
+        geometry.vertices.push( start );
+        geometry.vertices.push( end );
+        this.fakeCursor.geometry.dispose();
+        this.fakeCursor.geometry = geometry;
+
+        /*var tmp = new THREE.Mesh(new THREE.CubeGeometry(3,3,3), new THREE.MeshBasicMaterial({color:0xFF0000}));
+        tmp.position = inter.point.clone();
+        this.viewer.addToScene( tmp );*/
+        
+
+      }
+      
+    },
     enteredView:function()
     {
       this.viewer = this.$.viewer;
@@ -113,6 +167,13 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.transformControls = new THREE.TransformControls(this.viewer.camera, this.$.viewer);
       this.transformControls.setMode( "translate" );
       this.viewer.updatables.push( this.transformControls.update ) ;
+
+      this.fakeCursor = new Connector();//new THREE.Mesh(new THREE.CubeGeometry(5,5,5), new THREE.MeshBasicMaterial({color:0xFF0000}));
+      
+      var geometry = new THREE.Geometry();
+      this.fakeCursor = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 3 } ), THREE.Lines );
+
+      this.viewer.addToScene( this.fakeCursor);
 
       function onControlsChange(event)
       {
@@ -174,34 +235,51 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         var type= event.detail.type;
         if(type)
         {
-          //console.log("editor creating", type);
           var instance = null;
-          var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
+          var material =  new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ); //createSuperDuperMaterial();
+
           switch(type)
           {
             case "Cube":
-              var instance =new Part( new THREE.CubeGeometry( 20, 20, 20 ), material );
-              //var instance = new THREE.Mesh( new THREE.CubeGeometry( 20, 20, 20 ), material );
+              var geometry = new THREE.CubeGeometry( 20, 20, 20, 10, 10 );
+              instance = new THREE.Mesh(geometry, material);
             break;
             case "Sphere":
-              var instance = new THREE.Mesh( new THREE.SphereGeometry( 10, 20, 20 ), material );
+              var geometry = new THREE.SphereGeometry( 10, 20, 20 );
+              instance = new THREE.Mesh( geometry, material );
             break;
             case "Cylinder":
-              var instance = new THREE.Mesh( new THREE.CylinderGeometry( 10, 20, 20 ), material );
+              var geometry = new THREE.CylinderGeometry( 10, 20, 20 ,10,10);
+              instance = new THREE.Mesh( geometry, material );
+            break;
+            case "Torus":
+              var geometry = new THREE.TorusKnotGeometry( 20, 6, 200, 100, 1, 3 );//new THREE.TorusGeometry( 10 );
+              instance = new THREE.Mesh( geometry, material );
             break;
             case "Part":
               //var instance = new THREE.Mesh();
             break;
             case "Connector":
-              var instance = new Connector();
+              instance = new Connector();
             break;
     
           }
           
           if(instance!=null){
             instance.name = type;
-            instance.castShadows=true;
-            instance.recieveShadows = true;
+            //instance.castShadows=true;
+            //instance.recieveShadows = true;
+            //material.uniforms.repeat.value.set( 8, 1 );
+            geometry = instance.geometry;
+            geometry.verticesNeedUpdate = true;
+            geometry.normalsNeedUpdate = true;
+            geometry.uvsNeedUpdate = true;
+            geometry.computeCentroids();
+            geometry.computeFaceNormals();
+            geometry.computeVertexNormals();
+            geometry.computeMorphNormals();
+            geometry.computeTangents();
+
 
             if(this.selectedObjects.length==1) //if we have a selection, add it to that selection
             {
@@ -268,10 +346,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         }
 
         },10000);
-        
-        
-
-        
 
          var result = current.toMesh();
          result.geometry.computeVertexNormals()
@@ -281,8 +355,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
          result.geometry.computeBoundingSphere();
          //selections[0].geometry = result.geometry;
          return result;//selections[0];
-
-
         }
         function intersect(selections)
         {
