@@ -5,6 +5,10 @@ Command = function ( type, value, target)
   this.value = value;
   this.target = target;
 }
+Command.prototype.clone = function()
+{
+  //var cloneResult = new this.prototype();
+}
 
 Translation = function ( value, target)
 {
@@ -15,7 +19,10 @@ Translation = function ( value, target)
 }
 Translation.prototype = Object.create( Command.prototype );
 Translation.prototype.constructor=Translation;
-
+Translation.prototype.clone = function()
+{
+  return new Translation( this.value.clone(), this.target);
+}
 /*Not sure about this
 Translation.prototype.execute = function(value)
 {
@@ -41,6 +48,10 @@ Rotation = function ( value, target)
 }
 Rotation.prototype = Object.create( Command.prototype );
 Rotation.prototype.constructor=Rotation;
+Rotation.prototype.clone = function()
+{
+  return new Rotation( this.value.clone(), this.target);
+}
 
 Rotation.prototype.undo = function()
 {
@@ -127,6 +138,10 @@ Creation = function (target, parentObject)
 }
 Creation.prototype = Object.create( Command.prototype );
 Creation.prototype.constructor=Creation;
+Creation.prototype.clone = function()
+{
+  return new Creation( this.target, this.parentObject);
+}
 
 Creation.prototype.undo = function()
 {
