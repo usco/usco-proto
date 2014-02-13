@@ -13,9 +13,8 @@
       ready: function() {
         this.object = new THREE.CustomGridHelper(this.size, this.step, new THREE.Vector3(0,0,1), this.color, this.opacity, this.addText, this.textColor, this.textLocation);
         this.super();
-
         this.object.receiveShadow = true;
-                console.log("blah", this.object.receiveShadow);
+        //console.log("blah", this.object.receiveShadow);
       },
       enteredView:function()
       {

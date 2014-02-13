@@ -825,7 +825,6 @@ THREE.TransformControls = function ( camera, domElement ) {
 	this.update = function () {
 
 		if ( scope.object === undefined ) return;
-
 		scope.object.updateMatrixWorld();
 		worldPosition.setFromMatrixPosition( scope.object.matrixWorld );
 		worldRotation.setFromRotationMatrix( tempMatrix.extractRotation( scope.object.matrixWorld ) );

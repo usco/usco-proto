@@ -108,7 +108,6 @@ THREE.CustomGridHelper.prototype._drawGrid = function() {
       //= vec3(0.0,0.0,0.0) 
       var uniforms = THREE.ShaderLib['basic'].uniforms;
       //if( ! ("shadowColor" in uniforms) ) {uniforms["shadowColor"] = {type:'c',value:new THREE.Color(0,1,1) } }
-      console.log("uniforms", uniforms);
   
       planeMaterial = new THREE.ShaderMaterial({
         uniforms: uniforms,
