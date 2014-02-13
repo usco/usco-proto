@@ -1,4 +1,6 @@
 <link rel="import" href="../../components/polymer/polymer.html">
+<link rel="import" href="../../components/polymer-localstorage/polymer-localstorage.html">
+
 <link rel="import" href="../../components/usco-polymer-three-js/three-js.html">
 <link rel="import" href="../shape-creator/shape-creator.html">
 
@@ -6,11 +8,11 @@
 <link rel="import" href="./sub-elements/drag-drop.html">
 
 <link rel="import" href="../../components/usco-command-manager/usco-command-manager.html">
-<script src="lib/commands.js"></script>
+<script src="lib/operations/commands.js"></script>
 
 <script src="lib/transformControls.js"></script>
 <script src="lib/THREECSG.js"></script>
-<script src="lib/meshWrapper.js"></script>
+<script src="lib/shapes/meshWrapper.js"></script>
 
 <script src="lib/helpers/parent-child-links-helper.js"></script>
 <script src="lib/helpers/linked-clone-helper.js"></script>
@@ -18,7 +20,8 @@
 <script src="lib/connectors/connector.js"></script>
 
 <!--<script src="lib/materials/materialTest.js"></script>-->
-
+<script src="lib/code-generation/code-generators.js"></script>
+<script src="lib/code-generation/code-generation-ui.js"></script>
 
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
 on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}" on-pointermove="{{ptrMove}}">
@@ -30,6 +33,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         width:640px;
         height:480px;
       }
+
+      #codeGen{
+        position: absolute;
+        right: 10px;
+        top: 20px;
+        z-index: 3;
+      }
+
       shape-creator{
         opacity : 0;
         z-index : 4;
@@ -64,13 +75,21 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       }
 
     </style>
+    <!--AutoSaving settings to localstorage-->
+    <polymer-localstorage name="usco-proto-settings-showGrid"   value="{{showGrid}}"></polymer-localstorage>
+    <polymer-localstorage name="usco-proto-settings-showAxes"   value="{{showAxes}}"></polymer-localstorage>
+    <polymer-localstorage name="usco-proto-settings-autoRotate" value="{{autoRotate}}"></polymer-localstorage>
 
+    <!--various helpers-->
+    <div id="codeGen" class="codeGen" style="position:absolute; right:10px;top:50px;z-index:3">
+      <button on-click="{{generateCodeFromHistory}}"> Generate code from history </button>
+    </div>
     <shape-creator id="contextMenu"> </shape-creator>
     <history-editor id="historyEditor"> </history-editor>
     <!--<drag-drop id="dragDropLayer"> </drag-drop>-->
 
     <three-js postProcess fullscreen="{{fullscreen}}" 
-    selectedObjects="{{selectedObjects}}" id="viewer" on-keydown="{{keyUp}}">
+    selectedObjects="{{selectedObjects}}" id="viewer" on-keydown="{{keyUp}}" on-sceneready="{{viewerSceneReady}}">
       <!--<drag-drop id="dragDropLayer"> </drag-drop>-->
           <three-stats id="stats" show></three-stats>
           <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
@@ -82,11 +101,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
             <three-js-object helpersRoot>
               <three-axis-helper show="{{showAxes}}"> </three-axis-helper>
-              <grid-helper size="200" step="10" receiveShadow> </grid-helper>
+              <grid-helper       show="{{showGrid}}"size="200" step="10" receiveShadow> </grid-helper>
 
-            <three-js-light kind="dir" color="0xffEEEE" intensity="0.2" shadow y=50 z=300 > </three-js-light> 
-             
-              <three-js-light kind="ambient" color="0x161515" intensity="0.8"> </three-js-light>
+              <three-js-light kind="dir" color="0xffEEEE" intensity="0.2" castShadow y=50 z=300 > </three-js-light> 
+               <three-js-light kind="ambient" color="0x161515" intensity="0.8"> </three-js-light>
                <three-js-light kind="hemi" color="0xffffff" secColor="0xffffff" intensity="0.5" y="1200" z="5000"> </three-js-light>
               <!--
               <three-js-light kind="dir" color="0xfcfc7e" intensity="0.5" x=100 y=150 z=200> </three-js-light>
@@ -102,17 +120,35 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
   </template>
   <script>
     Polymer("visual-editor",{
+    applyAuthorStyles: true,
+
     autorotate:false,
     showAxes : false,
     selectedObjects:null,
     selectedObject:null,
+    ready:function()
+    {
+      //console.log("i am ready");
+    },
+    viewerSceneReady:function(event)
+    {
+      console.log("a scene is ready",event);
+      this.async(this.setupElements);
+    },
     created:function()
     {
       this.selectedObjects = [];
     },
+    //generation of code based on history
+    generateCodeFromHistory:function()
+    {
+       console.log("generating code from history");
+        updateSelectionCode(this.selectedObject,this.commandManager.undos);
+    },
+    //pointer movement and tracking of object normals
     ptrMove:function(event)
     {
-      //console.log("blm");
+      return;
       var event = event.impl || event;
         event = normalizeEvent(event);
         var x = event.offsetX;
@@ -122,6 +158,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     	var	v = new THREE.Vector3((x / this.viewer.width) * 2 - 1, -(y / this.viewer.height) * 2 + 1, 1);
       this.projector.unprojectVector(v, this.viewer.camera);
 		  var raycaster = new THREE.Raycaster(this.viewer.camera.position, v.sub(this.viewer.camera.position).normalize());
+     
 		  var intersects = raycaster.intersectObjects(this.viewer.hierarchyRoot.children, true);
       if (intersects.length > 0) {
         var inter = intersects[0];
@@ -154,8 +191,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         /*var tmp = new THREE.Mesh(new THREE.CubeGeometry(3,3,3), new THREE.MeshBasicMaterial({color:0xFF0000}));
         tmp.position = inter.point.clone();
         this.viewer.addToScene( tmp );*/
-        
-
       }
       
     },
@@ -163,17 +198,22 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     {
       this.viewer = this.$.viewer;
       this.commandManager = this.$.historyEditor;
-  
+    },
+    setupElements : function()
+    {
+      console.log("viewer cam", this.viewer.camera);
       this.transformControls = new THREE.TransformControls(this.viewer.camera, this.$.viewer);
       this.transformControls.setMode( "translate" );
+      this.transformControls.setSnap(10);
       this.viewer.updatables.push( this.transformControls.update ) ;
 
-      this.fakeCursor = new Connector();//new THREE.Mesh(new THREE.CubeGeometry(5,5,5), new THREE.MeshBasicMaterial({color:0xFF0000}));
       
-      var geometry = new THREE.Geometry();
-      this.fakeCursor = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 3 } ), THREE.Lines );
+      /*this.async(function(){
+        var geometry = new THREE.Geometry();
+        this.fakeCursor = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 3 } ), THREE.Lines );
+        this.viewer.addToScene( this.fakeCursor);
 
-      this.viewer.addToScene( this.fakeCursor);
+      },null, 5000);*/
 
       function onControlsChange(event)
       {
@@ -568,6 +608,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       if(!(oldSelections)) oldSelections = [];
       if(!(newSelections)) newSelections = [];
       if(oldSelections.length == 0 && newSelections.length == 0) { return }
+
+      this.selectedObject = this.selectedObjects[0];
 
       this.transformControls.detach();
       this.viewer.removeFromScene(this.transformControls);
