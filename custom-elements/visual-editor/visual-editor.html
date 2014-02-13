@@ -23,6 +23,8 @@
 <script src="lib/code-generation/code-generators.js"></script>
 <script src="lib/code-generation/code-generation-ui.js"></script>
 
+<link rel="import" href="../../components/code-mirror/code-mirror.html">
+
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
 on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}" on-pointermove="{{ptrMove}}">
   <template >
@@ -74,6 +76,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
          height:100%;
       }
 
+      code-mirror{position:absolute;top:80px;right:20px;width:400px;height:200px;z-index:9999;}
+
     </style>
     <!--AutoSaving settings to localstorage-->
     <polymer-localstorage name="usco-proto-settings-showGrid"   value="{{showGrid}}"></polymer-localstorage>
@@ -81,12 +85,15 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     <polymer-localstorage name="usco-proto-settings-autoRotate" value="{{autoRotate}}"></polymer-localstorage>
 
     <!--various helpers-->
-    <div id="codeGen" class="codeGen" style="position:absolute; right:10px;top:50px;z-index:3">
+    <div id="codeGen" class="codeGen" style="position:absolute; right:10px;top:30px;z-index:3">
       <button on-click="{{generateCodeFromHistory}}"> Generate code from history </button>
     </div>
     <shape-creator id="contextMenu"> </shape-creator>
     <history-editor id="historyEditor"> </history-editor>
     <!--<drag-drop id="dragDropLayer"> </drag-drop>-->
+
+    <code-mirror id="selectEdit" theme="monokai" mode="javascript" value="{{source}}" >
+    </code-mirror>
 
     <three-js postProcess fullscreen="{{fullscreen}}" 
     selectedObjects="{{selectedObjects}}" id="viewer" on-keydown="{{keyUp}}" on-sceneready="{{viewerSceneReady}}">
@@ -126,6 +133,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     showAxes : false,
     selectedObjects:null,
     selectedObject:null,
+
+    source:"//testing\n",
     ready:function()
     {
       //console.log("i am ready");
@@ -143,7 +152,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     generateCodeFromHistory:function()
     {
        console.log("generating code from history");
-        updateSelectionCode(this.selectedObject,this.commandManager.undos);
+       this.source = updateSelectionCode(this.selectedObject,this.commandManager.undos);
+       console.log("res source", this.source);
     },
     //pointer movement and tracking of object normals
     ptrMove:function(event)
@@ -204,6 +214,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       console.log("viewer cam", this.viewer.camera);
       this.transformControls = new THREE.TransformControls(this.viewer.camera, this.$.viewer);
       this.transformControls.setMode( "translate" );
+      this.transformControls.setSpace("local");
       this.transformControls.setSnap(10);
       this.viewer.updatables.push( this.transformControls.update ) ;
 
@@ -708,6 +719,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             console.log("duplicating");
             event.preventDefault();
           }
+        break;
+        case 71://g
+          if(this.transformControls.space == "world") this.transformControls.setSpace("local");
+          if(this.transformControls.space == "local") this.transformControls.setSpace("world");
         break;
         case 82://r
           console.log("set to rotate");

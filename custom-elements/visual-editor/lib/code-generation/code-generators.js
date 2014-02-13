@@ -107,6 +107,7 @@ function generateCodeFromOperations(operations)
       code+=generateCodeFromOperation(operation);
   }
   console.log("code:\n", code);
+  return code;
 }
 
 if(typeof module === "Object")
