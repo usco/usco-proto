@@ -71,7 +71,7 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
   var type = operation.type;
   var value = operation.value;
 
-  var targetName = target.name.toLowerCase();//    this.";//target.name;//@
+  var targetName = target.name.toLowerCase()+new String(target.id);//    this.";//target.name;//@
   var code = "";
   var lineCap = ";\n";
   //TODO: if translate, rotate etc values are integers, do not display as float, or give the option to do so
@@ -79,7 +79,10 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
   {
     case "creation":
       var type = target.constructor.name || "foo";
-      code += "var "+targetName+" = new "+ type +"()"+"\n";
+      code += "var "+targetName+" = new "+ type +"()"+lineCap+"\n";
+    break;
+    case "deletion":
+      //TODO: how to deal with this ?
     break;
     case "rotation":
       if (!("code" in target)){ target.code = ""};
@@ -92,6 +95,38 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
     case "scaling":
       if (!("code" in target)){ target.code = ""};
       code += targetName+".scale("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+")"+lineCap;
+    break;
+    
+    case "union":
+      var ops =[];
+      for(var i=0;i<operation.operands.length;i++)
+      {
+        var op = operation.operands[i];
+        var opName = op.name.toLowerCase()+new String(op.id);
+        ops.push( opName );
+      }
+      code += targetName+".union(["+ops.join(",")+"])"+lineCap;
+    break;
+    case "subtraction":
+      //console.log("operands for subtraction", operation.operands);
+      var ops =[];
+      for(var i=0;i<operation.operands.length;i++)
+      {
+        var op = operation.operands[i];
+        var opName = op.name.toLowerCase()+new String(op.id);
+        ops.push( opName );
+      }
+      code += targetName+".subtract(["+ops.join(",")+"])"+lineCap;
+    break;
+    case "intersection":
+      var ops =[];
+      for(var i=0;i<operation.operands.length;i++)
+      {
+        var op = operation.operands[i];
+        var opName = op.name.toLowerCase()+new String(op.id);
+        ops.push( opName );
+      }
+      code += targetName+".intersect(["+ops.join(",")+"])"+lineCap;
     break;
   }
   return code;

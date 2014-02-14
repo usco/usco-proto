@@ -9,10 +9,20 @@
 
 <link rel="import" href="../../components/usco-command-manager/usco-command-manager.html">
 <script src="lib/operations/commands.js"></script>
+<script src="lib/operations/creation.js"></script>
+<script src="lib/operations/deletion.js"></script>
+<script src="lib/operations/translation.js"></script>
+<script src="lib/operations/rotation.js"></script>
+<script src="lib/operations/scaling.js"></script>
+<script src="lib/operations/union.js"></script>
+<script src="lib/operations/subtraction.js"></script>
+<script src="lib/operations/intersection.js"></script>
+
 
 <script src="lib/transformControls.js"></script>
 <script src="lib/THREECSG.js"></script>
 <script src="lib/shapes/meshWrapper.js"></script>
+<script src="lib/shapes/shapes.js"></script>
 
 <script src="lib/helpers/parent-child-links-helper.js"></script>
 <script src="lib/helpers/linked-clone-helper.js"></script>
@@ -292,12 +302,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           switch(type)
           {
             case "Cube":
-              var geometry = new THREE.CubeGeometry( 20, 20, 20, 10, 10 );
-              instance = new THREE.Mesh(geometry, material);
+              //var geometry = new THREE.CubeGeometry( 20, 20, 20, 10, 10 );
+              //instance = new THREE.Mesh(geometry, material);
+              instance = new Cube();
             break;
             case "Sphere":
-              var geometry = new THREE.SphereGeometry( 10, 20, 20 );
-              instance = new THREE.Mesh( geometry, material );
+              //var geometry = new THREE.SphereGeometry( 10, 20, 20 );
+              //instance = new THREE.Mesh( geometry, material );
+              instance = new Sphere();
             break;
             case "Cylinder":
               var geometry = new THREE.CylinderGeometry( 10, 20, 20 ,10,10);
@@ -435,13 +447,31 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           switch(type)
           {
             case 'union':
+                console.log("unioning");
+              var target = selections[0];
+              var oldGeometry = target.geometry.clone();
+
               result = union( selections );
+
+              this.commandManager.addCommand( new Union(target, oldGeometry, selections.slice(1)) );
             break;
             case 'subtract':
+                console.log("subtracting");
+              var target = selections[0];
+              var oldGeometry = target.geometry.clone();
+
               result = subtract(selections);
+
+              this.commandManager.addCommand( new Subtraction(target, oldGeometry, selections.slice(1) ) );
             break;
             case 'intersect':
+              console.log("intersecting");
+              var target = selections[0];
+              var oldGeometry = target.geometry.clone();
+
               result = intersect(selections);
+
+              this.commandManager.addCommand( new Intersection(target, oldGeometry, selections.slice(1)) );
             break;
 
             //specials
@@ -494,7 +524,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               //result.remove(result.shape);
               //result.remove(result.children[0]);
               original.addEventListener('shapeChanged',function(event){
-                var source = event.target;
+                /*var source = event.target;
                 console.log("in",result,"originalShapeChanged",this);
                 var pos = result.innerMesh.position.clone();
                 result.shape.remove( result.innerMesh);
@@ -506,7 +536,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
                 result._original = this;
 
                 var mS = (new THREE.Matrix4()).identity();
-                mS.elements[0] = -1;//flip x
+                mS.elements[0] = -1;*/
+//flip x
                 //mS.elements[5] = -1;
                 //mS.elements[10] = -1;
                 //result.innerMesh.geometry.applyMatrix(mS);
@@ -543,6 +574,13 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
           if(type != "clone" && type != "linkedClone" && type!='mirrorX')
           {
+            var old = selections[0];
+            delete old.__webglInit;
+            old.geometry.dispose();
+            old.geometry = result.geometry;
+
+            
+    
             //FIXME: hack hack hack !
             /*var old = selections[0];
             this.viewer.removeFromScene( old );
@@ -578,9 +616,11 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             //var old = selections[0];
             //old.geometry.copy( result.geometry) ;//remove( old.innerMesh );
             //var nGeom = result.geometry.clone();
+            
+            /* implementation with linked cloning attmpt
             var old = selections[0];
             old = old.parent.parent;
-              var savedOldGeometry = old.innerMesh.geometry.clone();
+            var savedOldGeometry = old.innerMesh.geometry.clone();
             console.log("old.shape",old.shape);
             var pos = old.innerMesh.position.clone();
             old.shape.remove( old.innerMesh);
@@ -590,9 +630,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             console.log("old.shape", old.shape);
             old.dispatchEvent( { type: 'shapeChanged' } );
             
-            this.commandManager.addCommand( new Subtraction(old, savedOldGeometry) );
-            
-            this.selectedObjects = [old.innerMesh];//make sure the new item is the selected one
+            this.selectedObjects = [old.innerMesh];//make sure the new item is the selected one*/
             //old.geometry.setWrap(result.geometry.clone());
             //this.viewer.renderer.initWebGLObjects(this.viewer.scene);
 
