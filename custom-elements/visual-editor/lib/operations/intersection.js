@@ -1,5 +1,5 @@
 //FIXME: HAAACK !
-Intersection = function ( target,originalGeometry, operands)
+Intersection = function ( target, originalGeometry, operands)
 {
   Command.call( this );
   this.type = "intersection";
@@ -20,21 +20,17 @@ Intersection.prototype.clone = function()
 Intersection.prototype.undo = function()
 {
   var target = this.target;
-  this._undoBackup = target.innerMesh.geometry;
-  var pos = target.innerMesh.position.clone();
-  target.shape.remove( target.innerMesh);
-  target.innerMesh = new THREE.Mesh(this.original, target.material);
-  target.shape.add( target.innerMesh);
-  target.innerMesh.position=pos;
+  this._undoBackup = target.geometry;
+  var pos = target.position.clone();
+
+  delete target.__webglInit;
+  target.geometry = this.original;
   target.dispatchEvent( { type: 'shapeChanged' } );
 }
 Intersection.prototype.redo = function()
 {
   var target = this.target;
-  var pos = target.innerMesh.position.clone();
-  target.shape.remove( target.innerMesh);
-  target.innerMesh = new THREE.Mesh(this._undoBackup, target.material);
-  target.shape.add( target.innerMesh);
-  target.innerMesh.position=pos;
+  delete target.__webglInit;
+  target.geometry = this._undoBackup;
   target.dispatchEvent( { type: 'shapeChanged' } );
 }

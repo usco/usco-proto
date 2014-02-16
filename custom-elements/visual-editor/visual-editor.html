@@ -182,7 +182,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 		  var intersects = raycaster.intersectObjects(this.viewer.hierarchyRoot.children, true);
       if (intersects.length > 0) {
         var inter = intersects[0];
-        //console.log("intersects", inter);
         if(!(inter.face)) return;
         var face = inter.face;
         var normal = inter.face.normal;
@@ -191,16 +190,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         var normalMatrix = new THREE.Matrix3().getNormalMatrix( object.matrixWorld );
         var worldNormal = normal.clone().applyMatrix3( normalMatrix ).normalize().multiplyScalar(50);
 
-        //console.log("v1", worldNormal);
-        //v1.add( inter.point);
         var geometry = new THREE.Geometry();
-        //var bli = objectTest.position.clone();
-        //geometry.vertices.push( objectTest.position.clone() );
-        //geometry.vertices.push( inter.point.clone().sub( bli ).multiplyScalar( 100 ) );
-
         var start = inter.point.clone();
         var end   = inter.point.clone().add( worldNormal );
-        console.log("start", start, "end", end, worldNormal, object);
 
         delete this.fakeCursor.__webglInit;
         geometry.vertices.push( start );
@@ -228,12 +220,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.transformControls.setSnap(10);
       this.viewer.updatables.push( this.transformControls.update ) ;
 
-      /*this.async(function(){
-        var geometry = new THREE.Geometry();
-        this.fakeCursor = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 3 } ), THREE.Lines );
-        this.viewer.addToScene( this.fakeCursor);
+      var geometry = new THREE.Geometry();
+      this.fakeCursor = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 3 } ), THREE.Lines );
+      this.viewer.addToScene( this.fakeCursor);
 
-      },null, 5000);*/
 
       function onControlsChange(event)
       {
@@ -304,27 +294,19 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         if(type)
         {
           var instance = null;
-          var material =  new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ); //createSuperDuperMaterial();
-
           switch(type)
           {
             case "Cube":
-              //var geometry = new THREE.CubeGeometry( 20, 20, 20, 10, 10 );
-              //instance = new THREE.Mesh(geometry, material);
               instance = new Cube();
             break;
             case "Sphere":
-              //var geometry = new THREE.SphereGeometry( 10, 20, 20 );
-              //instance = new THREE.Mesh( geometry, material );
               instance = new Sphere();
             break;
             case "Cylinder":
-              var geometry = new THREE.CylinderGeometry( 10, 20, 20 ,10,10);
-              instance = new THREE.Mesh( geometry, material );
+              instance = new Cylinder();
             break;
             case "Torus":
-              var geometry = new THREE.TorusKnotGeometry( 20, 6, 200, 100, 1, 3 );//new THREE.TorusGeometry( 10 );
-              instance = new THREE.Mesh( geometry, material );
+              instance = new Torus();
             break;
             case "Part":
               //var instance = new THREE.Mesh();
@@ -337,9 +319,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           
           if(instance!=null){
             instance.name = type;
-            //instance.castShadows=true;
-            //instance.recieveShadows = true;
-            //material.uniforms.repeat.value.set( 8, 1 );
+            instance.castShadows=true;
+            instance.recieveShadows = true;
+
             geometry = instance.geometry;
             geometry.verticesNeedUpdate = true;
             geometry.normalsNeedUpdate = true;
@@ -359,6 +341,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             else
             {
               this.viewer.addToScene(instance);
+              this.selectedObjects=[instance];
             }
             this.commandManager.addCommand( new Creation(instance, instance.parent) );
             console.log("instance", instance, this.viewer.scene);
@@ -372,87 +355,40 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
         function union(selections)
         {
-          var bspFirst = new ThreeBSP( selections[0] );
-          var current = bspFirst;
-
-          for(var i=1; i<selections.length;i++)
-          {
-            var bsp = new ThreeBSP( selections[i] );
-            var current = current.union( bsp );
-          }
-          var result = current.toMesh();
-         result.geometry.computeVertexNormals()
-         result.geometry.computeBoundingBox()
-         result.geometry.computeCentroids()
-         result.geometry.computeFaceNormals();
-         result.geometry.computeBoundingSphere();
-
-         //selections[0].geometry = result.geometry;
-         return result;//selections[0];
+          if(selections.length == 0) return;
+          var operands = selections.slice(1);
+          var result = selections[0].union( operands ); 
         }
 
         function subtract(selections)
         {
-          /*var bspFirst = new ThreeBSP( selections[0] );
-          var bsp = new ThreeBSP( selections[i] );
-          var current = current.subtract( bsp );*/
-
-          return selections[0].subtract(selections.slice(1)); 
-  
-
-          /*var bspFirst = new ThreeBSP( selections[0] );
-          var current = bspFirst;
-
-          var operands = [];
-
-          for(var i=1; i<selections.length;i++)
+          if(selections.length == 0) return;
+          var operands = selections.slice(1);
+          var result = selections[0].subtract( operands ); 
+          
+          for(var i=0; i<operands.length;i++)
           {
-            var bsp = new ThreeBSP( selections[i] );
-            var current = current.subtract( bsp );
-
-            operands.push( selections[i] );    
-            selections[i].material.transparent=true; 
-            selections[i].material.opacity =0.2;       
+            var operand = operands[i];
+            operand.material.transparent=true; 
+            operand.material.opacity =0.2;       
           }
 
-        //FIXME: visual effect to make csg effects more clear
+        //TODO:develop this further: visual effect to make csg effects more clear
         setTimeout(function(){
         for(var i=0;i<operands.length;i++)
         {
           operands[i].material.opacity = 1;
+          operands[i].material.transparent=false; 
         }
 
         },10000);
-
-         var result = current.toMesh();
-         result.geometry.computeVertexNormals()
-         result.geometry.computeBoundingBox()
-         result.geometry.computeCentroids()
-         result.geometry.computeFaceNormals();
-         result.geometry.computeBoundingSphere();
-         //selections[0].geometry = result.geometry;
-         return result;//selections[0];*/
           
         }
         function intersect(selections)
         {
-          var bspFirst = new ThreeBSP( selections[0] );
-          var current = bspFirst;
-
-          for(var i=1; i<selections.length;i++)
-          {
-            var bsp = new ThreeBSP( selections[i] );
-            var current = current.intersect( bsp );
-          }
-
-         var result = current.toMesh();
-         result.geometry.computeVertexNormals()
-         result.geometry.computeBoundingBox()
-         result.geometry.computeCentroids()
-         result.geometry.computeFaceNormals();
-         result.geometry.computeBoundingSphere();
-         //selections[0].geometry = result.geometry;
-         return result;//selections[0];
+          if(selections.length == 0) return;
+          var operands = selections.slice(1);
+          var result = selections[0].intersect( operands ); 
         }
 
 
@@ -787,8 +723,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           }
           console.log("set to scale");
           this.transformControls.setMode("scale");
-          this.transformControls.setSpace("local");
-          
           break;
         case 84:
           console.log("set to translate");
@@ -813,6 +747,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           }
         break;
       }
+
     },
     handleDragOver:function(e) {
     if (e.preventDefault) {

@@ -1,5 +1,5 @@
 //FIXME: HAAACK !
-Subtraction = function ( target,originalGeometry, operands)
+Subtraction = function ( target, originalGeometry, operands)
 {
   Command.call( this );
   this.type = "subtraction";
@@ -16,25 +16,22 @@ Subtraction.prototype.clone = function()
 {
   return new Subtraction( this.target, this.original, this.operands);
 }
+  
 
 Subtraction.prototype.undo = function()
 {
   var target = this.target;
-  this._undoBackup = target.innerMesh.geometry;
-  var pos = target.innerMesh.position.clone();
-  target.shape.remove( target.innerMesh);
-  target.innerMesh = new THREE.Mesh(this.original, target.material);
-  target.shape.add( target.innerMesh);
-  target.innerMesh.position=pos;
+  this._undoBackup = target.geometry;
+  var pos = target.position.clone();
+
+  delete target.__webglInit;
+  target.geometry = this.original;
   target.dispatchEvent( { type: 'shapeChanged' } );
 }
 Subtraction.prototype.redo = function()
 {
   var target = this.target;
-  var pos = target.innerMesh.position.clone();
-  target.shape.remove( target.innerMesh);
-  target.innerMesh = new THREE.Mesh(this._undoBackup, target.material);
-  target.shape.add( target.innerMesh);
-  target.innerMesh.position=pos;
+  delete target.__webglInit;
+  target.geometry = this._undoBackup;
   target.dispatchEvent( { type: 'shapeChanged' } );
 }
