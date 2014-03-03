@@ -23,6 +23,7 @@
 <script src="lib/shapes/THREECSG.js"></script>
 <script src="lib/shapes/meshWrapper.js"></script>
 <script src="lib/shapes/shapes.js"></script>
+<script src="lib/shapes/shapes2d.js"></script>
 
 <script src="lib/helpers/parent-child-links-helper.js"></script>
 <script src="lib/helpers/linked-clone-helper.js"></script>
@@ -99,12 +100,19 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       <button on-click="{{generateCodeFromHistory}}"> Generate code from history </button>
       <button on-click="{{generateFromCode}}"> Generate shapes from code </button>
     </div>
+    
+    
     <shape-creator id="contextMenu"> </shape-creator>
     <history-editor id="historyEditor"> </history-editor>
     <!--<drag-drop id="dragDropLayer"> </drag-drop>-->
 
     <code-mirror id="selectEdit" theme="monokai" mode="javascript" value="{{source}}" >
     </code-mirror>
+
+    <!--testing editing of 2d shapes-->
+    <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:500px;top:30px;z-index:3">
+      Infos:{{controlPoints[0].x}} {{controlPoints[0].y}}
+    </div>
 
     <three-js postProcess fullscreen="{{fullscreen}}" 
     selectedObjects="{{selectedObjects}}" id="viewer" on-keydown="{{keyUp}}" on-sceneready="{{viewerSceneReady}}">
@@ -146,6 +154,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     selectedObject:null,
 
     source:"//testing\n",
+    controlPoints:[],
+    
     ready:function()
     {
       //console.log("i am ready");
@@ -216,19 +226,35 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.viewer = this.$.viewer;
       this.commandManager = this.$.historyEditor;
     },
+    controlPointsChanged:function()
+    {
+      console.log("control points changed");
+      this.superDuperShape.update();
+    },  
     setupElements : function()
     {
       console.log("viewer cam", this.viewer.camera);
       this.transformControls = new THREE.TransformControls(this.viewer.camera, this.$.viewer);
       this.transformControls.setMode( "translate" );
       this.transformControls.setSpace("local");
-      this.transformControls.setSnap(10);
+      //this.transformControls.setSnap(10);
       this.viewer.updatables.push( this.transformControls.update ) ;
 
       var geometry = new THREE.Geometry();
       this.fakeCursor = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 3 } ), THREE.Lines );
       this.viewer.addToScene( this.fakeCursor);
-
+      
+      
+      var shape = new Shape2d();
+				shape.moveTo(  80, 20 );
+				shape.lineTo(  40, 80 );
+				shape.lineTo( 120, 80 );
+				shape.bezierCurveTo(  80, 0, 80, 0, 80, 20 );
+				
+			this.viewer.addToScene( shape.generateRenderables() );
+      this.controlPoints = shape.superDuperControls;
+      console.log("this.controlPoints",this.controlPoints);
+      this.superDuperShape = shape;
 
       function onControlsChange(event)
       {
@@ -242,11 +268,22 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           {
             this.viewer.controls.enabled = false;
           }
+          
+        if(event.target.object.name == "Shape2dPointHelper")
+        {
+          this.superDuperShape.update();
+        }
       }
       this.transformControls.addEventListener( 'change', onControlsChange.bind(this) )
 
       function onObjectTranform(event)
       {
+        console.log("object transforming",event.target.object.name);
+        if(event.target.object.name == "Shape2dPointHelper")
+        {
+          this.superDuperShape.update();
+        }
+        
         var operation = null;
         switch(event.transform)
         {
@@ -319,7 +356,18 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             case "Connector":
               instance = new Connector();
             break;
+            
+            case "Rectangle":
+            
+            break;
+            
+            case "Circle":
+              
+            break;
     
+            case "Polyline":
+            
+            break;
           }
           
           if(instance!=null){
@@ -458,6 +506,21 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               mesh.innerMesh.material.side = THREE.DoubleSide;
               
             break;
+            
+            case 'extrude':
+              console.log("extruding");
+              shape = selections[0].sourceElement//.extrude({ amount: 20 });
+              var extrudeSettings = {};
+              extrudeSettings.bevelEnabled = false;
+				      extrudeSettings.bevelSegments = 2;
+				      extrudeSettings.steps = 2;
+				      extrudeSettings.amount = 20;
+              var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
+
+					    var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ) );
+					    result = mesh;
+					  break;
+              
             case 'clone':
               result = selections[0].clone();
             break;
@@ -525,14 +588,12 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             
           }
 
-          if(type != "clone" && type != "linkedClone" && type!='mirrorX')
+          if(type != "clone" && type != "linkedClone" && type!='mirrorX' && type != 'extrude')
           {
             /*var old = selections[0];
             delete old.__webglInit;
             old.geometry.dispose();
             old.geometry = result.geometry;*/
-
-            
     
             //FIXME: hack hack hack !
             /*var old = selections[0];
@@ -593,6 +654,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           {
           }
           else{
+          console.log("adding to scene",result);
           this.viewer.addToScene( result );
           this.commandManager.addCommand( new Creation(result, result.parent) );
           this.selectedObjects = [result.innerMesh];//make sure the new item is the selected one
@@ -657,9 +719,17 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       if(newSelections.length>0)
       {
         this.contextMenu.mode = 'operations';
+        this.contextMenu.target = '';
+        
+        if(newSelections && newSelections[0].sourceElement instanceof Shape2d)
+        {
+          console.log("enabling 2d shape operations");
+          this.contextMenu.target = 'shape2d';
+        }
       }
       else
       {
+        this.contextMenu.target = '';
         this.contextMenu.mode = 'creation';
       }
       for(var i= newSelections.length-1 ;i>=0;i--)

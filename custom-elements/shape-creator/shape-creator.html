@@ -47,6 +47,14 @@ box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.1176
               </div>
             </template>
           </template>
+          <template if="{{target == 'shape2d'}}">
+            <template repeat="{{opName in operations2d}}">
+              <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
+                <span on-click="{{applyOperation}}" class="shape-item-base">{{opName}} </span>
+              </div>
+            </template>
+          </template>
+          
         </polymer-ui-submenu-item>
         <polymer-ui-submenu-item icon="menu" label="Shapes(3d)" active>
           <template repeat="{{shapeName in shapes3d}}">
@@ -80,9 +88,11 @@ box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.1176
     Polymer("shape-creator",{
     enabled:false,
     mode: "creation",
+    target:"",
     operations:["union", "subtract", "intersect","clone","linkedClone","mirrorX","mirrorY","mirrorZ"],
+    operations2d:["extrude"],
     shapes3d : ["Cube","Sphere", "Cylinder","Torus"],
-    shapes2d : ["Rectangle","Circle","Text"],
+    shapes2d : ["Rectangle","Circle","Text","Polyline"],
     shapesGeneric: ["Connector","Part"],
     headerTap:function(event)
     {
