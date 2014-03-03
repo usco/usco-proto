@@ -108,7 +108,6 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
       code += targetName+".union(["+ops.join(",")+"])"+lineCap;
     break;
     case "subtraction":
-      //console.log("operands for subtraction", operation.operands);
       var ops =[];
       for(var i=0;i<operation.operands.length;i++)
       {

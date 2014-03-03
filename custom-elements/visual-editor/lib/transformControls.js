@@ -1104,8 +1104,6 @@ THREE.TransformControls = function ( camera, domElement ) {
 
 	function onPointerUp( event ) {
 
-    //console.log("bla",scope.object,scope.axis);    
-    //event dispatching
     if ( scope.object != undefined && scope.axis != undefined)
     {
       if(_mode == "translate")

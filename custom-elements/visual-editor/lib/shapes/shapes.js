@@ -8,10 +8,13 @@ function Part()
 }
 Part.prototype = Object.create( THREE.Mesh.prototype );
 Part.prototype.constructor = Part;
+Part.prototype._clone = function()
+{
+  return ;
+}
 
 Part.prototype.fromThreeMesh=function(object)
 {
-
 }
 
 Part.prototype.union=function(objects)

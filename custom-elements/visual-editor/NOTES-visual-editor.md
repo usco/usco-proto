@@ -50,3 +50,14 @@ Some bad "suprises" regarding THREE.js:
  * mesh mirroring support is bad / unexisting:
    * applying matrix to mesh does not apply it to geometry (flipping positions in scene graph, but not geometry)
    * applying matrix to geometry foobars normals/winding order and needs hacks/workarounds
+
+
+What we need:
+-------------
+
+- simple way to draw polylines visually
+- import export : quick and easy, drag & drop : per part , per design (global)
+- configurable base solids, configurable sub part
+- visual "distance measurements" clicky here, clicky there, your distance is right there
+- snap to : corners (edge intersections), edges , connectors
+- actual saving of designs, ya know? 
