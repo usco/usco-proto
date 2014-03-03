@@ -271,7 +271,11 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           
         if(event.target.object.name == "Shape2dPointHelper")
         {
-          this.superDuperShape.update();
+          //this.superDuperShape.update();
+          if(this.selectedObjects.length>0 && this.selectedObjects[0].parent.sourceElement)
+          {
+            this.selectedObjects[0].parent.sourceElement.update();
+          }
         }
       }
       this.transformControls.addEventListener( 'change', onControlsChange.bind(this) )
@@ -281,7 +285,11 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         console.log("object transforming",event.target.object.name);
         if(event.target.object.name == "Shape2dPointHelper")
         {
-          this.superDuperShape.update();
+          //this.superDuperShape.update();
+          if(this.selectedObjects.length>0 && this.selectedObjects[0].parent.sourceElement)
+          {
+            this.selectedObjects[0].parent.sourceElement.update();
+          }
         }
         
         var operation = null;
@@ -358,11 +366,13 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             break;
             
             case "Rectangle":
-            
+              instance = new Rectangle();
+              this.viewer.addToScene( instance.generateRenderables() );
             break;
             
             case "Circle":
-              
+              instance = new Circle();
+              this.viewer.addToScene( instance.generateRenderables() );
             break;
     
             case "Polyline":
@@ -375,15 +385,18 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             instance.castShadows=true;
             instance.recieveShadows = true;
 
-            geometry = instance.geometry;
-            geometry.verticesNeedUpdate = true;
-            geometry.normalsNeedUpdate = true;
-            geometry.uvsNeedUpdate = true;
-            geometry.computeCentroids();
-            geometry.computeFaceNormals();
-            geometry.computeVertexNormals();
-            geometry.computeMorphNormals();
-            geometry.computeTangents();
+            if(!(instance instanceof Shape2d))
+            {
+              geometry = instance.geometry;
+              geometry.verticesNeedUpdate = true;
+              geometry.normalsNeedUpdate = true;
+              geometry.uvsNeedUpdate = true;
+              geometry.computeCentroids();
+              geometry.computeFaceNormals();
+              geometry.computeVertexNormals();
+              geometry.computeMorphNormals();
+              geometry.computeTangents();
+            }
 
 
             if(this.selectedObjects.length==1) //if we have a selection, add it to that selection
@@ -393,8 +406,11 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             }
             else
             {
+              if(!(instance instanceof Shape2d))
+              {
               this.viewer.addToScene(instance);
               this.selectedObjects=[instance];
+              }
             }
             this.commandManager.addCommand( new Creation(instance, instance.parent) );
             console.log("instance", instance, this.viewer.scene);
@@ -517,7 +533,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 				      extrudeSettings.amount = 20;
               var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
 
-					    var mesh = new THREE.Mesh( geometry, new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ) );
+					    var mesh = new Part( );
+					    mesh.geometry = geometry;
 					    result = mesh;
 					  break;
               
@@ -723,7 +740,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         
         if(newSelections && newSelections[0].sourceElement instanceof Shape2d)
         {
-          console.log("enabling 2d shape operations");
           this.contextMenu.target = 'shape2d';
         }
       }

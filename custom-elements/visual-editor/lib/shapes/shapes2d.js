@@ -2,9 +2,7 @@ function Shape2d()
 {
   THREE.Shape.apply( this, arguments );
   this.controlPoints = [];
-
 }
-
 Shape2d.prototype = Object.create( THREE.Shape.prototype );
 
 Shape2d.prototype.moveTo= function(x,y)
@@ -231,4 +229,51 @@ Shape2d.prototype.generateRenderables = function()
 	  this.renderable = line;
 	  return this.renderable;
 }
+
+
+
+function Rectangle(width, height, center, radius)
+{
+    var width = width || 40;
+    var height = height || 40;
+    var radius = radius || 5;
+    var center = center || new THREE.Vector3();
+    
+    Shape2d.apply( this, arguments );
+    var x = center.x, y = center.y;
+    //console.log("x,y", x,y);
+    
+    /*this.moveTo(  x, y );
+		this.lineTo( width, y );
+		this.lineTo( width, height );
+		this.lineTo( x, height );
+	  this.lineTo( x, y );*/
+	  
+	  
+	  this.moveTo( x, y + radius );
+		this.lineTo( x, y + height - radius );
+		this.quadraticCurveTo( x, y + height, x + radius, y + height );
+		this.lineTo( x + width - radius, y + height) ;
+		this.quadraticCurveTo( x + width, y + height, x + width, y + height - radius );
+		this.lineTo( x + width, y + radius );
+		this.quadraticCurveTo( x + width, y, x + width - radius, y );
+		this.lineTo( x + radius, y );
+		this.quadraticCurveTo( x, y, x, y + radius );
+	  
+}
+Rectangle.prototype = Object.create( Shape2d.prototype );
+
+function Circle(center, radius)
+{
+    var radius = radius || 20;
+    var center = center || new THREE.Vector3();
+    
+    Shape2d.apply( this, arguments );
+    var x = center.x, y = center.y;
+    
+		this.moveTo( radius+x, y );
+	  this.absarc( x, y, radius, 0, Math.PI*2, false );
+	  
+}
+Circle.prototype = Object.create( Shape2d.prototype );
 
