@@ -530,7 +530,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             
             case 'extrude':
               console.log("extruding");
-              shape = selections[0].sourceElement//.extrude({ amount: 20 });
+              var shape = selections[0].sourceElement//.extrude({ amount: 20 });
               var extrudeSettings = {};
               extrudeSettings.bevelEnabled = false;
 				      extrudeSettings.bevelSegments = 2;
@@ -538,7 +538,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 				      extrudeSettings.amount = 20;
               var geometry = new THREE.ExtrudeGeometry( shape, extrudeSettings );
 
-					    var mesh = new Part( );
+					    var mesh = new Part();
+					    mesh.name = "Part";
 					    mesh.geometry = geometry;
 					    result = mesh;
 					  break;
@@ -678,7 +679,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           if(type == 'extrude')
           {
             this.viewer.addToScene( result );
-            this.commandManager.addCommand( new Extrusion(result, result.parent) );
+            var op = new Extrusion(result, extrudeSettings, shape, result.parent);
+            this.commandManager.addCommand( op );
             this.selectedObjects = [result];//make sure the new item is the selected one
           }
           else{
