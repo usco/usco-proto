@@ -11,13 +11,18 @@
 <script src="lib/operations/commands.js"></script>
 <script src="lib/operations/creation.js"></script>
 <script src="lib/operations/deletion.js"></script>
+<script src="lib/operations/import.js"></script>
+
 <script src="lib/operations/translation.js"></script>
 <script src="lib/operations/rotation.js"></script>
 <script src="lib/operations/scaling.js"></script>
+
 <script src="lib/operations/union.js"></script>
 <script src="lib/operations/subtraction.js"></script>
 <script src="lib/operations/intersection.js"></script>
-<script src="lib/operations/import.js"></script>
+
+<script src="lib/operations/extrusion.js"></script>
+
 
 <script src="lib/transformControls.js"></script>
 <script src="lib/shapes/THREECSG.js"></script>
@@ -670,11 +675,17 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           if(type == 'mirrorX')
           {
           }
+          if(type == 'extrude')
+          {
+            this.viewer.addToScene( result );
+            this.commandManager.addCommand( new Extrusion(result, result.parent) );
+            this.selectedObjects = [result];//make sure the new item is the selected one
+          }
           else{
           console.log("adding to scene",result);
           this.viewer.addToScene( result );
           this.commandManager.addCommand( new Creation(result, result.parent) );
-          this.selectedObjects = [result.innerMesh];//make sure the new item is the selected one
+          this.selectedObjects = [result];//make sure the new item is the selected one
           
           }
         }
