@@ -21,43 +21,72 @@ Shape2d.prototype.addPoint = function(x, y)
   //this.getPoint(x,y);
 }
 
+Shape2d.prototype.removePoint = function( point )
+{
+  //throw new Error("Not implemented yet");
+  for(var i=this.curves.length-1;i>=0;i--)
+  {
+    var curve = this.curves[i];
+    if(point == curve.v1 || point == curve.v2)
+    {
+      console.log("removing curve", curve);
+      var idx = this.curves.indexOf(curve);
+      this.curves.splice(idx, 1);
+    }
+  }
+  for(var i=this.actions.length-1;i>=0;i--)
+  {
+    var action = this.actions[i];
+    console.log("action", action);
+    if(point == action.args2)
+    {
+      console.log("removing action", action);
+      var idx = this.actions.indexOf(action);
+      this.actions.splice(idx, 1);
+    }
+  }
+  
+  var idx = this.controlPoints.indexOf(point);
+  this.controlPoints.splice(idx,1);
+    
+  this.update();
+}
+
+Shape2d.prototype.fromExpression = function( expression )
+{
+  var expression = function (x) { return Math.cos(x); };
+}
+
 Shape2d.prototype.moveTo= function(x,y)
 {
   console.log("moveTo");
-  //this.controlPoints.push( new THREE.Vector3(x,y,0) );
   var args = Array.prototype.slice.call( arguments );
-  var controlPoint = new THREE.Vector2( x, y );
-  controlPoint.index = this.actions.length;
-  this.controlPoints.push( controlPoint );
-
+  var startPoint = new THREE.Vector2( x, y );
+  //startPoint.index = this.actions.length;
+  //startPoint.curves = [];
+  this.controlPoints.push( startPoint );
   
-	this.actions.push( { action: THREE.PathActions.MOVE_TO, args: args, args2:controlPoint } );
-  
-  //THREE.Shape.prototype.moveTo.call(this, x,y);
+	this.actions.push( { action: THREE.PathActions.MOVE_TO, args: args, args2:startPoint } );
 } 
 
 Shape2d.prototype.lineTo= function(x,y)
 {
   console.log("lineTo");
-  //this.controlPoints.push( new THREE.Vector3(x,y,0) );
   var args = Array.prototype.slice.call( arguments );
   var endPoint = new THREE.Vector2( x, y );
   endPoint.index = this.actions.length;
+  endPoint.curves = [];
   this.controlPoints.push( endPoint );
 
 	var lastArgs = this.actions[ this.actions.length - 1 ].args2;
 	var prevPoint= lastArgs;
 
 	var curve = new THREE.LineCurve( prevPoint, endPoint );
+	//prevPoint.curves.push(curve);
+	//endPoint.curves.push(curve);
+	
 	this.curves.push( curve );
 	this.actions.push( { action: THREE.PathActions.LINE_TO, args: args, args2:endPoint } );
-} 
-
-Shape2d.prototype.bezierCurveTo= function(aCP1x, aCP1y, aCP2x, aCP2y, aX, aY)
-{
-  console.log("bezierCurveTo");
-  this.controlPoints.push( new THREE.Vector3(aX,aY,0) );
-  THREE.Shape.prototype.bezierCurveTo.call(this, aCP1x, aCP1y, aCP2x, aCP2y, aX, aY);
 } 
 
 Shape2d.prototype.quadraticCurveTo = function( aCPx, aCPy, aX, aY )
@@ -66,6 +95,7 @@ Shape2d.prototype.quadraticCurveTo = function( aCPx, aCPy, aX, aY )
   var args = Array.prototype.slice.call( arguments );
   var endPoint = new THREE.Vector2( aX, aY );
   endPoint.index = this.actions.length;
+  endPoint.curves = [];
   this.controlPoints.push( endPoint );
 
   var lastArgs = this.actions[ this.actions.length - 1 ].args2;
@@ -78,14 +108,38 @@ Shape2d.prototype.quadraticCurveTo = function( aCPx, aCPy, aX, aY )
 												curveControlPoint,
 												endPoint );
 	this.curves.push( curve );
+	prevPoint.curves.push(curve);
+	endPoint.curves.push(curve);
 
 	this.actions.push( { action: THREE.PathActions.QUADRATIC_CURVE_TO, args: args, args2:endPoint,args3:curveControlPoint } );
 }
 
-Shape2d.prototype.fromExpression = function( expression )
+Shape2d.prototype.bezierCurveTo= function(aCP1x, aCP1y, aCP2x, aCP2y, aX, aY)
 {
-  var expression = function (x) { return Math.cos(x); };
-}
+  console.log("bezierCurveTo");
+  var args = Array.prototype.slice.call( arguments );
+  
+  var endPoint = new THREE.Vector2( aX, aY );
+  endPoint.index = this.actions.length;
+  this.controlPoints.push( endPoint );
+
+	var lastargs = this.actions[ this.actions.length - 1 ].args2;
+  var prevPoint = lastArgs;
+	//var x0 = lastargs[ lastargs.length - 2 ];
+	//var y0 = lastargs[ lastargs.length - 1 ];
+	var bezierCurveControlPoint1 = new THREE.Vector2( aCP1x, aCP1y );
+  var bezierCurveControlPoint2 = new THREE.Vector2( aCP2x, aCP2y );
+	var args3 = [bezierCurveControlPoint1,bezierCurveControlPoint2];
+
+	var curve = new THREE.CubicBezierCurve( prevPoint,
+											bezierCurveControlPoint1,
+											bezierCurveControlPoint2,
+											endPoint );
+	this.curves.push( curve );
+
+	this.actions.push( { action: THREE.PathActions.BEZIER_CURVE_TO, args: args, args2:endPoint,args3:args3 } );
+} 
+
 
 Shape2d.prototype.createPointsGeometry = function(divisions)
 {
@@ -99,10 +153,10 @@ Shape2d.prototype.update = function()
   
   for(var i=0;i<controlPoints.length;i++)
   {
-    var controlPoint = controlPoints[i];
+    /*var controlPoint = controlPoints[i];
     var argIndices = controlPoint.argIndices || [0,1];
     this.actions[controlPoint.actionIndex].args[argIndices[0]] = controlPoint.x;
-    this.actions[controlPoint.actionIndex].args[argIndices[1]] = controlPoint.y;
+    this.actions[controlPoint.actionIndex].args[argIndices[1]] = controlPoint.y;*/
     
     //console.log("controlPoint",controlPoints[i],"curve",controlPoints[i].originalCurve);
     /*controlPoints[i].original.x =  controlPoints[i].x;
@@ -136,7 +190,8 @@ Shape2d.prototype.generateRenderables = function()
     var points = this.createPointsGeometry();
 		var line = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 2 } ) );
 		var controlSize = 2;
-			
+
+		var self = this;			
 			function drawPointHelper( pt, color )
 			{
 			  var color = color || 0x3333FF;
@@ -151,6 +206,13 @@ Shape2d.prototype.generateRenderables = function()
 			    //console.log("control point translated",event,this);
 			    this.standInFor.x = this.position.x;
 			    this.standInFor.y = this.position.y;
+			  });
+			  
+
+			  pointHelper.addEventListener('deleted', function(event) {
+			    console.log("control point deleted",this);
+			    self.removePoint( this.standInFor );
+			    //this.standInFor.x = this.position.x;
 			  });
 			  
 			  return pointHelper;
@@ -338,7 +400,6 @@ Shape2d.prototype.generateRenderables = function()
 
 Shape2d.prototype.getPoints = function( divisions, closedPath ) {
 	if (this.useSpacedPoints) {
-		console.log('tata');
 		return this.getSpacedPoints( divisions, closedPath );
 	}
 
@@ -389,14 +450,9 @@ Shape2d.prototype.getPoints = function( divisions, closedPath ) {
 				cpy0 = last.y;
 
 			} else {
-        console.log("gne");
 				last = this.actions[ i - 1 ].args2;
-
         cpx0 = last.x;
         cpy0 = last.y;
-				//cpx0 = laste[ laste.length - 2 ];
-				//cpy0 = laste[ laste.length - 1 ];
-
 			}
 
 			for ( j = 1; j <= divisions; j ++ ) {
