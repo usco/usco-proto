@@ -856,6 +856,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             parent.remove(selectedObject);
             //TODO: need a more generic system to publish operation into the history
             this.commandManager.addCommand( new Deletion(selectedObject, parent) );
+            
+            if(selectedObject.dispatchEvent)selectedObject.dispatchEvent({type:'deleted'});
+            
             this.selectedObjects = [];
           }
         break;
