@@ -1,9 +1,11 @@
 function Shape2d()
 {
   THREE.Shape.apply( this, arguments );
+  this.id = Shape2d.__id++;
   this.controlPoints = [];
 }
 Shape2d.prototype = Object.create( THREE.Shape.prototype );
+Shape2d.__id = 0;
 
 Shape2d.prototype.moveTo= function(x,y)
 {
@@ -117,16 +119,6 @@ Shape2d.prototype.generateRenderables = function()
           this.superDuperControls.push( pos );
 			    break;
 			    
-			  case THREE.PathActions.QUADRATIC_CURVE_TO:
-			    var pt = new THREE.Vector2( args[ 2 ], args[ 3 ] )
-          var helper = drawPointHelper(pt);
-          var pos = helper.position;
-          pos.actionIndex =i;
-          pos.argIndices = [2,3];
-          this.superDuperControls.push( pos );
-          break;
-			    
-
 		    case THREE.PathActions.LINE_TO:
           var pt = new THREE.Vector2( args[ 0 ], args[ 1 ] )
           var helper = drawPointHelper(pt);
@@ -135,6 +127,14 @@ Shape2d.prototype.generateRenderables = function()
           this.superDuperControls.push( pos );
 			    break;
 			   
+			  case THREE.PathActions.QUADRATIC_CURVE_TO:
+			    var pt = new THREE.Vector2( args[ 2 ], args[ 3 ] )
+          var helper = drawPointHelper(pt);
+          var pos = helper.position;
+          pos.actionIndex =i;
+          pos.argIndices = [2,3];
+          this.superDuperControls.push( pos );
+          break;
 			  
 			  case THREE.PathActions.BEZIER_CURVE_TO:
 			    console.log("args", args);
@@ -146,7 +146,6 @@ Shape2d.prototype.generateRenderables = function()
           this.superDuperControls.push( pos );
           var v3 = pos;
 			  
-			    
 			    /*pt = new THREE.Vector2( args[ 0 ], args[ 1 ] );
 			    var helper = drawPointHelper(pt, 0xff00ff);
 			    var pos = helper.position;
@@ -183,8 +182,34 @@ Shape2d.prototype.generateRenderables = function()
           //bezierHelper2.position = new THREE.Vector3().copy(bezierHelper2.position).sub( helper.position );
           helper.add( bezierHelper2 );
           //bezierHelper2.add( helperLine );
-			    
-			  break;
+			    break;
+			    case THREE.PathActions.ELLIPSE:
+			      //aX, aY, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise
+			      var pt = new THREE.Vector2( args[ 0 ], args[ 1 ] )
+            var helper = drawPointHelper(pt);
+            var pos = helper.position;
+            pos.actionIndex =i;
+            pos.argIndices = [0,1];
+            this.superDuperControls.push( pos );
+            
+            //radius controls
+            pt = new THREE.Vector2( args[ 2 ], args[ 3 ] );
+			      var radiusHelper =drawPointHelper(pt, 0xff00ff);
+			      pos = radiusHelper.position;
+			      pos.actionIndex =i;
+			      pos.argIndices = [2,3];
+			      this.superDuperControls.push( pos );
+			      
+			      //angle controls
+            pt = new THREE.Vector2( args[ 4 ], args[ 5 ] );
+			      var angleHelper =drawPointHelper(pt, 0xff00ff);
+			      pos = angleHelper.position;
+			      pos.actionIndex =i;
+			      pos.argIndices = [4,5];
+			      this.superDuperControls.push( pos );
+            
+            
+			    break;
 			  }
 			}
 			
@@ -264,6 +289,7 @@ function Rectangle(width, height, center, radius)
 	  
 }
 Rectangle.prototype = Object.create( Shape2d.prototype );
+Rectangle.prototype.constructor = Rectangle;
 
 function Circle(center, radius)
 {
@@ -278,4 +304,5 @@ function Circle(center, radius)
 	  
 }
 Circle.prototype = Object.create( Shape2d.prototype );
+Circle.prototype.constructor = Circle;
 
