@@ -61,3 +61,10 @@ What we need:
 - visual "distance measurements" clicky here, clicky there, your distance is right there
 - snap to : corners (edge intersections), edges , connectors
 - actual saving of designs, ya know? 
+
+
+Various ui behaviour notes:
+---------------------------
+- when deleting current selection we must:
+ * detach the transform controls
+ * reset the "context" menu to a neutral state
