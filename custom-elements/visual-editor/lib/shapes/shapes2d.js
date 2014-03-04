@@ -116,6 +116,16 @@ Shape2d.prototype.generateRenderables = function()
           pos.actionIndex =i;
           this.superDuperControls.push( pos );
 			    break;
+			    
+			  case THREE.PathActions.QUADRATIC_CURVE_TO:
+			    var pt = new THREE.Vector2( args[ 2 ], args[ 3 ] )
+          var helper = drawPointHelper(pt);
+          var pos = helper.position;
+          pos.actionIndex =i;
+          pos.argIndices = [2,3];
+          this.superDuperControls.push( pos );
+          break;
+			    
 
 		    case THREE.PathActions.LINE_TO:
           var pt = new THREE.Vector2( args[ 0 ], args[ 1 ] )
@@ -241,14 +251,6 @@ function Rectangle(width, height, center, radius)
     
     Shape2d.apply( this, arguments );
     var x = center.x, y = center.y;
-    //console.log("x,y", x,y);
-    
-    /*this.moveTo(  x, y );
-		this.lineTo( width, y );
-		this.lineTo( width, height );
-		this.lineTo( x, height );
-	  this.lineTo( x, y );*/
-	  
 	  
 	  this.moveTo( x, y + radius );
 		this.lineTo( x, y + height - radius );
