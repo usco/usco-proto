@@ -84,6 +84,16 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
     case "deletion":
       //TODO: how to deal with this ?
     break;
+    case "extrusion":
+      console.log("extrusio", operation);
+      var type = target.constructor.name || "foo";
+      var sourceShapeName = operation.sourceShape.name.toLowerCase()+new String(operation.sourceShape.id);
+      var strValue = JSON.stringify(operation.value);
+      strValue.replace(/\\"/g,"\uFFFF"); //U+ FFFF
+      strValue = strValue.replace(/\"([^"]+)\":/g,"$1:").replace(/\uFFFF/g,"\\\"");
+      code += "var "+targetName+" = "+ sourceShapeName +".extrude("+strValue+")"+lineCap+"\n";
+    break;
+    
     case "rotation":
       if (!("code" in target)){ target.code = ""};
       code += targetName+".rotate("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+")"+lineCap;
