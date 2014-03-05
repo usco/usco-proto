@@ -130,8 +130,8 @@ Shape2d.prototype.quadraticCurveTo = function( aCPx, aCPy, aX, aY )
 												curveControlPoint,
 												endPoint );
 	this.curves.push( curve );
-	prevPoint.curves.push(curve);
-	endPoint.curves.push(curve);
+	//prevPoint.curves.push(curve);
+	//endPoint.curves.push(curve);
 
 	this.actions.push( { action: THREE.PathActions.QUADRATIC_CURVE_TO, args: args, args2:endPoint,args3:curveControlPoint } );
 }
@@ -145,7 +145,7 @@ Shape2d.prototype.bezierCurveTo= function(aCP1x, aCP1y, aCP2x, aCP2y, aX, aY)
   endPoint.index = this.actions.length;
   this.controlPoints.push( endPoint );
 
-	var lastargs = this.actions[ this.actions.length - 1 ].args2;
+	var lastArgs = this.actions[ this.actions.length - 1 ].args2;
   var prevPoint = lastArgs;
 	//var x0 = lastargs[ lastargs.length - 2 ];
 	//var y0 = lastargs[ lastargs.length - 1 ];
@@ -229,6 +229,7 @@ Shape2d.prototype.update = function()
 {
   var controlPoints = this.__visualContols;
   var actions = this.actions;
+  return;
   
   for(var i=0;i<controlPoints.length;i++)
   {
@@ -442,6 +443,35 @@ Shape2d.prototype.generateRenderables = function()
 	  return this.renderable;
 }
 
+
+Shape2d.prototype.fromThreeShape = function(shape)
+{
+  console.log("here",shape);
+  for(var i=0; i<shape.actions.length;i++)
+  {
+    var action = shape.actions[i];
+    console.log("action", action);
+    switch(action.action)
+    {
+      case THREE.PathActions.MOVE_TO:
+        this.moveTo(action.args[0], action.args[1]);
+      break; 
+      case THREE.PathActions.LINE_TO:
+		    this.lineTo(action.args[0], action.args[1]);
+			break;
+		  case THREE.PathActions.QUADRATIC_CURVE_TO:
+        this.quadraticCurveTo(action.args[0], action.args[1],action.args[2], action.args[3]  );
+      break;
+      case THREE.PathActions.BEZIER_CURVE_TO:
+        this.bezierCurveTo(action.args[0], action.args[1], action.args[2], action.args[3], action.args[4], action.args[5]  );
+      break; 
+      case THREE.PathActions.ELLIPSE:
+        console.log("uh oh, elipse");
+      break;
+    }
+  }
+}
+
 /* Return an array of vectors based on contour of the path */
 
 Shape2d.prototype.getPoints = function( divisions, closedPath ) {
@@ -515,32 +545,35 @@ Shape2d.prototype.getPoints = function( divisions, closedPath ) {
 			break;
 
 		case THREE.PathActions.BEZIER_CURVE_TO:
+			//cpx  = args[ 4 ];
+			//cpy  = args[ 5 ];
+			cpx = args2.x;
+			cpy = args2.y;
 
-			cpx  = args[ 4 ];
-			cpy  = args[ 5 ];
+			//cpx1 = args[ 0 ];
+			//cpy1 = args[ 1 ];
+			cpx1 = args3[0].x;
+			cpy1 = args3[0].y;
 
-			cpx1 = args[ 0 ];
-			cpy1 = args[ 1 ];
-
-			cpx2 = args[ 2 ];
-			cpy2 = args[ 3 ];
+			//cpx2 = args[ 2 ];
+			//cpy2 = args[ 3 ];
+			
+			cpx2 = args3[1].x;
+			cpy2 = args3[1].y;
+			
 
 			if ( points.length > 0 ) {
-
 				laste = points[ points.length - 1 ];
 
 				cpx0 = laste.x;
 				cpy0 = laste.y;
-
 			} else {
 
-				laste = this.actions[ i - 1 ].args;
+				laste = this.actions[ i - 1 ].args2;
 
-				cpx0 = laste[ laste.length - 2 ];
-				cpy0 = laste[ laste.length - 1 ];
-
+				cpx0 = laste.x;//laste[ laste.length - 2 ];
+				cpy0 = laste.y;//laste[ laste.length - 1 ];
 			}
-
 
 			for ( j = 1; j <= divisions; j ++ ) {
 
@@ -603,13 +636,8 @@ Shape2d.prototype.getPoints = function( divisions, closedPath ) {
 				ty = aY + aRadius * Math.sin( angle );
 
 				//console.log('t', t, 'angle', angle, 'tx', tx, 'ty', ty);
-
 				points.push( new THREE.Vector2( tx, ty ) );
-
 			}
-
-			//console.log(points);
-
 		  break;
 
 		case THREE.PathActions.ELLIPSE:
@@ -636,24 +664,15 @@ Shape2d.prototype.getPoints = function( divisions, closedPath ) {
 					t = 1 - t;
 
 				}
-
 				angle = aStartAngle + t * deltaAngle;
 
 				tx = pos.x + xRadius * Math.cos( angle );
 				ty = pos.y + yRadius * Math.sin( angle );
-
 				//console.log('t', t, 'angle', angle, 'tx', tx, 'ty', ty);
-
 				points.push( new THREE.Vector2( tx, ty ) );
-
 			}
-
-			//console.log(points);
-
 		  break;
-
 		} // end switch
-
 	}
 
 
@@ -714,4 +733,47 @@ function Circle(center, radius)
 }
 Circle.prototype = Object.create( Shape2d.prototype );
 Circle.prototype.constructor = Circle;
+
+
+//TODO: find a way to make this work
+//TODO: how to deal with multiple shapes in one , like with text?
+
+function Text(text, size, font, weight, style)
+{
+    var text = text || "\uf004";//"\uf001";
+    var textShapes = THREE.FontUtils.generateShapes( text, {font:"fontawesome"} );
+    console.log("textShapes", textShapes);
+    
+    Shape2d.apply( this, arguments );
+    
+    this.fromThreeShape( textShapes[0] );
+    console.log("my actions", this.actions);
+    //this.actions = textShapes[0].actions;
+    //this.curves = textShapes[0].curves;
+	  
+}
+Text.prototype = Object.create( Shape2d.prototype );
+Text.prototype.constructor = Text;
+
+
+//FIXME! HAAACK ! not even 2d
+/*Text = function ( text, parameters ) {
+
+  text = "foobar";
+	textGeo = new THREE.TextGeometry( text, {
+
+					size: 50,
+					height: 10,
+
+					material: 0,
+					extrudeMaterial: 1
+
+				});
+	Part.call( this );
+	this.geometry = textGeo;
+};
+
+Text.prototype = Object.create( Part.prototype );
+Text.prototype.constructor = Text;*/
+
 
