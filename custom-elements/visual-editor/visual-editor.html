@@ -41,6 +41,12 @@
 
 <link rel="import" href="../../components/code-mirror/code-mirror.html">
 
+
+<script src="fonts/helvetiker_regular.typeface.js"></script>
+<script src="fonts/fontawesome_regular.typeface_2.js"></script>
+
+
+
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
 on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}" on-pointermove="{{ptrMove}}">
   <template >
@@ -268,11 +274,11 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       
       var points = [new THREE.Vector2(10,10), new THREE.Vector2(100,90) ,new THREE.Vector2(80,10)];
       var shape = new Shape2d();
-      shape.fromPoints(points);
-				/*shape.moveTo(  80, 20 );
+      //shape.fromPoints(points);
+			shape.moveTo(  80, 20 );
 				shape.lineTo(  40, 80 );
 				shape.lineTo( 120, 80 );
-				shape.lineTo(  80, 20 );*/
+				shape.bezierCurveTo( 80,20,80,20,  80, 20 );
 			this.viewer.addToScene( shape.generateRenderables() );
 			
 			/*var pt = new THREE.Vector2(10,20);
@@ -377,6 +383,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         if(type)
         {
           var instance = null;
+          var options = {};
           switch(type)
           {
             case "Cube":
@@ -410,6 +417,15 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     
             case "Polyline":
             
+            break;
+            
+            case "Text":
+              options = {text:"Yo",font:'helvetiker',size:20};
+              options = {text:"\uf112",font:'fontawesome',size:20};
+              
+              instance = new Text(options);
+              this.viewer.addToScene( instance.generateRenderables() );
+              
             break;
           }
           
