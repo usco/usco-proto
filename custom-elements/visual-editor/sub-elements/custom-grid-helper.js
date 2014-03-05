@@ -172,13 +172,16 @@ THREE.CustomGridHelper.prototype.setTextLocation = function(location) {
 };
 
 THREE.CustomGridHelper.prototype.resize = function(size) {
-  if (size !== this.size) {
+  if (size ) {
+    var size = Math.max(size,10);
+    this.step = Math.max(this.step,5);
     this.size = size;
     this.remove(this.mainGrid);
     this.remove(this.subGrid);
     this.remove(this.plane);
     return this._drawGrid();
   }
+  else{console.log("aaargh, size", size);}
 };
 
 THREE.CustomGridHelper.prototype._drawNumbering = function() {

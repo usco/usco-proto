@@ -21,6 +21,11 @@
         this.super();
 
                 this.object.receiveShadow = true;
+      },
+      stepChanged:function()
+      {
+        this.object.step = this.step;
+        this.object.resize(this.size);
       }
     });
   </script>
