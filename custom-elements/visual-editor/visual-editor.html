@@ -247,11 +247,13 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.viewer.addToScene( this.fakeCursor);
       
       
+      var points = [new THREE.Vector2(10,10), new THREE.Vector2(100,90) ,new THREE.Vector2(80,10)];
       var shape = new Shape2d();
-				shape.moveTo(  80, 20 );
+      shape.fromPoints(points);
+				/*shape.moveTo(  80, 20 );
 				shape.lineTo(  40, 80 );
 				shape.lineTo( 120, 80 );
-				shape.lineTo(  80, 20 );
+				shape.lineTo(  80, 20 );*/
 			this.viewer.addToScene( shape.generateRenderables() );
 			
 			/*var pt = new THREE.Vector2(10,20);
