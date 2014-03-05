@@ -100,6 +100,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     <polymer-localstorage name="usco-proto-settings-showAxes"   value="{{showAxes}}"></polymer-localstorage>
     <polymer-localstorage name="usco-proto-settings-autoRotate" value="{{autoRotate}}"></polymer-localstorage>
 
+    <!-- for various "visual" settings-->
+    <div style="position:absolute;left:30%;top:20px;z-index:9">
+        <span> Cursor </span>
+        Snap to grid <input type="checkbox" checked="{{cursorSettings.snapToGrid}}"> </input>
+        Snap transform <input type="checkbox" checked="{{cursorSettings.snapTransform}}"> </input>
+        Grid step <input type="number" value="{{gridSettings.step}}"></input>
+    </div>    
+    
     <!--various helpers-->
     <div id="codeGen" class="codeGen" style="position:absolute; right:10px;top:30px;z-index:3">
       <button on-click="{{generateCodeFromHistory}}"> Generate code from history </button>
@@ -131,7 +139,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
             <three-js-object helpersRoot>
               <three-axis-helper show="{{showAxes}}"> </three-axis-helper>
-              <grid-helper       show="{{showGrid}}"size="200" step="10" receiveShadow> </grid-helper>
+              <grid-helper       show="{{showGrid}}"size="200" step="{{gridSettings.step}}" receiveShadow> </grid-helper>
 
               <three-js-light kind="dir" color="0xffEEEE" intensity="0.2" castShadow y=50 z=300 > </three-js-light> 
                <three-js-light kind="ambient" color="0x161515" intensity="0.8"> </three-js-light>
@@ -160,6 +168,17 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     source:"//testing\n",
     altSource:"",
     
+    gridSettings:{step:10},
+    cursorSettings:{snapToGrid:false,snapTransform:true},
+    
+    observe: {
+      'gridSettings.step': 'gridSettingsChanged'
+    },
+    gridSettingsChanged:function()
+    {
+      console.log("grid settings changed");
+      this.transformControls.setSnap(this.gridSettings.step);
+    },
     ready:function()
     {
       //console.log("i am ready");
@@ -239,7 +258,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.transformControls = new THREE.TransformControls(this.viewer.camera, this.$.viewer);
       this.transformControls.setMode( "translate" );
       this.transformControls.setSpace("local");
-      //this.transformControls.setSnap(10);
+      this.transformControls.setSnap(this.gridSettings.step);
       this.viewer.updatables.push( this.transformControls.update ) ;
 
       var geometry = new THREE.Geometry();
