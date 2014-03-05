@@ -9,6 +9,7 @@ function Shape2d()
 {
   THREE.Shape.apply( this, arguments );
   this.id = Shape2d.__id++;
+  this.name = this.constructor.name;
   this.controlPoints = [];
   
   this.__visualContols = [];
@@ -266,6 +267,11 @@ Shape2d.prototype.generateRenderables = function()
     var points = this.createPointsGeometry();
 		var line = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 2 } ) );
 		var controlSize = 2;
+		
+		line.addEventListener('translated', function(event) {
+		  console.log("I AM BEEN TRANSLATED");
+	  });
+		
 
 		var self = this;			
 			function drawPointHelper( pt, color )
@@ -313,6 +319,7 @@ Shape2d.prototype.generateRenderables = function()
           var pt = args2;//new THREE.Vector2( args[ 0 ], args[ 1 ] )
           var helper = drawPointHelper(pt);
           helper.standInFor = pt;
+          helper.sourceParent = this;
           var pos = helper.position;
           pos.actionIndex =i;
           this.__visualContols.push( pos );
@@ -325,6 +332,7 @@ Shape2d.prototype.generateRenderables = function()
           var pt = args2;//new THREE.Vector2( args[ 0 ], args[ 1 ] )
           var helper = drawPointHelper(pt);
           helper.standInFor = pt;
+          helper.sourceParent = this;
           var pos = helper.position;
           pos.actionIndex =i;
           this.__visualContols.push( pos );
@@ -334,7 +342,10 @@ Shape2d.prototype.generateRenderables = function()
 			  case THREE.PathActions.QUADRATIC_CURVE_TO:
 			    var pt = args2;
           var helper = drawPointHelper(pt);
+          //we add information about the origins of the visual helper
           helper.standInFor = pt;
+          helper.sourceParent = this;
+          
           var pos = helper.position;
           pos.actionIndex =i;
           pos.argIndices = [2,3];
@@ -344,6 +355,7 @@ Shape2d.prototype.generateRenderables = function()
           pt = args3;
 			    var curveHelper = drawPointHelper(pt, 0xff00ff);
 			    curveHelper.standInFor = pt;
+			    curveHelper.sourceParent = this;
 			    pos = curveHelper.position;
 			    pos.actionIndex =i;
 			    pos.argIndices = [0,1];
@@ -357,7 +369,6 @@ Shape2d.prototype.generateRenderables = function()
 			    points.vertices.push( start );
 			    points.vertices.push( mid );
 			    points.vertices.push( end );
-			    console.log("points", points);
 			    var helperLine = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF00FF, linewidth: 2 } ) );
 			    line.add( helperLine );
 			    
@@ -370,9 +381,9 @@ Shape2d.prototype.generateRenderables = function()
           break;
 			  
 			  case THREE.PathActions.BEZIER_CURVE_TO:
-			    console.log("args", args);
 			    var pt = new THREE.Vector2( args[ 4 ], args[ 5 ] )
           var helper = drawPointHelper(pt);
+          helper.sourceParent = this;
           var pos = helper.position;
           pos.actionIndex =i;
           pos.argIndices = [4,5];
@@ -395,6 +406,7 @@ Shape2d.prototype.generateRenderables = function()
 			      var pt = args2;//new THREE.Vector2( args[ 0 ], args[ 1 ] )
             var helper = drawPointHelper(pt);
             helper.standInFor = pt;
+            helper.sourceParent = this;
             var pos = helper.position;
             pos.actionIndex =i;
             pos.argIndices = [0,1];
