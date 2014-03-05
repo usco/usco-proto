@@ -68,3 +68,7 @@ Various ui behaviour notes:
 - when deleting current selection we must:
  * detach the transform controls
  * reset the "context" menu to a neutral state
+ 
+ Notes about 2d shape editing:
+ -----------------------------
+ - deleting a control point will require a workaround to generate "operations" (and to generated code from it)
