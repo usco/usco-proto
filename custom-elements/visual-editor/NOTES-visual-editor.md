@@ -72,3 +72,4 @@ Various ui behaviour notes:
  Notes about 2d shape editing:
  -----------------------------
  - deleting a control point will require a workaround to generate "operations" (and to generated code from it)
+ - all "stand ins for" should provide a way to compute to (an back) the ACTUAL operation that took place?
