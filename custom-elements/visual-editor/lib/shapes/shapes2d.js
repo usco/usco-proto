@@ -64,19 +64,18 @@ Shape2d.prototype.fromExpression = function( expression )
 
 Shape2d.prototype.union = function ( otherShape2d)
 {
-
+    throw new Error("Not implemented yet");
 }
 
 Shape2d.prototype.subtract = function ( otherShape2d)
 {
-
+  throw new Error("Not implemented yet");
 }
 
 Shape2d.prototype.intersect = function ( otherShape2d)
 {
-
+  throw new Error("Not implemented yet");
 }
-
 
 
 Shape2d.prototype.moveTo= function(x,y)
@@ -84,8 +83,7 @@ Shape2d.prototype.moveTo= function(x,y)
   console.log("moveTo");
   var args = Array.prototype.slice.call( arguments );
   var startPoint = new THREE.Vector2( x, y );
-  //startPoint.index = this.actions.length;
-  //startPoint.curves = [];
+  startPoint.index = this.actions.length;
   this.controlPoints.push( startPoint );
   
 	this.actions.push( { action: THREE.PathActions.MOVE_TO, args: args, args2:startPoint } );
@@ -147,8 +145,7 @@ Shape2d.prototype.bezierCurveTo= function(aCP1x, aCP1y, aCP2x, aCP2y, aX, aY)
 
 	var lastArgs = this.actions[ this.actions.length - 1 ].args2;
   var prevPoint = lastArgs;
-	//var x0 = lastargs[ lastargs.length - 2 ];
-	//var y0 = lastargs[ lastargs.length - 1 ];
+
 	var bezierCurveControlPoint1 = new THREE.Vector2( aCP1x, aCP1y );
   var bezierCurveControlPoint2 = new THREE.Vector2( aCP2x, aCP2y );
 	var args3 = [bezierCurveControlPoint1,bezierCurveControlPoint2];
@@ -159,7 +156,7 @@ Shape2d.prototype.bezierCurveTo= function(aCP1x, aCP1y, aCP2x, aCP2y, aX, aY)
 											endPoint );
 	this.curves.push( curve );
 
-	this.actions.push( { action: THREE.PathActions.BEZIER_CURVE_TO, args: args, args2:endPoint,args3:args3 } );
+	this.actions.push( { action: THREE.PathActions.BEZIER_CURVE_TO, args: args, args2:endPoint,args3:bezierCurveControlPoint1,args4:bezierCurveControlPoint2 } );
 } 
 
 // FUTURE: Change the API or follow canvas API?
@@ -229,7 +226,6 @@ Shape2d.prototype.update = function()
 {
   var controlPoints = this.__visualContols;
   var actions = this.actions;
-  return;
   
   for(var i=0;i<controlPoints.length;i++)
   {
@@ -267,7 +263,7 @@ Shape2d.prototype.generateRenderables = function()
 
     var points = this.createPointsGeometry();
 		var line = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 2 } ) );
-		var controlSize = 2;
+		var controlSize = 1.5;
 		
 		line.addEventListener('translated', function(event) {
 		  console.log("I AM BEEN TRANSLATED");
@@ -286,7 +282,7 @@ Shape2d.prototype.generateRenderables = function()
 			  
 			  //for testing: update the 2d point the helper stands in for based on the helper's position
 			  pointHelper.addEventListener('translated', function(event) {
-			    //console.log("control point translated",event,this);
+			    console.log("control point translated",event,this);
 			    this.standInFor.x = this.position.x;
 			    this.standInFor.y = this.position.y;
 			    if(this.linkedLines)
@@ -341,6 +337,7 @@ Shape2d.prototype.generateRenderables = function()
 			    break;
 			   
 			  case THREE.PathActions.QUADRATIC_CURVE_TO:
+			  
 			    var pt = args2;
           var helper = drawPointHelper(pt);
           //we add information about the origins of the visual helper
@@ -382,22 +379,31 @@ Shape2d.prototype.generateRenderables = function()
           break;
 			  
 			  case THREE.PathActions.BEZIER_CURVE_TO:
-			    var pt = new THREE.Vector2( args[ 4 ], args[ 5 ] )
+			    console.log("case BEZIERTo, args", args2, args3);
+			    var pt = args2;//new THREE.Vector2( args[ 4 ], args[ 5 ] )
           var helper = drawPointHelper(pt);
+          helper.standInFor = pt;
           helper.sourceParent = this;
           var pos = helper.position;
           pos.actionIndex =i;
           pos.argIndices = [4,5];
           this.__visualContols.push( pos );
-          var v3 = pos;
 			    
-			    pt = new THREE.Vector2( args[ 2 ], args[ 3 ] );
-			    var bezierHelper2 =drawPointHelper(pt, 0xff00ff);
-			    pos = bezierHelper2.position;
+			    pt = item.args3; //new THREE.Vector2( args[ 2 ], args[ 3 ] );
+			    var bezierHelper = drawPointHelper(pt, 0xff00ff);
+			    bezierHelper.standInFor = pt;
+          bezierHelper.sourceParent = this;
+			    pos = bezierHelper.position;
 			    pos.actionIndex =i;
 			    pos.argIndices = [2,3];
 			    this.__visualContols.push( pos );
-			    var v2 = pos;
+			    
+			    pt = item.args4; //new THREE.Vector2( args[ 2 ], args[ 3 ] );
+			    var bezierHelper2 = drawPointHelper(pt, 0xff00ff);
+			    bezierHelper2.standInFor = pt;
+          bezierHelper2.sourceParent = this;
+			    pos = bezierHelper2.position;
+			    this.__visualContols.push( pos );
 			    
 			    //line helpers
 			    break;
@@ -446,11 +452,11 @@ Shape2d.prototype.generateRenderables = function()
 
 Shape2d.prototype.fromThreeShape = function(shape)
 {
-  console.log("here",shape);
+  console.log("source shape", shape);
   for(var i=0; i<shape.actions.length;i++)
   {
     var action = shape.actions[i];
-    console.log("action", action);
+    //console.log("action", action.action);
     switch(action.action)
     {
       case THREE.PathActions.MOVE_TO:
@@ -463,6 +469,9 @@ Shape2d.prototype.fromThreeShape = function(shape)
         this.quadraticCurveTo(action.args[0], action.args[1],action.args[2], action.args[3]  );
       break;
       case THREE.PathActions.BEZIER_CURVE_TO:
+        //console.log("action, bezier", action.args);
+        //this.quadraticCurveTo(Math.abs(action.args[0]), Math.abs(action.args[1]), Math.abs(action.args[4]), Math.abs(action.args[5])  );
+        //this.bezierCurveTo(Math.abs(action.args[0]), Math.abs(action.args[1]),Math.abs(action.args[2]), Math.abs(action.args[3]), Math.abs(action.args[4]), Math.abs(action.args[5]) );
         this.bezierCurveTo(action.args[0], action.args[1], action.args[2], action.args[3], action.args[4], action.args[5]  );
       break; 
       case THREE.PathActions.ELLIPSE:
@@ -550,16 +559,22 @@ Shape2d.prototype.getPoints = function( divisions, closedPath ) {
 			cpx = args2.x;
 			cpy = args2.y;
 
+      console.log("generating points from bezier", args2, args3);
+      
 			//cpx1 = args[ 0 ];
 			//cpy1 = args[ 1 ];
-			cpx1 = args3[0].x;
-			cpy1 = args3[0].y;
+			
+			cpx1 = args3.x;
+			cpy1 = args3.y;
 
 			//cpx2 = args[ 2 ];
 			//cpy2 = args[ 3 ];
+			var args4 = item.args4;
+			cpx2 = args4.x;
+			cpy2 = args4.y;
 			
-			cpx2 = args3[1].x;
-			cpy2 = args3[1].y;
+			//cpx1 = cpx;
+			//cpy1 = cpy;
 			
 
 			if ( points.length > 0 ) {
@@ -571,9 +586,12 @@ Shape2d.prototype.getPoints = function( divisions, closedPath ) {
 
 				laste = this.actions[ i - 1 ].args2;
 
-				cpx0 = laste.x;//laste[ laste.length - 2 ];
-				cpy0 = laste.y;//laste[ laste.length - 1 ];
+				cpx0 = laste[ laste.length - 2 ]; //laste.x;
+				cpy0 = laste[ laste.length - 1 ];//laste.y;
 			}
+			
+			//cpx2 = cpx0;
+			//cpy1 = cpy0;
 
 			for ( j = 1; j <= divisions; j ++ ) {
 
@@ -738,18 +756,23 @@ Circle.prototype.constructor = Circle;
 //TODO: find a way to make this work
 //TODO: how to deal with multiple shapes in one , like with text?
 
-function Text(text, size, font, weight, style)
+function Text(options)
 {
-    var text = text || "\uf004";//"\uf001";
-    var textShapes = THREE.FontUtils.generateShapes( text, {font:"fontawesome"} );
+    var options = options || {};
+    var text = options.text || "foo";//"\uf001";
+    var size = options.size || 20;
+    var font = options.font || "helvetiker";//"fontawesome";
+    var weight = options.weight || "";
+    
+    console.log("options", options, font, size, text);
+    
+    var textShapes = THREE.FontUtils.generateShapes( text, {font:font,size:size} );
     console.log("textShapes", textShapes);
     
-    Shape2d.apply( this, arguments );
+    Shape2d.call( this );
     
     this.fromThreeShape( textShapes[0] );
     console.log("my actions", this.actions);
-    //this.actions = textShapes[0].actions;
-    //this.curves = textShapes[0].curves;
 	  
 }
 Text.prototype = Object.create( Shape2d.prototype );
@@ -759,9 +782,9 @@ Text.prototype.constructor = Text;
 //FIXME! HAAACK ! not even 2d
 /*Text = function ( text, parameters ) {
 
-  text = "foobar";
+  text = "\uf112";
 	textGeo = new THREE.TextGeometry( text, {
-
+          font:"fontawesome",
 					size: 50,
 					height: 10,
 
@@ -775,5 +798,4 @@ Text.prototype.constructor = Text;
 
 Text.prototype = Object.create( Part.prototype );
 Text.prototype.constructor = Text;*/
-
 
