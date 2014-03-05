@@ -10,11 +10,15 @@ function Shape2d()
   THREE.Shape.apply( this, arguments );
   this.id = Shape2d.__id++;
   this.controlPoints = [];
+  
+  this.__visualContols = [];
 }
 Shape2d.prototype = Object.create( THREE.Shape.prototype );
 Shape2d.__id = 0;
 
 //this needs to inject new lineTo, bezierCurveTo elements
+//it might require some additional data from the visual editing side of things
+// ie finding out which curve/action we want to split/subdivide
 Shape2d.prototype.addPoint = function(x, y)
 {
   throw new Error("Not implemented yet");
@@ -56,6 +60,23 @@ Shape2d.prototype.fromExpression = function( expression )
 {
   var expression = function (x) { return Math.cos(x); };
 }
+
+Shape2d.prototype.union = function ( otherShape2d)
+{
+
+}
+
+Shape2d.prototype.subtract = function ( otherShape2d)
+{
+
+}
+
+Shape2d.prototype.intersect = function ( otherShape2d)
+{
+
+}
+
+
 
 Shape2d.prototype.moveTo= function(x,y)
 {
@@ -140,6 +161,63 @@ Shape2d.prototype.bezierCurveTo= function(aCP1x, aCP1y, aCP2x, aCP2y, aX, aY)
 	this.actions.push( { action: THREE.PathActions.BEZIER_CURVE_TO, args: args, args2:endPoint,args3:args3 } );
 } 
 
+// FUTURE: Change the API or follow canvas API?
+
+Shape2d.prototype.arc = function ( aX, aY, aRadius,
+									  aStartAngle, aEndAngle, aClockwise ) {
+
+	var lastargs = this.actions[ this.actions.length - 1].args;
+	var x0 = lastargs[ lastargs.length - 2 ];
+	var y0 = lastargs[ lastargs.length - 1 ];
+
+	this.absarc(aX + x0, aY + y0, aRadius,
+		aStartAngle, aEndAngle, aClockwise );
+
+ };
+
+ Shape2d.prototype.absarc = function ( aX, aY, aRadius,
+									  aStartAngle, aEndAngle, aClockwise ) {
+	  this.absellipse(aX, aY, aRadius, aRadius, aStartAngle, aEndAngle, aClockwise);
+ };
+
+Shape2d.prototype.ellipse = function ( aX, aY, xRadius, yRadius,
+									  aStartAngle, aEndAngle, aClockwise ) {
+
+	var lastargs = this.actions[ this.actions.length - 1].args;
+	var x0 = lastargs[ lastargs.length - 2 ];
+	var y0 = lastargs[ lastargs.length - 1 ];
+
+	this.absellipse(aX + x0, aY + y0, xRadius, yRadius,
+		aStartAngle, aEndAngle, aClockwise );
+
+ };
+
+
+Shape2d.prototype.absellipse = function ( aX, aY, xRadius, yRadius,
+									  aStartAngle, aEndAngle, aClockwise ) {
+
+	var args = Array.prototype.slice.call( arguments );
+	
+	var endPoint = new THREE.Vector2(aX,aY);
+  endPoint.index = this.actions.length;
+  this.controlPoints.push( endPoint );
+  
+  //var radiusControlPoint = new THREE.Vector2(xRadius, yRadius);
+	
+	
+	var curve = new THREE.EllipseCurve( endPoint.x, endPoint.y, xRadius, yRadius,
+									aStartAngle, aEndAngle, aClockwise );
+	this.curves.push( curve );
+
+	var lastPoint = curve.getPoint(1);
+	args.push(lastPoint.x);
+	args.push(lastPoint.y);
+	
+
+	this.actions.push( { action: THREE.PathActions.ELLIPSE, args: args, args2:lastPoint } );
+
+ };
+
 
 Shape2d.prototype.createPointsGeometry = function(divisions)
 {
@@ -148,7 +226,7 @@ Shape2d.prototype.createPointsGeometry = function(divisions)
 
 Shape2d.prototype.update = function()
 {
-  var controlPoints = this.superDuperControls;
+  var controlPoints = this.__visualContols;
   var actions = this.actions;
   
   for(var i=0;i<controlPoints.length;i++)
@@ -184,8 +262,6 @@ Shape2d.prototype.controlPointChanged = function(event)
 
 Shape2d.prototype.generateRenderables = function()
 {
-    this.superDuperControls = [];
-
 
     var points = this.createPointsGeometry();
 		var line = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 2 } ) );
@@ -206,6 +282,10 @@ Shape2d.prototype.generateRenderables = function()
 			    //console.log("control point translated",event,this);
 			    this.standInFor.x = this.position.x;
 			    this.standInFor.y = this.position.y;
+			    if(this.linkedLines)
+			    {
+			      this.linkedLines.geometry.verticesNeedUpdate = true;
+			    }
 			  });
 			  
 
@@ -217,7 +297,8 @@ Shape2d.prototype.generateRenderables = function()
 			  
 			  return pointHelper;
 			}
-				for(var i=0;i<this.actions.length;i++)
+		  var prevEndHelper = null;//pointer to the helper fo the end of the last "curve"/action
+		  for(var i=0;i<this.actions.length;i++)
 			{
 			    item = this.actions[ i ];
 
@@ -234,7 +315,9 @@ Shape2d.prototype.generateRenderables = function()
           helper.standInFor = pt;
           var pos = helper.position;
           pos.actionIndex =i;
-          this.superDuperControls.push( pos );
+          this.__visualContols.push( pos );
+          
+          prevEndHelper = helper;
 			    break;
 			    
 		    case THREE.PathActions.LINE_TO:
@@ -244,27 +327,46 @@ Shape2d.prototype.generateRenderables = function()
           helper.standInFor = pt;
           var pos = helper.position;
           pos.actionIndex =i;
-          this.superDuperControls.push( pos );
+          this.__visualContols.push( pos );
+          prevEndHelper = helper;
 			    break;
 			   
 			  case THREE.PathActions.QUADRATIC_CURVE_TO:
-			    var pt = args2;//new THREE.Vector2( args[ 2 ], args[ 3 ] )
+			    var pt = args2;
           var helper = drawPointHelper(pt);
           helper.standInFor = pt;
           var pos = helper.position;
           pos.actionIndex =i;
           pos.argIndices = [2,3];
-          this.superDuperControls.push( pos );
+          this.__visualContols.push( pos );
           
           var args3 = item.args3;
-          pt = args3;//new THREE.Vector2( args[ 0 ], args[ 1] );
-			    var curveHelper =drawPointHelper(pt, 0xff00ff);
+          pt = args3;
+			    var curveHelper = drawPointHelper(pt, 0xff00ff);
 			    curveHelper.standInFor = pt;
 			    pos = curveHelper.position;
 			    pos.actionIndex =i;
 			    pos.argIndices = [0,1];
-			    this.superDuperControls.push( pos );
+			    this.__visualContols.push( pos );
+			    
+			    //line helpers
+			    var start = prevEndHelper.position;
+			    var mid = curveHelper.position;
+			    var end = helper.position;
+			    var points = new THREE.Geometry();
+			    points.vertices.push( start );
+			    points.vertices.push( mid );
+			    points.vertices.push( end );
+			    console.log("points", points);
+			    var helperLine = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF00FF, linewidth: 2 } ) );
+			    line.add( helperLine );
+			    
+			    //flag helperLine as linked to the various helpers, so it can be auto-updated when they change position
+			    helper.linkedLines = helperLine;
+			    curveHelper.linkedLines = helperLine;
+			    prevEndHelper.linkedLines = helperLine;
           
+          prevEndHelper = helper;
           break;
 			  
 			  case THREE.PathActions.BEZIER_CURVE_TO:
@@ -274,54 +376,29 @@ Shape2d.prototype.generateRenderables = function()
           var pos = helper.position;
           pos.actionIndex =i;
           pos.argIndices = [4,5];
-          this.superDuperControls.push( pos );
+          this.__visualContols.push( pos );
           var v3 = pos;
-			  
-			    /*pt = new THREE.Vector2( args[ 0 ], args[ 1 ] );
-			    var helper = drawPointHelper(pt, 0xff00ff);
-			    var pos = helper.position;
-			    pos.actionIndex =i;
-			    pos.argIndices = [0,1];
-			    this.superDuperControls.push( pos );
-			    var v1 = pos;*/
 			    
 			    pt = new THREE.Vector2( args[ 2 ], args[ 3 ] );
 			    var bezierHelper2 =drawPointHelper(pt, 0xff00ff);
 			    pos = bezierHelper2.position;
 			    pos.actionIndex =i;
 			    pos.argIndices = [2,3];
-			    this.superDuperControls.push( pos );
+			    this.__visualContols.push( pos );
 			    var v2 = pos;
 			    
 			    //line helpers
-			    /*var start = v0;
-			    var end = v1;
-			    var points = new THREE.Geometry();
-			    points.vertices.push(  start );
-			    points.vertices.push( end );
-			    var helperLine = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF00FF, linewidth: 2 } ) );
-			    line.add( helperLine )*/
-			    
-			    var start = v2.clone();
-			    var end = v3.clone();
-			    var points = new THREE.Geometry();
-			    points.vertices.push( start.sub(bezierHelper2.position) );
-			    points.vertices.push( end );
-			    var helperLine = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF00FF, linewidth: 2 } ) );
-          
-          //add bezier control point to point
-          //bezierHelper2.position = new THREE.Vector3().copy(bezierHelper2.position).sub( helper.position );
-          helper.add( bezierHelper2 );
-          //bezierHelper2.add( helperLine );
 			    break;
-			    case THREE.PathActions.ELLIPSE:
+			  case THREE.PathActions.ELLIPSE:
 			      //aX, aY, xRadius, yRadius, aStartAngle, aEndAngle, aClockwise
-			      var pt = new THREE.Vector2( args[ 0 ], args[ 1 ] )
+			      console.log("elipse", args2);
+			      var pt = args2;//new THREE.Vector2( args[ 0 ], args[ 1 ] )
             var helper = drawPointHelper(pt);
+            helper.standInFor = pt;
             var pos = helper.position;
             pos.actionIndex =i;
             pos.argIndices = [0,1];
-            this.superDuperControls.push( pos );
+            this.__visualContols.push( pos );
             
             //radius controls
             pt = new THREE.Vector2( args[ 2 ], args[ 3 ] );
@@ -329,7 +406,8 @@ Shape2d.prototype.generateRenderables = function()
 			      pos = radiusHelper.position;
 			      pos.actionIndex =i;
 			      pos.argIndices = [2,3];
-			      this.superDuperControls.push( pos );
+			      this.__visualContols.push( pos );
+			      
 			      
 			      //angle controls
             pt = new THREE.Vector2( args[ 4 ], args[ 5 ] );
@@ -337,58 +415,14 @@ Shape2d.prototype.generateRenderables = function()
 			      pos = angleHelper.position;
 			      pos.actionIndex =i;
 			      pos.argIndices = [4,5];
-			      this.superDuperControls.push( pos );
+			      this.__visualContols.push( pos );
             
+            prevEndHelper = helper;
             
 			    break;
 			  }
+			  
 			}
-			
-		
-
-      /*			
-			for(var i=0;i<this.curves.length;i++)
-			{
-        if(this.curves[i] instanceof THREE.LineCurve)
-        {
-          var pt = this.curves[i].v2;
-          var pos = drawPointHelper(pt);
-          
-          pos.original = pt;
-          pos.originalCurve = this.curves[i];
-          pos.curveIndex =1;
-          
-          this.superDuperControls.push( pos );
-          
-        }
-        if(this.curves[i] instanceof THREE.CubicBezierCurve)
-        {
-          var pt = this.curves[i].v3;
-          drawPointHelper(pt);
-			    
-			    var pt = this.curves[i].v1;
-			    drawPointHelper(pt, 0xff00ff);
-			    var pt = this.curves[i].v2;
-			    drawPointHelper(pt, 0xff00ff);
-			    
-			    //line helpers
-			    var start = this.curves[i].v0;
-			    var end = this.curves[i].v1;
-			    var points = new THREE.Geometry();
-			    points.vertices.push(  new THREE.Vector3(start.x,start.y,0) );
-			    points.vertices.push( new THREE.Vector3(end.x,end.y,0) );
-			    var helperLine = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF00FF, linewidth: 2 } ) );
-			    line.add( helperLine )
-			    
-			    var start = this.curves[i].v2;
-			    var end = this.curves[i].v3;
-			    var points = new THREE.Geometry();
-			    points.vertices.push(  new THREE.Vector3(start.x,start.y,0) );
-			    points.vertices.push( new THREE.Vector3(end.x,end.y,0) );
-			    var helperLine = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF00FF, linewidth: 2 } ) );
-          line.add( helperLine )
-        }
-			}*/
 	
 	  //flag the visual representation as comming from this shape2D
 	  line.sourceElement = this;
@@ -579,6 +613,8 @@ Shape2d.prototype.getPoints = function( divisions, closedPath ) {
 			var angle;
 			var tdivisions = divisions * 2;
 
+      var pos = args2;
+
 			for ( j = 1; j <= tdivisions; j ++ ) {
 
 				t = j / tdivisions;
@@ -591,8 +627,8 @@ Shape2d.prototype.getPoints = function( divisions, closedPath ) {
 
 				angle = aStartAngle + t * deltaAngle;
 
-				tx = aX + xRadius * Math.cos( angle );
-				ty = aY + yRadius * Math.sin( angle );
+				tx = pos.x + xRadius * Math.cos( angle );
+				ty = pos.y + yRadius * Math.sin( angle );
 
 				//console.log('t', t, 'angle', angle, 'tx', tx, 'ty', ty);
 
