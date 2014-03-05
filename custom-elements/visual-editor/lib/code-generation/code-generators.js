@@ -71,6 +71,9 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
   var type = operation.type;
   var value = operation.value;
 
+  //we apply the operations to the actual object, not its visual representation
+  if(target.sourceElement) target = target.sourceElement;
+  
   var targetName = target.name.toLowerCase()+new String(target.id);//    this.";//target.name;//@
   var code = "";
   var lineCap = ";\n";
@@ -85,7 +88,6 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
       //TODO: how to deal with this ?
     break;
     case "extrusion":
-      console.log("extrusio", operation);
       var type = target.constructor.name || "foo";
       var sourceShapeName = operation.sourceShape.name.toLowerCase()+new String(operation.sourceShape.id);
       var strValue = JSON.stringify(operation.value);
@@ -100,7 +102,19 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
     break;
     case "translation":
       if (!("code" in target)){ target.code = ""};
+      console.log("target name", target);
+      if(target.name == "Shape2dPointHelper")
+      {
+        console.log("we moved a shape2d helper",target.standInFor,target.sourceParent);
+        var sourceParentName = target.sourceParent.name.toLowerCase()+target.sourceParent.id;
+        var id = target.standInFor.index;
+        code += sourceParentName+".controlPoints["+ id +"].translate("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+",)"+lineCap;
+        
+      }
+      else
+      {
       code += targetName+".translate("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+")"+lineCap;
+      }
     break;
     case "scaling":
       if (!("code" in target)){ target.code = ""};
