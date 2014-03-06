@@ -222,27 +222,29 @@ Shape2d.prototype.createPointsGeometry = function(divisions)
     return THREE.Shape.prototype.createPointsGeometry.call(this, divisions);
 }
 
-Shape2d.prototype.update = function()
+
+Shape2d.prototype.update = function( parameters )
 {
+  
+  for (var key in parameters)
+  {
+    if (parameters.hasOwnProperty(key) && this.hasOwnProperty(key) )
+    {
+      //console.log("updating"+key + " -> " + parameters[key]);
+      this[key] = parameters[key];
+    }
+  }
+
   var controlPoints = this.__visualContols;
   var actions = this.actions;
   
-  for(var i=0;i<controlPoints.length;i++)
+  /*for(var i=0;i<controlPoints.length;i++)
   {
-    /*var controlPoint = controlPoints[i];
+    var controlPoint = controlPoints[i];
     var argIndices = controlPoint.argIndices || [0,1];
     this.actions[controlPoint.actionIndex].args[argIndices[0]] = controlPoint.x;
-    this.actions[controlPoint.actionIndex].args[argIndices[1]] = controlPoint.y;*/
-    
-    //console.log("controlPoint",controlPoints[i],"curve",controlPoints[i].originalCurve);
-    /*controlPoints[i].original.x =  controlPoints[i].x;
-    controlPoints[i].original.y =  controlPoints[i].y;
-    
-    controlPoints[i].originalCurve.needsUpdate = true;
-    controlPoints[i].originalCurve.v2.copy( controlPoints[i].original );
-    
-    this.curves[ controlPoints[i].curveIndex ] = new THREE.LineCurve(controlPoints[i].originalCurve.v1,controlPoints[i].original);*/
-  }
+    this.actions[controlPoint.actionIndex].args[argIndices[1]] = controlPoint.y;
+  }*/
   this.cacheLengths = null;
   this.needsUpdate = true;
   
@@ -251,6 +253,7 @@ Shape2d.prototype.update = function()
   
   var points = this.createPointsGeometry();
   this.renderable.geometry = points;
+  
 }
 
 Shape2d.prototype.controlPointChanged = function(event)
@@ -258,39 +261,31 @@ Shape2d.prototype.controlPointChanged = function(event)
   console.log("control point changed", event);
 }
 
-Shape2d.prototype.generateRenderables = function()
+
+Shape2d.prototype.generateVisualControlPoints = function()
 {
-
-    var points = this.createPointsGeometry();
-		var line = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 2 } ) );
-		var controlSize = 1.5;
-		
-		line.addEventListener('translated', function(event) {
-		  console.log("I AM BEEN TRANSLATED");
+  var line = this.renderable;
+  var self = this;			
+  var controlSize = 1.5;
+	function drawPointHelper( pt, color )
+	{
+	  var color = color || 0x3333FF;
+    var pointHelper = new THREE.Mesh(new THREE.CubeGeometry(controlSize,controlSize,controlSize), new THREE.MeshBasicMaterial({color:color}));
+    pointHelper.name = "Shape2dPointHelper";
+    var position = THREE.Vector3.fromVector2( pt ); //new THREE.Vector3(pt.x, pt.y,0)
+	  pointHelper.position= position;
+	  line.add( pointHelper );
+	  
+	  //for testing: update the 2d point the helper stands in for based on the helper's position
+	  pointHelper.addEventListener('translated', function(event) {
+	    //console.log("control point translated",event,this);
+	    this.standInFor.x = this.position.x;
+	    this.standInFor.y = this.position.y;
+	    if(this.linkedLines)
+	    {
+	      this.linkedLines.geometry.verticesNeedUpdate = true;
+	    }
 	  });
-		
-
-		var self = this;			
-			function drawPointHelper( pt, color )
-			{
-			  var color = color || 0x3333FF;
-        var pointHelper = new THREE.Mesh(new THREE.CubeGeometry(controlSize,controlSize,controlSize), new THREE.MeshBasicMaterial({color:color}));
-        pointHelper.name = "Shape2dPointHelper";
-        var position = THREE.Vector3.fromVector2( pt ); //new THREE.Vector3(pt.x, pt.y,0)
-			  pointHelper.position= position;
-			  line.add( pointHelper );
-			  
-			  //for testing: update the 2d point the helper stands in for based on the helper's position
-			  pointHelper.addEventListener('translated', function(event) {
-			    //console.log("control point translated",event,this);
-			    this.standInFor.x = this.position.x;
-			    this.standInFor.y = this.position.y;
-			    if(this.linkedLines)
-			    {
-			      this.linkedLines.geometry.verticesNeedUpdate = true;
-			    }
-			  });
-			  
 
 			  pointHelper.addEventListener('deleted', function(event) {
 			    console.log("control point deleted",this);
@@ -443,9 +438,22 @@ Shape2d.prototype.generateRenderables = function()
 			  
 			}
 	
+}
+
+Shape2d.prototype.generateRenderables = function()
+{
+    var points = this.createPointsGeometry();
+		var line = new THREE.Line( points, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 2 } ) );
+		
+		line.addEventListener('translated', function(event) {
+		  console.log("I AM BEEN TRANSLATED");
+	  });
+	  
 	  //flag the visual representation as comming from this shape2D
 	  line.sourceElement = this;
 	  this.renderable = line;
+	  this.generateVisualControlPoints(); 
+	  
 	  return this.renderable;
 }
 
@@ -759,10 +767,10 @@ Circle.prototype.constructor = Circle;
 function Text(options)
 {
     var options = options || {};
-    var text = options.text || "foo";//"\uf001";
-    var size = options.size || 20;
-    var font = options.font || "helvetiker";//"fontawesome";
-    var weight = options.weight || "";
+    var text = this.text = options.text || "foo";//"\uf001";
+    var size = this.size = options.size || 20;
+    var font = this.font = options.font || "helvetiker";//"fontawesome";
+    var weight = this.weight = options.weight || "";
     
     if(font == "fontawesome")
     {
@@ -792,6 +800,37 @@ function Text(options)
 }
 Text.prototype = Object.create( Shape2d.prototype );
 Text.prototype.constructor = Text;
+
+Text.prototype.update=function( parameters )
+{
+  for(var i=0;i< this.renderable.children.length;i++)
+  {
+    var child = this.renderable.children[i];
+    this.renderable.remove( child );
+  }
+  
+  Shape2d.prototype.update.call(this, parameters);
+  
+  if(this.font == "fontawesome")
+  {
+    this.text = unescape('%u' + this.text);
+  }
+  
+  //TODO: only do this if something changed!
+  this.actions = [];
+  this.curves = [];
+  this.controlPoints = [];
+  this.__visualContols = [];
+  
+  var textShapes = THREE.FontUtils.generateShapes( this.text, {font:this.font,size:this.size} );
+  for(var i=0;i<textShapes.length;i++)
+  {
+      this.fromThreeShape( textShapes[i] );
+  }
+  this.generateVisualControlPoints();
+  
+  Shape2d.prototype.update.call(this, parameters);
+}
 
 
 //FIXME! HAAACK ! not even 2d
