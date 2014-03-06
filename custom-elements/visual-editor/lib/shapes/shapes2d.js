@@ -282,7 +282,7 @@ Shape2d.prototype.generateRenderables = function()
 			  
 			  //for testing: update the 2d point the helper stands in for based on the helper's position
 			  pointHelper.addEventListener('translated', function(event) {
-			    console.log("control point translated",event,this);
+			    //console.log("control point translated",event,this);
 			    this.standInFor.x = this.position.x;
 			    this.standInFor.y = this.position.y;
 			    if(this.linkedLines)
@@ -456,7 +456,7 @@ Shape2d.prototype.fromThreeShape = function(shape)
   for(var i=0; i<shape.actions.length;i++)
   {
     var action = shape.actions[i];
-    //console.log("action", action.action);
+    console.log("action", action.action);
     switch(action.action)
     {
       case THREE.PathActions.MOVE_TO:
@@ -764,6 +764,10 @@ function Text(options)
     var font = options.font || "helvetiker";//"fontawesome";
     var weight = options.weight || "";
     
+    if(font == "fontawesome")
+    {
+      text = unescape('%u' + text);
+    }
     console.log("options", options, font, size, text);
     
     var textShapes = THREE.FontUtils.generateShapes( text, {font:font,size:size} );
@@ -771,8 +775,19 @@ function Text(options)
     
     Shape2d.call( this );
     
-    this.fromThreeShape( textShapes[0] );
-    console.log("my actions", this.actions);
+    for(var i=0;i<textShapes.length;i++)
+    {
+        this.fromThreeShape( textShapes[i] );
+    }
+
+    //console.log("my actions", textShapes[0].actions, this.actions);
+    //console.log("my curves", textShapes[0].curves, this.curves);
+    
+    for(var i=0;i<textShapes[0].holes;i++)
+    {
+      this.holes.push( textShapes[0].holes[i] );
+    }
+    //console.log("text", this);
 	  
 }
 Text.prototype = Object.create( Shape2d.prototype );
@@ -780,17 +795,21 @@ Text.prototype.constructor = Text;
 
 
 //FIXME! HAAACK ! not even 2d
-/*Text = function ( text, parameters ) {
+/*Text = function ( options ) {
 
-  text = "\uf112";
+  var options = options || {};
+    var text = options.text || "foo";//"\uf001";
+    var size = options.size || 20;
+    var font = options.font || "helvetiker";//"fontawesome";
+    var weight = options.weight || "";
+    
+    
 	textGeo = new THREE.TextGeometry( text, {
-          font:"fontawesome",
-					size: 50,
+          font:font,
+					size: size,
 					height: 10,
-
 					material: 0,
 					extrudeMaterial: 1
-
 				});
 	Part.call( this );
 	this.geometry = textGeo;
