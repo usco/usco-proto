@@ -129,7 +129,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     </code-mirror>
 
     <!--testing editing of 2d shapes-->
-    <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:500px;top:30px;z-index:3">
+    <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:20px;top:300px;z-index:3">
+      <div>Text:<input type="text" value="{{testText}}"> </input></div>
+      <div>Size:<input type="number" value="{{textSize}}"> </input></div>
+      <div>Font:<select value="{{textFont}}"><option value="helvetiker">Helvetiker</option> <option value="fontawesome">Font Awesome</option></select></div>
     </div>
 
     <three-js postProcess fullscreen="{{fullscreen}}" 
@@ -180,6 +183,11 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     observe: {
       'gridSettings.step': 'gridSettingsChanged'
     },
+    
+    textSize:10,
+    testText:"foo",
+    textFont:'helvetiker',
+    
     gridSettingsChanged:function()
     {
       console.log("grid settings changed");
@@ -420,8 +428,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             break;
             
             case "Text":
-              options = {text:"Yo",font:'helvetiker',size:20};
-              options = {text:"\uf112",font:'fontawesome',size:20};
+              options = {text:this.testText,font:this.textFont,size:this.textSize};
+              //options = {text:"\uf112",font:'fontawesome',size:20};
               
               instance = new Text(options);
               this.viewer.addToScene( instance.generateRenderables() );
@@ -461,7 +469,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               this.selectedObjects=[instance];
               }
             }
-            this.commandManager.addCommand( new Creation(instance, instance.parent) );
+            this.commandManager.addCommand( new Creation(instance, instance.parent, options) );
             console.log("instance", instance, this.viewer.scene);
           }
         }
