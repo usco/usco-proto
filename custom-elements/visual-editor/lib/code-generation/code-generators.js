@@ -82,7 +82,20 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
   {
     case "creation":
       var type = target.constructor.name || "foo";
-      code += "var "+targetName+" = new "+ type +"()"+lineCap+"\n";
+      
+      
+      //TODO: refactor: this same code is present multiple times
+      var strValue = "";
+      
+      if( Object.keys(operation.value).length !== 0 )
+      {
+        var strValue = JSON.stringify(operation.value);
+        strValue.replace(/\\"/g,"\uFFFF"); //U+ FFFF
+        strValue = strValue.replace(/\"([^"]+)\":/g,"$1:").replace(/\uFFFF/g,"\\\"");
+      }
+      
+      
+      code += "var "+targetName+" = new "+ type +"("+strValue+")"+lineCap+"\n";
     break;
     case "deletion":
       //TODO: how to deal with this ?
