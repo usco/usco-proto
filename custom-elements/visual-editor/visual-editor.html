@@ -3,6 +3,9 @@
 
 <link rel="import" href="../../components/usco-polymer-three-js/three-js.html">
 <link rel="import" href="../shape-creator/shape-creator.html">
+<link rel="import" href="../shape-creator/cube-creator.html">
+<link rel="import" href="../shape-creator/text-editor.html">
+
 
 <link rel="import" href="./sub-elements/grid-helper.html">
 <link rel="import" href="./sub-elements/drag-drop.html">
@@ -130,9 +133,21 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
     <!--testing editing of 2d shapes-->
     <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:20px;top:300px;z-index:3">
-      <div>Text:<input type="text" value="{{testText}}"> </input></div>
-      <div>Size:<input type="number" value="{{textSize}}"> </input></div>
-      <div>Font:<select value="{{textFont}}"><option value="helvetiker">Helvetiker</option> <option value="fontawesome">Font Awesome</option></select></div>
+      <!--<div>
+        <div>Text:<input type="text" value="{{testText}}"> </input></div>
+        <div>Size:<input type="number" value="{{textSize}}"> </input></div>
+        <div>Font:<select value="{{textFont}}"><option value="helvetiker">Helvetiker</option> <option value="fontawesome">Font Awesome</option></select></div>
+      </div>-->
+      
+      <div>
+        <text-editor id="textEditor"> </text-editor>
+        <cube-editor id="cubeEditor"> </cube-editor>
+      
+        <!--
+        <div>Width:<input type="number" value="{{cubeWidth}}"> </input></div>
+        <div>Depth:<input type="number" value="{{cubeDepth}}"> </input></div>
+        <div>Height:<input type="number" value="{{cubeHeight}}"> </input></div>-->
+      </div>
     </div>
 
     <three-js postProcess fullscreen="{{fullscreen}}" 
@@ -183,10 +198,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     observe: {
       'gridSettings.step': 'gridSettingsChanged'
     },
-    
-    textSize:10,
-    testText:"foo",
-    textFont:'helvetiker',
     
     gridSettingsChanged:function()
     {
@@ -395,16 +406,19 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           switch(type)
           {
             case "Cube":
-              instance = new Cube();
+              //options = {w:this.cubeWidth,d:this.cubeDepth,h:this.cubeHeight};
+              instance = new Cube(options);
+              this.$.cubeEditor.target = instance;
             break;
             case "Sphere":
-              instance = new Sphere();
+              instance = new Sphere(options);
+              //this.$.sphereEditor.target = instance;
             break;
             case "Cylinder":
-              instance = new Cylinder();
+              instance = new Cylinder(options);
             break;
             case "Torus":
-              instance = new Torus();
+              instance = new Torus(options);
             break;
             case "Part":
               //var instance = new THREE.Mesh();
@@ -428,10 +442,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             break;
             
             case "Text":
-              options = {text:this.testText,font:this.textFont,size:this.textSize};
+              //options = {text:this.testText,font:this.textFont,size:this.textSize};
               //options = {text:"\uf112",font:'fontawesome',size:20};
-              
               instance = new Text(options);
+              this.$.textEditor.target = instance;
               this.viewer.addToScene( instance.generateRenderables() );
               
             break;
@@ -756,10 +770,19 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       if(oldSelections.length == 0 && newSelections.length == 0) {  this.contextMenu.target = '';this.contextMenu.mode = 'creation';    this.transformControls.detach(); return; }
 
       this.transformControls.detach();
-      this.selectedObject = this.selectedObjects[0];
-
-
+      var selectedObject = this.selectedObject = newSelections[0];
       this.viewer.removeFromScene(this.transformControls);
+
+      //TODO:move this elsewhere
+      if(selectedObject instanceof Cube)
+      {
+        this.$.cubeEditor.target = selectedObject;
+      }
+      if(selectedObject.sourceElement && selectedObject.sourceElement instanceof Text)
+      {
+        console.log("bar");
+        this.$.textEditor.target = selectedObject.sourceElement;
+      }
       
       //remove from old
       for(var i=oldSelections.length-1;i>=0;i--)
