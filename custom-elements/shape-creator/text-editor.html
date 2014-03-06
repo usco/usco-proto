@@ -1,0 +1,37 @@
+<polymer-element name="text-editor" attributes="target text size font center" >
+    <template>
+      <div>Text:<input type="text" value="{{text}}"> </input></div>
+      <div>Size:<input type="number" value="{{size}}"> </input></div>
+      <div>Font:<select value="{{font}}"><option value="helvetiker">Helvetiker</option> <option value="fontawesome">Font Awesome</option></select></div>
+    </template>
+    <script>
+      Polymer("text-editor",{
+        target:null,
+        text:"foo",
+        size:10,
+        font:'helvetiker',
+        targetChanged:function()
+        {
+          if(this.target)
+          {
+          var target = this.target;
+          this.text = target.text;
+          this.size = target.size;
+          this.font = target.font;
+          }
+        },
+        textChanged:function()
+        {
+          this.target.update({text:this.text});
+        },
+        sizeChanged:function()
+        {
+          this.target.update({size:this.size});
+        },
+        fontChanged:function()
+        {
+          this.target.update({font:this.font});
+        }
+      });
+    </script>
+</polymer-element>

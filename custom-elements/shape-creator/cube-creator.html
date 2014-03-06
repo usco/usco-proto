@@ -1,12 +1,37 @@
-<polymer-element name="cube-editor" attributes="w h d center" >
+<polymer-element name="cube-editor" attributes="target w h d center" >
     <template>
-      w: {{w}} <input type="text" value="{{target.w}}">
-      d: {{d}} <input type="text" value="{{target.d}}">
-      h: {{h}} <input type="text" value="{{target.h}}">
-
-      <div>Generate code</div>
+      <div> width: <input type="number" value="{{w}}"></input> </div>
+      <div> depth: <input type="number" value="{{d}}"></input> </div>
+      <div> height: <input type="number" value="{{h}}"></input> </div>
     </template>
     <script>
-      Polymer("cube-editor",{});
+      Polymer("cube-editor",{
+        target:null,
+        w:10,
+        d:10,
+        h:10,
+        targetChanged:function()
+        {
+          if(this.target)
+          {
+          var target = this.target;
+          this.w = target.w;
+          this.d = target.d;
+          this.h = target.h;
+          }
+        },
+        wChanged:function()
+        {
+          this.target.update({w:this.w});
+        },
+        dChanged:function()
+        {
+          this.target.update({d:this.d});
+        },
+        hChanged:function()
+        {
+          this.target.update({h:this.h});
+        }
+      });
     </script>
 </polymer-element>
