@@ -4,6 +4,7 @@ function Part()
   THREE.Mesh.call(this, undefined, material);
 
   this.__meta = null;
+  
   this._bsp = null;
 }
 Part.prototype = Object.create( THREE.Mesh.prototype );
@@ -16,6 +17,18 @@ Part.prototype._clone = function()
 
 Part.prototype.fromThreeMesh=function(object)
 {
+}
+
+Part.prototype.update = function( parameters ) 
+{
+  for (var key in parameters)
+  {
+    if (parameters.hasOwnProperty(key) && this.hasOwnProperty(key) )
+    {
+      console.log("updating"+key + " -> " + parameters[key]);
+      this[key] = parameters[key];
+    }
+  }
 }
 
 Part.prototype.union=function(objects)
@@ -130,11 +143,11 @@ Part.prototype.subtract=function(objects)
 
 
 
-function Cube(w,h,d)
+function Cube(options)
 {
-  this.w = w || 20;
-  this.h = h || 20;
-  this.d = d || 20;
+  this.w = options.w || 20;
+  this.h = options.h || 20;
+  this.d = options.d || 20;
 
   Part.call( this );
   this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
@@ -143,9 +156,18 @@ function Cube(w,h,d)
 Cube.prototype = Object.create( Part.prototype );
 Cube.prototype.constructor = Cube;
 
-function Sphere(r)
+Cube.prototype.update=function( parameters )
 {
-  this.r = r || 10;
+  Part.prototype.update.call(this, parameters);
+  this.geometry.dispose();
+  delete this.__webglInit;
+  this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
+}
+
+
+function Sphere(options)
+{
+  this.r = options.r || 10;
 
   Part.call( this );
   this.geometry = new THREE.SphereGeometry( this.r, 30, 30 );
@@ -155,10 +177,10 @@ Sphere.prototype.constructor = Sphere;
 
 
 
-function Cylinder(r,h)
+function Cylinder(options)
 {
-  this.r = r || 10;
-  this.h = h || 10;
+  this.r = options.r || 10;
+  this.h = options.h || 10;
 
   Part.call( this );
   this.geometry = new THREE.CylinderGeometry( this.r, this.r, this.h ,10,10);
@@ -167,10 +189,10 @@ Cylinder.prototype = Object.create( Part.prototype );
 Cylinder.prototype.constructor = Cylinder;
 
 
-function Torus(r,h)
+function Torus(options)
 {
-  this.r = r || 10;
-  this.h = h || 10;
+  this.r = options.r || 10;
+  this.h = options.h || 10;
 
   Part.call( this );
   //var geometry = new THREE.TorusKnotGeometry( 20, 6, 200, 100, 1, 3 );//new THREE.TorusGeometry( 10 );
