@@ -3,9 +3,14 @@ function Part()
   var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ); 
   THREE.Mesh.call(this, undefined, material);
 
+  //holds object meta data ("reflexion", links between code and visual etc
   this.__meta = null;
   
+  //curent implementation uses bsp under the hood...
   this._bsp = null;
+  
+  //this is an abstract element, but it needs a visual representation
+  this.renderable = null;
 }
 Part.prototype = Object.create( THREE.Mesh.prototype );
 Part.prototype.constructor = Part;
@@ -15,8 +20,16 @@ Part.prototype._clone = function()
   return ;
 }
 
-Part.prototype.fromThreeMesh=function(object)
+Part.prototype.generateRenderables=function()
 {
+  var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ); 
+}
+
+Part.prototype.fromThreeMesh=function(object){}
+
+Part.prototype.attributeChanged = function(attrName, oldVal, newVal)
+{
+
 }
 
 Part.prototype.update = function( parameters ) 
@@ -29,6 +42,8 @@ Part.prototype.update = function( parameters )
       this[key] = parameters[key];
     }
   }
+  
+  this.updateRenderables();
 }
 
 Part.prototype.union=function(objects)
@@ -159,15 +174,32 @@ Cube.prototype.constructor = Cube;
 Cube.prototype.update=function( parameters )
 {
   Part.prototype.update.call(this, parameters);
-  this.geometry.dispose();
-  delete this.__webglInit;
-  this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
+  //this.geometry.dispose();
+  //delete this.__webglInit;
+  //this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
+}
+
+Cube.prototype.generateRenderables=function()
+{
+  Part.prototype.generateRenderables.call(this);
+  var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
+  this.renderable = new THREE.Mesh( new THREE.CubeGeometry( this.w, this.d, this.h ), material);
+  this.renderable.sourceShape = this;
+  return this.renderable;
+}
+
+Cube.prototype.updateRenderables=function()
+{
+  this.renderable.geometry.dispose();
+  delete this.renderable.__webglInit;
+  this.renderable.geometry =  new THREE.CubeGeometry( this.w, this.d, this.h ); 
 }
 
 
 function Sphere(options)
 {
   this.r = options.r || 10;
+  this.$fn = options.$fn || 10;
 
   Part.call( this );
   this.geometry = new THREE.SphereGeometry( this.r, 30, 30 );
@@ -175,18 +207,55 @@ function Sphere(options)
 Sphere.prototype = Object.create( Part.prototype );
 Sphere.prototype.constructor = Sphere;
 
+Sphere.prototype.generateRenderables=function()
+{
+  Part.prototype.generateRenderables.call(this);
+  var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
+  this.renderable = new THREE.Mesh( new THREE.SphereGeometry( this.r, this.$fn, this.$fn ), material);
+  this.renderable.sourceShape = this;
+  return this.renderable;
+}
+
+Sphere.prototype.updateRenderables=function()
+{
+  this.renderable.geometry.dispose();
+  delete this.renderable.__webglInit;
+  this.renderable.geometry =  new THREE.SphereGeometry( this.r, this.$fn, 20 ); 
+}
 
 
 function Cylinder(options)
 {
   this.r = options.r || 10;
   this.h = options.h || 10;
+  this.$fn = options.$fn || 10;
 
   Part.call( this );
-  this.geometry = new THREE.CylinderGeometry( this.r, this.r, this.h ,10,10);
+  this.geometry = new THREE.CylinderGeometry( this.r, this.r, this.h ,this.$fn,this.$fn);
 }
 Cylinder.prototype = Object.create( Part.prototype );
 Cylinder.prototype.constructor = Cylinder;
+
+Cylinder.prototype.generateRenderables=function()
+{
+  Part.prototype.generateRenderables.call(this);
+  var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
+  var geometry = new THREE.CylinderGeometry( this.r, this.r, this.h ,this.$fn,this.$fn)
+  geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
+  
+  this.renderable = new THREE.Mesh( geometry , material);
+  this.renderable.sourceShape = this;
+  return this.renderable;
+}
+
+Cylinder.prototype.updateRenderables=function()
+{
+  this.renderable.geometry.dispose();
+  delete this.renderable.__webglInit;
+  geom = new THREE.CylinderGeometry( this.r, this.r, this.h ,this.$fn,this.$fn).applyMatrix(new THREE.Matrix4().makeRotationY( Math.PI/2));
+  this.renderable.geometry =   geom;
+}
+
 
 
 function Torus(options)
