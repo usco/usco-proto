@@ -409,13 +409,17 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               //options = {w:this.cubeWidth,d:this.cubeDepth,h:this.cubeHeight};
               instance = new Cube(options);
               this.$.cubeEditor.target = instance;
+              instance.generateRenderables();
+              //this.viewer.addToScene( instance.generateRenderables() );
             break;
             case "Sphere":
               instance = new Sphere(options);
+              instance.generateRenderables();
               //this.$.sphereEditor.target = instance;
             break;
             case "Cylinder":
               instance = new Cylinder(options);
+              instance.generateRenderables();
             break;
             case "Torus":
               instance = new Torus(options);
@@ -429,12 +433,12 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             
             case "Rectangle":
               instance = new Rectangle();
-              this.viewer.addToScene( instance.generateRenderables() );
+              instance.generateRenderables();
             break;
             
             case "Circle":
               instance = new Circle();
-              this.viewer.addToScene( instance.generateRenderables() );
+              instance.generateRenderables();
             break;
     
             case "Polyline":
@@ -456,6 +460,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             instance.castShadows=true;
             instance.recieveShadows = true;
 
+            /*
             if(!(instance instanceof Shape2d))
             {
               geometry = instance.geometry;
@@ -467,7 +472,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               geometry.computeVertexNormals();
               geometry.computeMorphNormals();
               geometry.computeTangents();
-            }
+            }*/
 
 
             if(this.selectedObjects.length==1) //if we have a selection, add it to that selection
@@ -477,11 +482,17 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             }
             else
             {
-              if(!(instance instanceof Shape2d))
+              /*if(!(instance instanceof Shape2d))
               {
               this.viewer.addToScene(instance);
               this.selectedObjects=[instance];
+              }*/
+              if(instance.renderable)
+              {
+                this.viewer.addToScene(instance.renderable);
+                this.selectedObjects=[instance.renderable];
               }
+
             }
             this.commandManager.addCommand( new Creation(instance, instance.parent, options) );
             console.log("instance", instance, this.viewer.scene);
@@ -778,9 +789,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       {
         this.$.cubeEditor.target = selectedObject;
       }
-      if(selectedObject.sourceElement && selectedObject.sourceElement instanceof Text)
+      if(selectedObject && selectedObject.sourceElement && selectedObject.sourceElement instanceof Text)
       {
-        console.log("bar");
         this.$.textEditor.target = selectedObject.sourceElement;
       }
       
