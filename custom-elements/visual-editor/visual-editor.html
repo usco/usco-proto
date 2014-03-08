@@ -117,27 +117,18 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         Grid step <input type="number" value="{{gridSettings.step}}"></input>
     </div>    
     
-    <!--various helpers-->
-    <div id="codeGen" class="codeGen" style="position:absolute; right:10px;top:30px;z-index:3">
-      <button on-click="{{generateCodeFromHistory}}"> Generate code from history </button>
-      <button on-click="{{generateFromCode}}"> Generate shapes from code </button>
-    </div>
-    
     
     <shape-creator id="contextMenu"> </shape-creator>
-    <history-editor id="historyEditor"> </history-editor>
-    <!--<drag-drop id="dragDropLayer"> </drag-drop>-->
-
-    <code-mirror id="selectEdit" theme="monokai" mode="javascript" value="{{source}}" boundValue="{{altSource}}" >
-    </code-mirror>
 
     <!--testing editing of 2d shapes-->
+    <template if="{{selectedObjects.length>0}}">
     <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:20px;top:300px;z-index:3">
       <div>
         <text-editor id="textEditor"> </text-editor>
         <cube-editor id="cubeEditor"> </cube-editor>
       </div>
     </div>
+    </template>
 
     <three-js postProcess fullscreen="{{fullscreen}}" 
     selectedObjects="{{selectedObjects}}" id="viewer" on-keydown="{{keyUp}}" on-sceneready="{{viewerSceneReady}}">
@@ -201,20 +192,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     created:function()
     {
       this.selectedObjects = [];
-    },
-    //generation of code based on history
-    generateCodeFromHistory:function()
-    {
-       console.log("generating code from history");
-       this.source = updateSelectionCode(this.selectedObject,this.commandManager.undos);
-       console.log("res source", this.source);
-    },
-    generateFromCode:function()
-    {
-      console.log("generating from code",this.altSource);
-      
-      var result = eval(this.altSource)
-      console.log("result", result);
     },
     enteredView:function()
     {
@@ -337,7 +314,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             case "Cube":
               //options = {w:this.cubeWidth,d:this.cubeDepth,h:this.cubeHeight};
               instance = new Cube(options);
-              this.$.cubeEditor.target = instance;
+              //this.$.cubeEditor.target = instance;
               instance.generateRenderables();
               //this.viewer.addToScene( instance.generateRenderables() );
             break;
