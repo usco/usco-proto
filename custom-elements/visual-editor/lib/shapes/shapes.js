@@ -28,9 +28,7 @@ Part.prototype.generateRenderables=function()
 Part.prototype.fromThreeMesh=function(object){}
 
 Part.prototype.attributeChanged = function(attrName, oldVal, newVal)
-{
-
-}
+{}
 
 Part.prototype.update = function( parameters ) 
 {
@@ -44,6 +42,18 @@ Part.prototype.update = function( parameters )
   }
   
   this.updateRenderables();
+}
+
+Part.prototype.translate=function(params)
+{
+}
+
+Part.prototype.rotate=function(params)
+{
+}
+
+Part.prototype.scale=function(params)
+{
 }
 
 Part.prototype.union=function(objects)
