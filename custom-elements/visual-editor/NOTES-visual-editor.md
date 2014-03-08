@@ -65,9 +65,19 @@ What we need:
 
 Various ui behaviour notes:
 ---------------------------
+- when creating a new shape, or executing an operation that creates a new shape
+(extrusion etc), the new shape should become selected
+
 - when deleting current selection we must:
  * detach the transform controls
  * reset the "context" menu to a neutral state
+- when doing boolean operations:
+  * make the right hand operands transparent for a few seconds, 
+  make them normally visible afterwards
+- various visual helpers that we need:
+ * linked clone relationships display
+ * parent <-> links display (not sure about this one)
+ 
  
  Notes about 2d shape editing:
  -----------------------------
