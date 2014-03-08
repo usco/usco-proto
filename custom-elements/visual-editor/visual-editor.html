@@ -61,31 +61,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         height:480px;
       }
 
-      #codeGen{
-        position: absolute;
-        right: 10px;
-        top: 20px;
-        z-index: 3;
-      }
-
-      shape-creator{
-        opacity : 0;
-        z-index : 4;
-      }
-      history-editor{
-         z-index:3;
-        display:block;
-        position:absolute;
-        color:black;
-        padding:5px;
-        height:100%;
-        width:200px
-      }
-      #commandsHistory{
-        height:100%;
-        overflow:auto;
-      }
-
       drag-drop{
         z-index:2;
         display:block;
@@ -121,7 +96,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     <shape-creator id="contextMenu"> </shape-creator>
 
     <!--testing editing of 2d shapes-->
-    <template if="{{selectedObjects.length>0}}">
+    <template if="{{selectedObjects.length>10}}">
     <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:20px;top:300px;z-index:3">
       <div>
         <text-editor id="textEditor"> </text-editor>
@@ -196,11 +171,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     enteredView:function()
     {
       this.viewer = this.$.viewer;
-      this.commandManager = this.$.historyEditor;
     },
     setupElements : function()
     {
-      console.log("viewer cam", this.viewer.camera);
       this.transformControls = new THREE.TransformControls(this.viewer.camera, this.$.viewer);
       this.transformControls.setMode( "translate" );
       this.transformControls.setSpace("local");
@@ -210,7 +183,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       var geometry = new THREE.Geometry();
       this.fakeCursor = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 3 } ), THREE.Lines );
       this.viewer.addToScene( this.fakeCursor);
-      
       
       /*var points = [new THREE.Vector2(10,10), new THREE.Vector2(100,90) ,new THREE.Vector2(80,10)];
       var shape = new Shape2d();
@@ -273,7 +245,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         
         if( operation != null)
         {
-          this.commandManager.addCommand( operation );
+          this.fire('newOperation', {msg: operation});
         }
       }
       this.transformControls.addEventListener( 'transform', onObjectTranform.bind(this) )
@@ -393,7 +365,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
                 this.selectedObjects=[instance.renderable];
               }
             }
-            this.commandManager.addCommand( new Creation(instance, instance.parent, options) );
+            this.fire('newOperation', {msg: new Creation(instance, instance.parent, options)});
             console.log("instance", instance, this.viewer.scene);
           }
         }
@@ -416,6 +388,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           var operands = selections.slice(1);
           for(var i=0; i<operands.length;i++)
           {
+            operands[i].parent.remove( operands[i] );
+            //FIXME:should we or should we not delete right hand operands?
             operands[i] = operands[i].sourceShape;
           }
           var result = selections[0].sourceShape.subtract( operands ); 
@@ -430,6 +404,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         if(type)
         {
           var result = null;
+          var operation = null;
           switch(type)
           {
             case 'union':
@@ -437,24 +412,22 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               var oldGeometry = target.geometry.clone();
 
               result = union( selections );
+              operation = new Union(target, oldGeometry, selections.slice(1));
 
-              this.commandManager.addCommand( new Union(target, oldGeometry, selections.slice(1)) );
             break;
             case 'subtract':
               var target = selections[0];
               var oldGeometry = target.geometry.clone();
 
               result = subtract(selections);
-
-              this.commandManager.addCommand( new Subtraction(target, oldGeometry, selections.slice(1) ) );
+              operation = new Subtraction(target, oldGeometry, selections.slice(1) ) ;
             break;
             case 'intersect':
               var target = selections[0];
               var oldGeometry = target.geometry.clone();
 
               result = intersect(selections);
-
-              this.commandManager.addCommand( new Intersection(target, oldGeometry, selections.slice(1)) );
+              operation = new Intersection(target, oldGeometry, selections.slice(1)) ;
             break;
 
             //specials
@@ -526,6 +499,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
           if(type != "clone" && type != "linkedClone" && type!='mirrorX' && type != 'extrude')
           {
+            this.fire('newOperation', {msg: operation});
             return;
           }
           if(type == 'mirrorX')
@@ -534,16 +508,16 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           if(type == 'extrude')
           {
             this.viewer.addToScene( result );
-            var op = new Extrusion(result, extrudeSettings, shape, result.parent);
-            this.commandManager.addCommand( op );
+            var operation = new Extrusion(result, extrudeSettings, shape, result.parent);
+            this.fire('newOperation', {msg: operation});
             this.selectedObjects = [result];//make sure the new item is the selected one
           }
           else{
           console.log("adding to scene",result);
           this.viewer.addToScene( result );
-          this.commandManager.addCommand( new Creation(result, result.parent) );
+          operation = new Creation(result, result.parent);
+          this.fire('newOperation', {msg: operation});
           this.selectedObjects = [result];//make sure the new item is the selected one
-          
           }
         }
     });
@@ -699,7 +673,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             var parent = selectedObject.parent
             parent.remove(selectedObject);
             //TODO: need a more generic system to publish operation into the history
-            this.commandManager.addCommand( new Deletion(selectedObject, parent) );
+            var operation = new Deletion(selectedObject, parent);
+            this.fire('newOperation', {msg: operation});
             
             if(selectedObject.dispatchEvent)selectedObject.dispatchEvent({type:'deleted'});
             
