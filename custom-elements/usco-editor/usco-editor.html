@@ -28,8 +28,33 @@
     visual-editor{
       width:100%;
       height:100%;
-    
     }
+    
+    #codeGen{
+      position: absolute;
+      right: 10px;
+      top: 20px;
+      z-index: 3;
+    }
+
+    shape-creator{
+      opacity : 0;
+      z-index : 4;
+    }
+    history-editor{
+       z-index:3;
+      display:block;
+      position:absolute;
+      color:black;
+      padding:5px;
+      height:100%;
+      width:200px
+    }
+    #commandsHistory{
+      height:90%;
+      overflow:auto;
+    }
+
   </style>
   <usco-client-deps> </usco-client-deps>
   
@@ -67,7 +92,19 @@
 </template>
 <script>
 Polymer("usco-editor",{
-
+  enteredView:function()
+  {
+    this.commandManager = this.$.historyEditor;
+  
+    //if we recieve a "newOperation" event, add it to history  
+    var self = this;
+    this.addEventListener('newOperation', function(e) {
+      console.log(e.type, e.detail.msg); 
+      self.commandManager.addCommand( e.detail.msg );
+    });
+    
+    
+  },
   //generation of code based on history
   generateCodeFromHistory:function()
   {
