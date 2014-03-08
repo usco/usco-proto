@@ -154,6 +154,9 @@ Part.prototype.subtract=function(objects)
      this.geometry.computeFaceNormals();
      this.geometry.computeBoundingSphere();
   }  
+  
+  delete this.renderable.__webglInit;
+  this.renderable.geometry = this.geometry;
 }
 
 
@@ -183,16 +186,27 @@ Cube.prototype.generateRenderables=function()
 {
   Part.prototype.generateRenderables.call(this);
   var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
-  this.renderable = new THREE.Mesh( new THREE.CubeGeometry( this.w, this.d, this.h ), material);
+  
+  
+  this.renderable = new THREE.Mesh( this.geometry, material);//new THREE.Mesh( new THREE.CubeGeometry( this.w, this.d, this.h ), material);
   this.renderable.sourceShape = this;
+  
+  this.renderable.position = this.position;
+  this.renderable.rotation = this.rotation;
+  this.renderable.scale    = this.scale;
+  this.renderable.matrix   = this.matrix;
+  this.renderable.matrixWorld   = this.matrixWorld;
+  this.renderable._rotation = this._rotation ;
+	this.renderable._quaternion = this._quaternion;
+  
   return this.renderable;
 }
 
 Cube.prototype.updateRenderables=function()
 {
-  this.renderable.geometry.dispose();
-  delete this.renderable.__webglInit;
-  this.renderable.geometry =  new THREE.CubeGeometry( this.w, this.d, this.h ); 
+  //this.renderable.geometry.dispose();
+  //delete this.renderable.__webglInit;
+  //this.renderable.geometry =  new THREE.CubeGeometry( this.w, this.d, this.h ); 
 }
 
 
