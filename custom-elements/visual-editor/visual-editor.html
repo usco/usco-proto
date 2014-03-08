@@ -51,7 +51,7 @@
 
 
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
-on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}" on-pointermove="{{ptrMove}}">
+on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}">
   <template >
     <style>
       :host{
@@ -152,7 +152,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
             <three-js-object helpersRoot>
               <three-axis-helper show="{{showAxes}}"> </three-axis-helper>
-              <grid-helper       show="{{showGrid}}"size="200" step="{{gridSettings.step}}" receiveShadow> </grid-helper>
+              <grid-helper       show="{{showGrid}}" size="200" step="{{gridSettings.step}}" receiveShadow> </grid-helper>
 
               <three-js-light kind="dir" color="0xffEEEE" intensity="0.2" castShadow y=50 z=300 > </three-js-light> 
                <three-js-light kind="ambient" color="0x161515" intensity="0.8"> </three-js-light>
@@ -193,10 +193,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       console.log("grid settings changed");
       this.transformControls.setSnap(this.gridSettings.step);
     },
-    ready:function()
-    {
-      //console.log("i am ready");
-    },
     viewerSceneReady:function(event)
     {
       console.log("a scene is ready",event);
@@ -220,47 +216,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       var result = eval(this.altSource)
       console.log("result", result);
     },
-    //pointer movement and tracking of object normals
-    ptrMove:function(event)
-    {
-      return;
-      var event = event.impl || event;
-        event = normalizeEvent(event);
-        var x = event.offsetX;
-        var y = event.offsetY;
-
-      this.projector = new THREE.Projector();
-    	var	v = new THREE.Vector3((x / this.viewer.width) * 2 - 1, -(y / this.viewer.height) * 2 + 1, 1);
-      this.projector.unprojectVector(v, this.viewer.camera);
-		  var raycaster = new THREE.Raycaster(this.viewer.camera.position, v.sub(this.viewer.camera.position).normalize());
-     
-		  var intersects = raycaster.intersectObjects(this.viewer.hierarchyRoot.children, true);
-      if (intersects.length > 0) {
-        var inter = intersects[0];
-        if(!(inter.face)) return;
-        var face = inter.face;
-        var normal = inter.face.normal;
-        var object = inter.object;
-
-        var normalMatrix = new THREE.Matrix3().getNormalMatrix( object.matrixWorld );
-        var worldNormal = normal.clone().applyMatrix3( normalMatrix ).normalize().multiplyScalar(50);
-
-        var geometry = new THREE.Geometry();
-        var start = inter.point.clone();
-        var end   = inter.point.clone().add( worldNormal );
-
-        delete this.fakeCursor.__webglInit;
-        geometry.vertices.push( start );
-        geometry.vertices.push( end );
-        this.fakeCursor.geometry.dispose();
-        this.fakeCursor.geometry = geometry;
-
-        /*var tmp = new THREE.Mesh(new THREE.CubeGeometry(3,3,3), new THREE.MeshBasicMaterial({color:0xFF0000}));
-        tmp.position = inter.point.clone();
-        this.viewer.addToScene( tmp );*/
-      }
-      
-    },
     enteredView:function()
     {
       this.viewer = this.$.viewer;
@@ -280,29 +235,17 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.viewer.addToScene( this.fakeCursor);
       
       
-      var points = [new THREE.Vector2(10,10), new THREE.Vector2(100,90) ,new THREE.Vector2(80,10)];
+      /*var points = [new THREE.Vector2(10,10), new THREE.Vector2(100,90) ,new THREE.Vector2(80,10)];
       var shape = new Shape2d();
       //shape.fromPoints(points);
 			shape.moveTo(  80, 20 );
 				shape.lineTo(  40, 80 );
 				shape.lineTo( 120, 80 );
 				shape.bezierCurveTo( 80,20,80,20,  80, 20 );
-			this.viewer.addToScene( shape.generateRenderables() );
+			this.viewer.addToScene( shape.generateRenderables() );*/
 			
-			/*var pt = new THREE.Vector2(10,20);
-			var pt3 = THREE.Vector3.fromVector2( pt );
-			pt.x = 25;
-			console.log("pt3",pt3);*/
-			
-			
-
       function onControlsChange(event)
       {
-          if( this.selectedObjects.length>0 && this.selectedObjects[0].lClones || this.selectedObjects[0].parent.parent._original)
-          {
-            if( this.selectedObjects[0].cloneLink) this.selectedObjects[0].remove( this.selectedObjects[0].cloneLink );
-            drawLinkToLinkedClones(this.selectedObjects[0]);
-          }
           this.viewer.controls.enabled = true;
           if(this.transformControls.axis != undefined)
           {
@@ -311,13 +254,11 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           
         if(event.target.object.name == "Shape2dPointHelper")
         {
-          //this.superDuperShape.update();
           if(this.selectedObjects.length>0 && this.selectedObjects[0].parent.sourceElement)
           {
             this.selectedObjects[0].parent.sourceElement.update();
           }
         }
-        
         //FIXME: horrible hack !!! transform is not always a translation!!
         if(this.selectedObjects[0].standInFor){
           this.selectedObjects[0].dispatchEvent({type:'translated',value:event.value});
@@ -347,10 +288,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               this.selectedObjects[0].dispatchEvent({type:'translated',value:event.value});
             }
             operation = new Translation(event.value,this.selectedObjects[0]);
-            
-            //this.selectedObjects[0].sourceShape.updateMatrix();
-            //this.selectedObjects[0].sourceShape.
-            //console.log("bla", this.selectedObjects[0].sourceShape.position);
           break;
           case "scale":
             operation = new Scaling(event.value,this.selectedObjects[0]);
@@ -360,7 +297,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         if( operation != null)
         {
           this.commandManager.addCommand( operation );
-          //operation.index = this.undos.length - 1;
         }
       }
       this.transformControls.addEventListener( 'transform', onObjectTranform.bind(this) )
@@ -506,35 +442,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             operands[i] = operands[i].sourceShape;
           }
           var result = selections[0].sourceShape.subtract( operands ); 
-          
-          for(var i=0; i<operands.length;i++)
-          {
-            var operand = operands[i];
-            operand.renderable.material.transparent=true; 
-            operand.renderable.material.opacity =0.2;       
-          }
-        
-          /*if(selections.length == 0) return;
-          var operands = selections.slice(1);
-          var result = selections[0].subtract( operands ); 
-          
-          for(var i=0; i<operands.length;i++)
-          {
-            var operand = operands[i];
-            operand.material.transparent=true; 
-            operand.material.opacity =0.2;       
-          }*/
-
-        //TODO:develop this further: visual effect to make csg effects more clear
-        setTimeout(function(){
-        for(var i=0;i<operands.length;i++)
-        {
-          operands[i].renderable.material.opacity = 1;
-          operands[i].renderable.material.transparent=false; 
-        }
-
-        },5000);
-          
         }
         function intersect(selections)
         {
@@ -542,7 +449,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           var operands = selections.slice(1);
           var result = selections[0].intersect( operands ); 
         }
-
 
         if(type)
         {
@@ -579,9 +485,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               var mesh = selections[0].parent.parent;
               var geometry = mesh.innerMesh.geometry;
               console.log("v",geometry);
-              //geom.applyMatrix(new THREE.Matrix4().makeScale(1, -1, 1));
-              //geom.computeFaceNormals();
-              //geom.computeVertexNormals();
 
                var mS = (new THREE.Matrix4()).identity();
                 mS.elements[0] = -1;//flip x
@@ -607,7 +510,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             break;
             
             case 'extrude':
-              var shape = selections[0].sourceElement//.extrude({ amount: 20 });
+              var shape = selections[0].sourceElement
               var extrudeSettings = {};
               extrudeSettings.bevelEnabled = false;
 				      extrudeSettings.bevelSegments = 2;
@@ -622,7 +525,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 					  break;
               
             case 'clone':
-              result = selections[0].clone();
+              result = selections[0].sourceShape.clone();
             break;
 
             case 'linkedClone':
@@ -636,118 +539,16 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               result._original = original;
 
               result.name = original.name+"linkedClone";
-              //console.log("result",result.shape,result.children[1]);
-              //result.remove(result.shape);
-              //result.remove(result.children[0]);
               original.addEventListener('shapeChanged',function(event){
-                /*var source = event.target;
-                console.log("in",result,"originalShapeChanged",this);
-                var pos = result.innerMesh.position.clone();
-                result.shape.remove( result.innerMesh);
-                result.innerMesh = new THREE.Mesh(this.innerMesh.geometry.clone(), result.material);
-                result.shape.add( result.innerMesh);
-                result.innerMesh.position = pos;
-                
-                this.innerMesh.lClones = [result];
-                result._original = this;
-
-                var mS = (new THREE.Matrix4()).identity();
-                mS.elements[0] = -1;*/
-//flip x
-                //mS.elements[5] = -1;
-                //mS.elements[10] = -1;
-                //result.innerMesh.geometry.applyMatrix(mS);
-                //var mesh = result.innerMesh;
-
-                //mesh.applyMatrix(new THREE.Matrix4().makeScale(-1, 1, 1));
-
-                //mesh.geometry.applyMatrix(mS);
-                //mesh.geometry.computeFaceNormals();
-//mesh.geometry.computeVertexNormals();
-    
-                /*
-                mesh.geometry.verticesNeedUpdate = true;
-	              mesh.geometry.elementsNeedUpdate = true;
-	              mesh.geometry.normalsNeedUpdate = true;
-                //mesh.flipSided = true;
-
-                for(var i = 0; i<mesh.geometry.faces.length; i++) {
-                    mesh.geometry.faces[i].normal.x = -1*mesh.geometry.faces[i].normal.x;
-                    mesh.geometry.faces[i].normal.y = -1*mesh.geometry.faces[i].normal.y;
-                    mesh.geometry.faces[i].normal.z = -1*mesh.geometry.faces[i].normal.z;
-                }*/
-                //mesh.geometry.computeVertexNormals();
-                //mesh.geometry.computeFaceNormals();
-  
-                //object.applyMatrix(mS);
+               
 
               });
-              //result.innerMesh = original.innerMesh;
-              //result.shape = original.shape;
             break;
             
           }
 
           if(type != "clone" && type != "linkedClone" && type!='mirrorX' && type != 'extrude')
           {
-            /*var old = selections[0];
-            delete old.__webglInit;
-            old.geometry.dispose();
-            old.geometry = result.geometry;*/
-    
-            //FIXME: hack hack hack !
-            /*var old = selections[0];
-            this.viewer.removeFromScene( old );
-            var material = old.material.clone();  
-            old.remove(old.children[0]);
-            old.geometry.dispose();
-            old.geometry = result.geometry;
-            console.log(" old", old);
-            old.material = material;
-            this.viewer.renderer.initWebGLObjects(this.viewer.scene);
-
-            this.viewer.addToScene( old );*/
-
-            /*var old = selections[0];
-            this.viewer.removeFromScene( old );
-            
-            old.geometry = result.geometry.clone();
-            this.viewer.renderer.initWebGLObjects(this.viewer.scene);
-            console.log("mlkml",this.viewer.renderer,this.viewer.scene);
-            this.viewer.addToScene( old );*/
-
-
-            /*var old = selections[0];
-            this.viewer.removeFromScene( old );
-            result.uuid = old.uuid;
-            //res.children = old.children;
-            result.name = old.name;
-            result.material = old.material;
-            old = null;
-            selections[0] = result;
-            this.viewer.addToScene( result );*/
-
-            //var old = selections[0];
-            //old.geometry.copy( result.geometry) ;//remove( old.innerMesh );
-            //var nGeom = result.geometry.clone();
-            
-            /* implementation with linked cloning attmpt
-            var old = selections[0];
-            old = old.parent.parent;
-            var savedOldGeometry = old.innerMesh.geometry.clone();
-            console.log("old.shape",old.shape);
-            var pos = old.innerMesh.position.clone();
-            old.shape.remove( old.innerMesh);
-            old.innerMesh = new THREE.Mesh(result.geometry, old.material);
-            old.shape.add( old.innerMesh);
-            old.innerMesh.position=pos;
-            console.log("old.shape", old.shape);
-            old.dispatchEvent( { type: 'shapeChanged' } );
-            
-            this.selectedObjects = [old.innerMesh];//make sure the new item is the selected one*/
-            //old.geometry.setWrap(result.geometry.clone());
-            //this.viewer.renderer.initWebGLObjects(this.viewer.scene);
-
             return;
           }
           if(type == 'mirrorX')
@@ -799,10 +600,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       {
         var oldSelection = oldSelections[i];
         if(!(oldSelection)) continue;
-        //this.selectedObject.remove( oldSelection );
-        //oldSelection.position.add( this.selectedObject.position );
-        //this.viewer.addToScene( oldSelection );
-        //oldSelection.controls = null;
         if(oldSelection.outline!=null)
         { 
           var outline = oldSelection.outline;
@@ -852,15 +649,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         var newSelection = newSelections[i];
         if(!(newSelection)) continue;
         //helpers drawn on screen : TODO: cleanup
-        //drawParentChildLinks(newSelection);
-        //drawLinkToLinkedClones(newSelection);
-
-        //if(this.selectedObject)this.selectedObject.add( newSelection );
-
         this.viewer.scene.add(this.transformControls);
         this.transformControls.attach( newSelections[0] ); 
-        //console.log("this.viewer",this.viewer);
-        //newSelection.controls = this.transformControls;
 
         if(newSelection.outline) continue;
         var outlineMaterial = new THREE.MeshBasicMaterial({
@@ -889,7 +679,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       switch(keyCode)
       {
         case 68://d
-          console.log("pouet");
           if(ctrlPressed){
             this.fire("reqShapeOperation",{type:"clone"});
             console.log("duplicating");
