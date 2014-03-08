@@ -79,6 +79,14 @@ Various ui behaviour notes:
  * parent <-> links display (not sure about this one)
  
  
+ Notes about variables expressions and scopes
+ --------------------------------------------
+ - when entering values for something (position, rotation, scale, object attributes, you name it):
+ we should also have access to the list of defined variables in the current scope/parent scope, 
+ and have the ability to define new ones
+ - how do we handle code that was generated from visuals, "augmented" with variables, classes etc:
+ visual editing should not override any user defined elements
+ 
  Notes about 2d shape editing:
  -----------------------------
  - deleting a control point will require a workaround to generate "operations" (and to generated code from it)
