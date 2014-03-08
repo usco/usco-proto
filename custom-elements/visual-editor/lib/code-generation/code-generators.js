@@ -122,7 +122,11 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
         var sourceParentName = target.sourceParent.name.toLowerCase()+target.sourceParent.id;
         var id = target.standInFor.index;
         code += sourceParentName+".controlPoints["+ id +"].translate("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+",)"+lineCap;
-        
+      }
+      else if(target.sourceShape)
+      {
+          var sourceShapeName = target.sourceShape.name.toLowerCase()+target.sourceShape.id;
+          code += sourceShapeName+".translate("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+")"+lineCap;
       }
       else
       {
