@@ -252,24 +252,43 @@ Cylinder.prototype.updateRenderables=function()
 {
   this.renderable.geometry.dispose();
   delete this.renderable.__webglInit;
-  geom = new THREE.CylinderGeometry( this.r, this.r, this.h ,this.$fn,this.$fn).applyMatrix(new THREE.Matrix4().makeRotationY( Math.PI/2));
-  this.renderable.geometry =   geom;
+  var geometry = new THREE.CylinderGeometry( this.r, this.r, this.h ,this.$fn,this.$fn)
+  geometry.applyMatrix(new THREE.Matrix4().makeRotationY( Math.PI/2));
+  this.renderable.geometry = geometry;
 }
-
 
 
 function Torus(options)
 {
   this.r = options.r || 10;
-  this.h = options.h || 10;
+  this.tube = options.tube || 4;
+  this.$fn = options.$fn || 20;
 
   Part.call( this );
-  //var geometry = new THREE.TorusKnotGeometry( 20, 6, 200, 100, 1, 3 );//new THREE.TorusGeometry( 10 );
-  this.geometry = new THREE.CylinderGeometry( this.r, this.r, this.h ,10,10);
+  //var geometry = new THREE.TorusKnotGeometry( 20, 6, 200, 100, 1, 3 );
+  this.geometry = new THREE.TorusGeometry( this.r,this.tube, this.$fn, this.$fn );
+  //radius, tube, segmentsR, segmentsT, arc
 }
 Torus.prototype = Object.create( Part.prototype );
 Torus.prototype.constructor = Torus;
 
+Torus.prototype.generateRenderables=function()
+{
+  Part.prototype.generateRenderables.call(this);
+  var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
+  var geometry = new THREE.TorusGeometry( this.r,this.tube , this.$fn, this.$fn);
+  //geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
+  
+  this.renderable = new THREE.Mesh( geometry , material);
+  this.renderable.sourceShape = this;
+  return this.renderable;
+}
+
+Torus.prototype.updateRenderables=function()
+{
+  this.renderable.geometry.dispose();
+  delete this.renderable.__webglInit;
+  var geometry = new THREE.TorusGeometry( this.r,this.tube , this.$fn, this.$fn);
+  this.renderable.geometry = geometry;
+}
               
-
-
