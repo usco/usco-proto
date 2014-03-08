@@ -133,20 +133,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
     <!--testing editing of 2d shapes-->
     <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:20px;top:300px;z-index:3">
-      <!--<div>
-        <div>Text:<input type="text" value="{{testText}}"> </input></div>
-        <div>Size:<input type="number" value="{{textSize}}"> </input></div>
-        <div>Font:<select value="{{textFont}}"><option value="helvetiker">Helvetiker</option> <option value="fontawesome">Font Awesome</option></select></div>
-      </div>-->
-      
       <div>
         <text-editor id="textEditor"> </text-editor>
         <cube-editor id="cubeEditor"> </cube-editor>
-      
-        <!--
-        <div>Width:<input type="number" value="{{cubeWidth}}"> </input></div>
-        <div>Depth:<input type="number" value="{{cubeDepth}}"> </input></div>
-        <div>Height:<input type="number" value="{{cubeHeight}}"> </input></div>-->
       </div>
     </div>
 
@@ -358,6 +347,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               this.selectedObjects[0].dispatchEvent({type:'translated',value:event.value});
             }
             operation = new Translation(event.value,this.selectedObjects[0]);
+            
+            //this.selectedObjects[0].sourceShape.updateMatrix();
+            //this.selectedObjects[0].sourceShape.
+            //console.log("bla", this.selectedObjects[0].sourceShape.position);
           break;
           case "scale":
             operation = new Scaling(event.value,this.selectedObjects[0]);
@@ -423,6 +416,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             break;
             case "Torus":
               instance = new Torus(options);
+              instance.generateRenderables();
             break;
             case "Part":
               //var instance = new THREE.Mesh();
@@ -450,7 +444,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               //options = {text:"\uf112",font:'fontawesome',size:20};
               instance = new Text(options);
               this.$.textEditor.target = instance;
-              this.viewer.addToScene( instance.generateRenderables() );
+              instance.generateRenderables();
               
             break;
           }
@@ -473,8 +467,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               geometry.computeMorphNormals();
               geometry.computeTangents();
             }*/
-
-
             if(this.selectedObjects.length==1) //if we have a selection, add it to that selection
             {
              this.selectedObjects[0].add( instance ) ;
@@ -482,17 +474,11 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             }
             else
             {
-              /*if(!(instance instanceof Shape2d))
-              {
-              this.viewer.addToScene(instance);
-              this.selectedObjects=[instance];
-              }*/
               if(instance.renderable)
               {
                 this.viewer.addToScene(instance.renderable);
                 this.selectedObjects=[instance.renderable];
               }
-
             }
             this.commandManager.addCommand( new Creation(instance, instance.parent, options) );
             console.log("instance", instance, this.viewer.scene);
@@ -515,6 +501,21 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         {
           if(selections.length == 0) return;
           var operands = selections.slice(1);
+          for(var i=0; i<operands.length;i++)
+          {
+            operands[i] = operands[i].sourceShape;
+          }
+          var result = selections[0].sourceShape.subtract( operands ); 
+          
+          for(var i=0; i<operands.length;i++)
+          {
+            var operand = operands[i];
+            operand.renderable.material.transparent=true; 
+            operand.renderable.material.opacity =0.2;       
+          }
+        
+          /*if(selections.length == 0) return;
+          var operands = selections.slice(1);
           var result = selections[0].subtract( operands ); 
           
           for(var i=0; i<operands.length;i++)
@@ -522,17 +523,17 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             var operand = operands[i];
             operand.material.transparent=true; 
             operand.material.opacity =0.2;       
-          }
+          }*/
 
         //TODO:develop this further: visual effect to make csg effects more clear
         setTimeout(function(){
         for(var i=0;i<operands.length;i++)
         {
-          operands[i].material.opacity = 1;
-          operands[i].material.transparent=false; 
+          operands[i].renderable.material.opacity = 1;
+          operands[i].renderable.material.transparent=false; 
         }
 
-        },10000);
+        },5000);
           
         }
         function intersect(selections)
@@ -606,7 +607,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             break;
             
             case 'extrude':
-              console.log("extruding");
               var shape = selections[0].sourceElement//.extrude({ amount: 20 });
               var extrudeSettings = {};
               extrudeSettings.bevelEnabled = false;
