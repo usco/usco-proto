@@ -73,3 +73,15 @@ Various ui behaviour notes:
  -----------------------------
  - deleting a control point will require a workaround to generate "operations" (and to generated code from it)
  - all "stand ins for" should provide a way to compute to (an back) the ACTUAL operation that took place?
+ 
+ Notes about code generation & regenerating from code:
+ -----------------------------------------------------
+  - generating the visual representation from code should only be done at the final step, no need to generate intermediary steps
+  
+ Notes about history generation/"operations" generation:
+ -------------------------------------------------------
+  - advantages of having objects/shapes generate their own list of operations:
+   * works both for visual and from code generation
+   * is more context specific : some operations (and their ability to generate code) need to be different based on
+   what kind of shape we are in (something that can done only with lots of "if elses" etc when generated "from outside")
+  
