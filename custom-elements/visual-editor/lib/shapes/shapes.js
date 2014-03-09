@@ -11,6 +11,13 @@ function Part()
   
   //this is an abstract element, but it needs a visual representation
   this.renderable = null;
+  
+  this.connectors = [];
+  var testConnector = new Connector();
+  testConnector.up = new THREE.Vector3(0,0,1);
+  testConnector.position.z = 10;
+  this.add( testConnector );
+  this.connectors.push( testConnector );
 }
 Part.prototype = Object.create( THREE.Mesh.prototype );
 Part.prototype.constructor = Part;
@@ -39,6 +46,9 @@ Part.prototype.generateRenderables=function()
   this.renderable.matrixWorld   = this.matrixWorld;
   this.renderable._rotation = this._rotation ;
 	this.renderable._quaternion = this._quaternion;
+	
+  this.renderable.add( this.connectors[0].generateRenderables() );
+	
   
   return this.renderable;
 }
@@ -210,25 +220,6 @@ Cube.prototype.update=function( parameters )
   //this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
 }
 
-Cube.prototype.generateRenderables=function()
-{
-  Part.prototype.generateRenderables.call(this);
-  var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
-  
-  
-  this.renderable = new THREE.Mesh( this.geometry, material);//new THREE.Mesh( new THREE.CubeGeometry( this.w, this.d, this.h ), material);
-  this.renderable.sourceShape = this;
-  
-  this.renderable.position = this.position;
-  this.renderable.rotation = this.rotation;
-  this.renderable.scale    = this.scale;
-  this.renderable.matrix   = this.matrix;
-  this.renderable.matrixWorld   = this.matrixWorld;
-  this.renderable._rotation = this._rotation ;
-	this.renderable._quaternion = this._quaternion;
-  
-  return this.renderable;
-}
 
 Cube.prototype.updateRenderables=function()
 {
@@ -249,14 +240,6 @@ function Sphere(options)
 Sphere.prototype = Object.create( Part.prototype );
 Sphere.prototype.constructor = Sphere;
 
-Sphere.prototype.generateRenderables=function()
-{
-  Part.prototype.generateRenderables.call(this);
-  var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
-  this.renderable = new THREE.Mesh( new THREE.SphereGeometry( this.r, this.$fn, this.$fn ), material);
-  this.renderable.sourceShape = this;
-  return this.renderable;
-}
 
 Sphere.prototype.updateRenderables=function()
 {
@@ -279,27 +262,6 @@ function Cylinder(options)
 Cylinder.prototype = Object.create( Part.prototype );
 Cylinder.prototype.constructor = Cylinder;
 
-Cylinder.prototype.generateRenderables=function()
-{
-  Part.prototype.generateRenderables.call(this);
-  var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
-  var geometry = new THREE.CylinderGeometry( this.r, this.r, this.h ,this.$fn,this.$fn)
-  geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
-  
-  this.renderable = new THREE.Mesh( geometry , material);
-  this.renderable.sourceShape = this;
-  
-   this.renderable.position = this.position;
-  this.renderable.rotation = this.rotation;
-  this.renderable.scale    = this.scale;
-  this.renderable.matrix   = this.matrix;
-  this.renderable.matrixWorld   = this.matrixWorld;
-  this.renderable._rotation = this._rotation ;
-	this.renderable._quaternion = this._quaternion;
-  
-  
-  return this.renderable;
-}
 
 Cylinder.prototype.updateRenderables=function()
 {
@@ -325,17 +287,6 @@ function Torus(options)
 Torus.prototype = Object.create( Part.prototype );
 Torus.prototype.constructor = Torus;
 
-Torus.prototype.generateRenderables=function()
-{
-  Part.prototype.generateRenderables.call(this);
-  var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
-  var geometry = new THREE.TorusGeometry( this.r,this.tube , this.$fn, this.$fn);
-  //geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
-  
-  this.renderable = new THREE.Mesh( geometry , material);
-  this.renderable.sourceShape = this;
-  return this.renderable;
-}
 
 Torus.prototype.updateRenderables=function()
 {
