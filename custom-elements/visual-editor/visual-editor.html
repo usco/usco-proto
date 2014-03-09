@@ -407,6 +407,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           var operation = null;
           switch(type)
           {
+            case 'export':
+              var target = selections[0];
+              console.log("please export", target);
+              
+              this.asyncFire('export-requested', {data:target} );
+              return;
+            break;
+          
             case 'union':
               var target = selections[0];
               var oldGeometry = target.geometry.clone();
@@ -551,11 +559,15 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       {
         var oldSelection = oldSelections[i];
         if(!(oldSelection)) continue;
-        if(oldSelection.outline!=null)
+        /*if(oldSelection.outline!=null)
         { 
           var outline = oldSelection.outline;
           oldSelection.remove(outline);
           delete oldSelection.outline;
+        }*/
+        if(oldSelection.origColor)
+        {
+          oldSelection.material.color = oldSelection.origColor;
         }
       }
       //add to new selection
@@ -603,6 +615,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         this.viewer.scene.add(this.transformControls);
         this.transformControls.attach( newSelections[0] ); 
 
+        newSelection.origColor = newSelection.material.color;
+        newSelection.material.color = 0xff0000;
+        /*
         if(newSelection.outline) continue;
         var outlineMaterial = new THREE.MeshBasicMaterial({
           color: 0xff0000,//0xffc200,
@@ -612,7 +627,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         outline.name = "selectOutline";
         outline.scale.multiplyScalar(1.03);
         newSelection.outline = outline;
-        newSelection.add(outline);
+        newSelection.add(outline);*/
       }
     },
     onMouseWheel:function (event)
@@ -714,12 +729,25 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
   {
     //if(bla instanceof THREE.Geometry)
     //{
+    if('children' in bla)
+    {
       var foo = new Part();
       var geometry = new THREE.Geometry();
+      
+      var bla = bla.children[0].geometry;
+      
       for(var i=0;i<bla.faces.length;i++)
       {
         var face = bla.faces[i];
         geometry.faces.push( new THREE.Face3(face.a,face.b,face.c ) );
+        
+        //hack
+        geometry.faceVertexUvs[0].push([
+        new THREE.Vector2(), //new THREE.Vector2( ( v1.x + offset.x ) / range.x , ( v1.y + offset.y ) / range.y ),
+        new THREE.Vector2(),//new THREE.Vector2( ( v2.x + offset.x ) / range.x , ( v2.y + offset.y ) / range.y ),
+        new THREE.Vector2(),//new THREE.Vector2( ( v3.x + offset.x ) / range.x , ( v3.y + offset.y ) / range.y )
+      ]);
+        
       }
       
       for(var i=0;i<bla.vertices.length;i++)
@@ -727,17 +755,64 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         var vertex = bla.vertices[i];
         geometry.vertices.push( new THREE.Vector3(vertex.x, vertex.y, vertex.z ));
       }
+
+    geometry.applyMatrix(new THREE.Matrix4().makeScale( 4,4,4));
+    
+    }else
+    {
+      var foo = new Part();
+      var geometry = new THREE.Geometry();
+      for(var i=0;i<bla.faces.length;i++)
+      {
+        var face = bla.faces[i];
+        geometry.faces.push( new THREE.Face3(face.a,face.b,face.c ) );
+        
+         geometry.faceVertexUvs[0].push([
+          new THREE.Vector2(), //new THREE.Vector2( ( v1.x + offset.x ) / range.x , ( v1.y + offset.y ) / range.y ),
+          new THREE.Vector2(),//new THREE.Vector2( ( v2.x + offset.x ) / range.x , ( v2.y + offset.y ) / range.y ),
+          new THREE.Vector2(),//new THREE.Vector2( ( v3.x + offset.x ) / range.x , ( v3.y + offset.y ) / range.y )
+        ]);
+      }
+      
+      for(var i=0;i<bla.vertices.length;i++)
+      {
+        var vertex = bla.vertices[i];
+        geometry.vertices.push( new THREE.Vector3(vertex.x, vertex.y, vertex.z ));
+      }
+    }
+      
       geometry.computeBoundingBox();
 		  geometry.computeCentroids();
 		  geometry.computeBoundingSphere();
+		  
+		  //centering hack
+		  var autoCenter = true;
+      if( autoCenter)
+      {
+        var offset = geometry.boundingSphere.center;
+        geometry.applyMatrix( new THREE.Matrix4().makeTranslation( -offset.x, -offset.y, -offset.z ) );
+      }
 
       //needed at least for .ply files
       geometry.computeVertexNormals();
       geometry.computeFaceNormals();
       
       foo.geometry = geometry;
-      this.viewer.addToScene( foo );
-    //}
+      
+      var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
+      foo.renderable = new THREE.Mesh( geometry, material);//new THREE.Mesh( new THREE.CubeGeometry( this.w, this.d, this.h ), material);
+      foo.renderable.sourceShape = foo;
+      
+       foo.renderable.position = foo.position;
+      foo.renderable.rotation = foo.rotation;
+      foo.renderable.scale    = foo.scale;
+      foo.renderable.matrix   = foo.matrix;
+      foo.renderable.matrixWorld   = foo.matrixWorld;
+      foo.renderable._rotation = foo._rotation ;
+	    foo.renderable._quaternion = foo._quaternion;
+      
+      this.viewer.addToScene( foo.renderable );
+    
   }
   
     //going down "one level" into an object hierarchy
