@@ -256,6 +256,7 @@ function Cylinder(options)
 
   Part.call( this );
   this.geometry = new THREE.CylinderGeometry( this.r, this.r, this.h ,this.$fn,this.$fn);
+  this.geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
 }
 Cylinder.prototype = Object.create( Part.prototype );
 Cylinder.prototype.constructor = Cylinder;
@@ -269,6 +270,16 @@ Cylinder.prototype.generateRenderables=function()
   
   this.renderable = new THREE.Mesh( geometry , material);
   this.renderable.sourceShape = this;
+  
+   this.renderable.position = this.position;
+  this.renderable.rotation = this.rotation;
+  this.renderable.scale    = this.scale;
+  this.renderable.matrix   = this.matrix;
+  this.renderable.matrixWorld   = this.matrixWorld;
+  this.renderable._rotation = this._rotation ;
+	this.renderable._quaternion = this._quaternion;
+  
+  
   return this.renderable;
 }
 
