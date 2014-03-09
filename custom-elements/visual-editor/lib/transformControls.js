@@ -1002,17 +1002,29 @@ THREE.TransformControls = function ( camera, domElement ) {
 					scope.object.scale.x = oldScale.x * scale;
 					scope.object.scale.y = oldScale.y * scale;
 					scope.object.scale.z = oldScale.z * scale;
+					
+          if ( scope.snap != undefined ) {
+            scope.snap = 0.2;
+            scope.object.scale.x = Math.max( Math.round( scope.object.scale.x / scope.snap ) * scope.snap, 0.1) ;
+					  scope.object.scale.y = Math.max( Math.round( scope.object.scale.y / scope.snap ) * scope.snap, 0.1) ;
+					  scope.object.scale.z = Math.max( Math.round( scope.object.scale.z / scope.snap ) * scope.snap, 0.1) ;
+				  }
 
 				} else {
 
 					point.applyMatrix4( tempMatrix.getInverse( worldRotationMatrix ) );
+            
+            if ( scope.axis == "X" ) scope.object.scale.x = oldScale.x * ( 1 + point.x / 50 );
+					  if ( scope.axis == "Y" ) scope.object.scale.y = oldScale.y * ( 1 + point.y / 50 );
+					  if ( scope.axis == "Z" ) scope.object.scale.z = oldScale.z * ( 1 + point.z / 50 );
 
-					if ( scope.axis == "X" ) scope.object.scale.x = oldScale.x * ( 1 + point.x / 50 );
-					if ( scope.axis == "Y" ) scope.object.scale.y = oldScale.y * ( 1 + point.y / 50 );
-					if ( scope.axis == "Z" ) scope.object.scale.z = oldScale.z * ( 1 + point.z / 50 );
-
+          if ( scope.snap != undefined ) {
+            scope.snap = 0.2;
+            if ( scope.axis == "X" ) scope.object.scale.x = Math.max( Math.round( scope.object.scale.x / scope.snap ) * scope.snap, 0.1) ;
+					  if ( scope.axis == "Y" ) scope.object.scale.y = Math.max( Math.round( scope.object.scale.y / scope.snap ) * scope.snap, 0.1) ;
+					  if ( scope.axis == "Z" ) scope.object.scale.z = Math.max( Math.round( scope.object.scale.z / scope.snap ) * scope.snap, 0.1) ;
+				  }
 				}
-
 			}
 
 		} else if ( _mode == "rotate" ) {
@@ -1061,6 +1073,14 @@ THREE.TransformControls = function ( camera, domElement ) {
 
 				rotation.set( Math.atan2( point.z, point.y ), Math.atan2( point.x, point.z ), Math.atan2( point.y, point.x ) );
 				offsetRotation.set( Math.atan2( tempVector.z, tempVector.y ), Math.atan2( tempVector.x, tempVector.z ), Math.atan2( tempVector.y, tempVector.x ) );
+				
+				 if ( scope.snap != undefined ) {
+          scope.snap = Math.PI/2;//0.5;
+					if ( scope.axis.search("X") != -1 ) rotation.x = Math.round( rotation.x / scope.snap ) * scope.snap;
+					//if ( scope.axis.search("Y") != -1 ) scope.object.position.y = Math.round( scope.object.position.y / scope.snap ) * scope.snap;
+					//if ( scope.axis.search("Z") != -1 ) scope.object.position.z = Math.round( scope.object.position.z / scope.snap ) * scope.snap;
+				}
+				
 
 				quaternionXYZ.setFromRotationMatrix( oldRotationMatrix );
 				quaternionX.setFromAxisAngle( unitX, rotation.x - offsetRotation.x );
@@ -1070,6 +1090,8 @@ THREE.TransformControls = function ( camera, domElement ) {
 				if ( scope.axis == "X" ) quaternionXYZ.multiplyQuaternions( quaternionXYZ, quaternionX );
 				if ( scope.axis == "Y" ) quaternionXYZ.multiplyQuaternions( quaternionXYZ, quaternionY );
 				if ( scope.axis == "Z" ) quaternionXYZ.multiplyQuaternions( quaternionXYZ, quaternionZ );
+
+
 
 				scope.object.quaternion.copy( quaternionXYZ );
 
