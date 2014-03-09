@@ -15,14 +15,32 @@ function Part()
 Part.prototype = Object.create( THREE.Mesh.prototype );
 Part.prototype.constructor = Part;
 
-Part.prototype._clone = function()
+Part.prototype.clone = function()
 {
-  return ;
+  var newInstance = new Part();
+  newInstance.position = this.position.clone();
+  newInstance.rotation = this.rotation.clone();
+  newInstance.scale    = this.scale.clone();
+  newInstance.geometry = this.geometry.clone();
+  return newInstance;
 }
 
 Part.prototype.generateRenderables=function()
 {
   var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ); 
+  
+  this.renderable = new THREE.Mesh(this.geometry, material);
+  this.renderable.sourceShape = this;
+  
+  this.renderable.position = this.position;
+  this.renderable.rotation = this.rotation;
+  this.renderable.scale    = this.scale;
+  this.renderable.matrix   = this.matrix;
+  this.renderable.matrixWorld   = this.matrixWorld;
+  this.renderable._rotation = this._rotation ;
+	this.renderable._quaternion = this._quaternion;
+  
+  return this.renderable;
 }
 
 Part.prototype.fromThreeMesh=function(object){}
