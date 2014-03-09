@@ -58,7 +58,7 @@
   </style>
   <usco-client-deps> </usco-client-deps>
   
-  <visual-editor> </visual-editor>
+  <visual-editor id="visualEditor"> </visual-editor>
   <!--<code-editor> </code-editor>-->
   <!--<code-mirror id="selectEdit" theme="monokai" mode="javascript" value="{{source}}" boundValue="{{altSource}}" >
     </code-mirror>-->
@@ -72,7 +72,7 @@
     <button on-click="{{generateFromCode}}"> Generate shapes from code </button>
   </div>
   
-  <usco-asset-manager>
+  <usco-asset-manager id="assetManager">
     <xhr-store> </xhr-store>
     <desktop-store> </desktop-store>
     <dropbox-store> </dropbox-store>
@@ -94,8 +94,11 @@
 Polymer("usco-editor",{
   enteredView:function()
   {
+    this.visualEditor   = this.$.visualEditor;
     this.commandManager = this.$.historyEditor;
-  
+    this.assetManager   = this.$.assetManager;
+    //document.querySelector('usco-asset-manager');
+    
     //if we recieve a "newOperation" event, add it to history  
     var self = this;
     this.addEventListener('newOperation', function(e) {
@@ -103,8 +106,46 @@ Polymer("usco-editor",{
       self.commandManager.addCommand( e.detail.msg );
     });
     
-    
+    this.addEventListener('text-dropped', function(e) {
+      console.log(e.type, e.detail.data); 
+      this.loadResource( e.detail.data );
+    });
+    this.addEventListener('files-dropped', function(e) {
+      console.log(e.type, e.detail.data); 
+      var files = e.detail.data;
+      for (var i = 0, f; f = files[i]; i++) {
+        this.loadResource( f );
+      }
+    });
   },
+  
+  loadResource:function(uriOrData)
+  {
+    var self = this;
+    var resourceDeferred = this.assetManager.loadResource(uriOrData);
+    resourceDeferred.promise.then(function(resource){
+      console.log("got resource data", resource);
+      
+      //geometry
+      var geometry = resource.data;
+      geometry.computeBoundingBox();
+		  geometry.computeCentroids();
+		  geometry.computeBoundingSphere();
+
+      //needed at least for .ply files
+      geometry.computeVertexNormals();
+      geometry.computeFaceNormals();
+
+      //nice color: 0x00a9ff
+     //var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10, shading: THREE.FlatShading} );
+      //var shape = new THREE.Mesh(geometry, material);
+    
+      //console.log("shape", shape);
+      self.visualEditor.addToScene( geometry ); 
+    });
+  
+  },
+  
   //generation of code based on history
   generateCodeFromHistory:function()
   {
