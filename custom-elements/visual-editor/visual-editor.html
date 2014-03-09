@@ -479,11 +479,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 					    var mesh = new Part();
 					    mesh.name = "Part";
 					    mesh.geometry = geometry;
-					    result = mesh;
+					    renderable = mesh.generateRenderables();
+					    
+					    result = renderable;
 					  break;
               
             case 'clone':
-              result = selections[0].sourceShape.clone();
+              var newInstance = selections[0].sourceShape.clone();
+              result = newInstance.generateRenderables();
             break;
 
             case 'linkedClone':
