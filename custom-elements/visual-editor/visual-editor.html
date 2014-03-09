@@ -51,7 +51,7 @@
 
 
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
-on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}">
+on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}" on-drop="{{handleDrop}}">
   <template >
     <style>
       :host{
@@ -690,6 +690,56 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     }
     console.log("drag over")
   },
+  handleDrop:function(e)
+  {
+    console.log("drag drop")
+    if (e.preventDefault) {
+      e.preventDefault(); // Necessary. Allows us to drop.
+    }
+
+    var data=e.dataTransfer.getData("Text");
+    if(data)
+    {
+        this.asyncFire('text-dropped', {data:data} );
+    }
+
+    var files = e.dataTransfer.files;
+    if(files)
+    {
+      this.asyncFire('files-dropped', {data:files});
+    }
+  } ,
+  //temp hack
+  addToScene: function( bla )
+  {
+    //if(bla instanceof THREE.Geometry)
+    //{
+      var foo = new Part();
+      var geometry = new THREE.Geometry();
+      for(var i=0;i<bla.faces.length;i++)
+      {
+        var face = bla.faces[i];
+        geometry.faces.push( new THREE.Face3(face.a,face.b,face.c ) );
+      }
+      
+      for(var i=0;i<bla.vertices.length;i++)
+      {
+        var vertex = bla.vertices[i];
+        geometry.vertices.push( new THREE.Vector3(vertex.x, vertex.y, vertex.z ));
+      }
+      geometry.computeBoundingBox();
+		  geometry.computeCentroids();
+		  geometry.computeBoundingSphere();
+
+      //needed at least for .ply files
+      geometry.computeVertexNormals();
+      geometry.computeFaceNormals();
+      
+      foo.geometry = geometry;
+      this.viewer.addToScene( foo );
+    //}
+  }
+  
     //going down "one level" into an object hierarchy
     });
   </script>
