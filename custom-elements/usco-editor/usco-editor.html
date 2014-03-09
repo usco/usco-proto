@@ -105,7 +105,6 @@ Polymer("usco-editor",{
       console.log(e.type, e.detail.msg); 
       self.commandManager.addCommand( e.detail.msg );
     });
-    
     this.addEventListener('text-dropped', function(e) {
       console.log(e.type, e.detail.data); 
       this.loadResource( e.detail.data );
@@ -116,6 +115,28 @@ Polymer("usco-editor",{
       for (var i = 0, f; f = files[i]; i++) {
         this.loadResource( f );
       }
+    });
+    
+    this.addEventListener('export-requested', function(e) {
+      console.log(e.type, e.detail.data); 
+      var stlSerializer = self.assetManager.assetManager.serializers["stl"];//STLSerializer//self.querySelector('stl-serializer');
+      console.log("stlSerializer",stlSerializer);
+      console.log("assetManager",self.assetManager.assetManager.serializers);
+      
+      var resultSTL = stlSerializer.serialize(e.detail.data.parent);
+      console.log("resultStl", resultSTL);
+      
+      var ext = "stl";
+      var link = document.createElement("a");
+
+      var blob = new Blob([resultSTL],{type : 'application/'+ext})
+      var url =  window.webkitURL.createObjectURL(blob);
+        //var blobURL = window.webkitURL.createObjectURL(blob);
+      
+      link.href = url;
+      link.download = "test.stl";
+		  link.click();
+      
     });
   },
   
@@ -128,13 +149,13 @@ Polymer("usco-editor",{
       
       //geometry
       var geometry = resource.data;
-      geometry.computeBoundingBox();
+      /*geometry.computeBoundingBox();
 		  geometry.computeCentroids();
 		  geometry.computeBoundingSphere();
 
       //needed at least for .ply files
       geometry.computeVertexNormals();
-      geometry.computeFaceNormals();
+      geometry.computeFaceNormals();*/
 
       //nice color: 0x00a9ff
      //var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10, shading: THREE.FlatShading} );
