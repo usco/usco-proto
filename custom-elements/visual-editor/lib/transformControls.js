@@ -1066,6 +1066,8 @@ THREE.TransformControls = function ( camera, domElement ) {
 				scope.object.quaternion.copy( tempQuaternion );
 
 			} else if ( scope.space == "local" ) {
+			
+			  console.log("local rotate");
 
 				point.applyMatrix4( tempMatrix.getInverse( worldRotationMatrix ) );
 
@@ -1075,12 +1077,15 @@ THREE.TransformControls = function ( camera, domElement ) {
 				offsetRotation.set( Math.atan2( tempVector.z, tempVector.y ), Math.atan2( tempVector.x, tempVector.z ), Math.atan2( tempVector.y, tempVector.x ) );
 				
 				 if ( scope.snap != undefined ) {
-          scope.snap = Math.PI/2;//0.5;
+          scope.snap = Math.PI/6;//0.5;
 					if ( scope.axis.search("X") != -1 ) rotation.x = Math.round( rotation.x / scope.snap ) * scope.snap;
-					//if ( scope.axis.search("Y") != -1 ) scope.object.position.y = Math.round( scope.object.position.y / scope.snap ) * scope.snap;
-					//if ( scope.axis.search("Z") != -1 ) scope.object.position.z = Math.round( scope.object.position.z / scope.snap ) * scope.snap;
+					if ( scope.axis.search("Y") != -1 ) rotation.y = Math.round( rotation.y / scope.snap ) * scope.snap;
+					if ( scope.axis.search("Z") != -1 ) rotation.z = Math.round( rotation.z / scope.snap ) * scope.snap;
+					
+					offsetRotation.x = Math.round( offsetRotation.x / scope.snap ) * scope.snap;
+					offsetRotation.y = Math.round( offsetRotation.y / scope.snap ) * scope.snap;
+					offsetRotation.z = Math.round( offsetRotation.z / scope.snap ) * scope.snap;
 				}
-				
 
 				quaternionXYZ.setFromRotationMatrix( oldRotationMatrix );
 				quaternionX.setFromAxisAngle( unitX, rotation.x - offsetRotation.x );
