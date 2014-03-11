@@ -684,7 +684,11 @@ THREE.TransformControls = function ( camera, domElement ) {
 	this.gizmo["scale"].hide();
 
 	this.object = undefined;
+	
 	this.snap = undefined;
+	this.rotateSnap  = undefined;
+	this.scaleSnap  = undefined;
+	
 	this.space = "world";
 	this.size = 1;
 	this.axis = undefined;
@@ -801,9 +805,13 @@ THREE.TransformControls = function ( camera, domElement ) {
 	}
 
 	this.setSnap = function ( snap ) {
-
 		scope.snap = snap;
-
+	}
+	this.setRotateSnap = function( snap ){
+	  scope.rotateSnap = snap;
+	}
+	this.setScaleSnap = function( snap ){
+	  scope.scaleSnap = snap;
 	}
 
 	this.setSize = function ( size ) {
@@ -1003,11 +1011,11 @@ THREE.TransformControls = function ( camera, domElement ) {
 					scope.object.scale.y = oldScale.y * scale;
 					scope.object.scale.z = oldScale.z * scale;
 					
-          if ( scope.snap != undefined ) {
-            scope.snap = 0.2;
-            scope.object.scale.x = Math.max( Math.round( scope.object.scale.x / scope.snap ) * scope.snap, 0.1) ;
-					  scope.object.scale.y = Math.max( Math.round( scope.object.scale.y / scope.snap ) * scope.snap, 0.1) ;
-					  scope.object.scale.z = Math.max( Math.round( scope.object.scale.z / scope.snap ) * scope.snap, 0.1) ;
+          if ( scope.scaleSnap != undefined ) {
+            //scope.snap = 0.2;
+            scope.object.scale.x = Math.max( Math.round( scope.object.scale.x / scope.scaleSnap ) * scope.scaleSnap, 0.1) ;
+					  scope.object.scale.y = Math.max( Math.round( scope.object.scale.y / scope.scaleSnap ) * scope.scaleSnap, 0.1) ;
+					  scope.object.scale.z = Math.max( Math.round( scope.object.scale.z / scope.scaleSnap ) * scope.scaleSnap, 0.1) ;
 				  }
 
 				} else {
@@ -1018,11 +1026,11 @@ THREE.TransformControls = function ( camera, domElement ) {
 					  if ( scope.axis == "Y" ) scope.object.scale.y = oldScale.y * ( 1 + point.y / 50 );
 					  if ( scope.axis == "Z" ) scope.object.scale.z = oldScale.z * ( 1 + point.z / 50 );
 
-          if ( scope.snap != undefined ) {
-            scope.snap = 0.2;
-            if ( scope.axis == "X" ) scope.object.scale.x = Math.max( Math.round( scope.object.scale.x / scope.snap ) * scope.snap, 0.1) ;
-					  if ( scope.axis == "Y" ) scope.object.scale.y = Math.max( Math.round( scope.object.scale.y / scope.snap ) * scope.snap, 0.1) ;
-					  if ( scope.axis == "Z" ) scope.object.scale.z = Math.max( Math.round( scope.object.scale.z / scope.snap ) * scope.snap, 0.1) ;
+          if ( scope.scaleSnap != undefined ) {
+            //scope.snap = 0.2;
+            if ( scope.axis == "X" ) scope.object.scale.x = Math.max( Math.round( scope.object.scale.x / scope.scaleSnap ) * scope.scaleSnap, 0.1) ;
+					  if ( scope.axis == "Y" ) scope.object.scale.y = Math.max( Math.round( scope.object.scale.y / scope.scaleSnap ) * scope.scaleSnap, 0.1) ;
+					  if ( scope.axis == "Z" ) scope.object.scale.z = Math.max( Math.round( scope.object.scale.z / scope.scaleSnap ) * scope.scaleSnap, 0.1) ;
 				  }
 				}
 			}
@@ -1076,15 +1084,16 @@ THREE.TransformControls = function ( camera, domElement ) {
 				rotation.set( Math.atan2( point.z, point.y ), Math.atan2( point.x, point.z ), Math.atan2( point.y, point.x ) );
 				offsetRotation.set( Math.atan2( tempVector.z, tempVector.y ), Math.atan2( tempVector.x, tempVector.z ), Math.atan2( tempVector.y, tempVector.x ) );
 				
-				 if ( scope.snap != undefined ) {
-          scope.snap = Math.PI/6;//0.5;
-					if ( scope.axis.search("X") != -1 ) rotation.x = Math.round( rotation.x / scope.snap ) * scope.snap;
-					if ( scope.axis.search("Y") != -1 ) rotation.y = Math.round( rotation.y / scope.snap ) * scope.snap;
-					if ( scope.axis.search("Z") != -1 ) rotation.z = Math.round( rotation.z / scope.snap ) * scope.snap;
+				 if ( scope.rotateSnap != undefined ) {
+				 
+          //scope.snap = Math.PI/6;//0.5;
+					if ( scope.axis.search("X") != -1 ) rotation.x = Math.round( rotation.x / scope.rotateSnap ) * scope.rotateSnap;
+					if ( scope.axis.search("Y") != -1 ) rotation.y = Math.round( rotation.y / scope.rotateSnap ) * scope.rotateSnap;
+					if ( scope.axis.search("Z") != -1 ) rotation.z = Math.round( rotation.z / scope.rotateSnap ) * scope.rotateSnap;
 					
-					offsetRotation.x = Math.round( offsetRotation.x / scope.snap ) * scope.snap;
-					offsetRotation.y = Math.round( offsetRotation.y / scope.snap ) * scope.snap;
-					offsetRotation.z = Math.round( offsetRotation.z / scope.snap ) * scope.snap;
+					offsetRotation.x = Math.round( offsetRotation.x / scope.rotateSnap ) * scope.rotateSnap;
+					offsetRotation.y = Math.round( offsetRotation.y / scope.rotateSnap ) * scope.rotateSnap;
+					offsetRotation.z = Math.round( offsetRotation.z / scope.rotateSnap ) * scope.rotateSnap;
 				}
 
 				quaternionXYZ.setFromRotationMatrix( oldRotationMatrix );
