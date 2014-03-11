@@ -77,6 +77,12 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       }
 
       code-mirror{position:absolute;top:80px;right:20px;width:400px;height:200px;z-index:9999;}
+      
+      input[type="number"]{
+        width:50px;
+        size:3;
+      }
+      
 
     </style>
     <!--AutoSaving settings to localstorage-->
@@ -86,10 +92,16 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
     <!-- for various "visual" settings-->
     <div style="position:absolute;left:30%;top:20px;z-index:9">
+
+    
         <span> Cursor </span>
         Snap to grid <input type="checkbox" checked="{{cursorSettings.snapToGrid}}"> </input>
+        
         Snap transform <input type="checkbox" checked="{{cursorSettings.snapTransform}}"> </input>
-        Grid step <input type="number" value="{{gridSettings.step}}"></input>
+        Translate step <input type="number" value="{{gridSettings.step}}"></input>
+        Rotate    step <input type="number" value="{{transformSettings.rotateStep}}" step=0.01 min=0.1 max=1 ></input>
+        Scale     step <input type="number" value="{{transformSettings.scaleStep}}"  step=0.1 min=0.1 max=1></input>
+        
     </div>    
     
     
@@ -149,15 +161,26 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     
     gridSettings:{step:10},
     cursorSettings:{snapToGrid:false,snapTransform:true},
+    transformSettings:{rotateStep:Math.PI/20,scaleStep:0.1},
     
     observe: {
       'gridSettings.step': 'gridSettingsChanged'
+    },
+    
+     observe: {
+      'transformSettings.rotateStep': 'transformSettingsChanged',
+      'transformSettings.scaleStep': 'transformSettingsChanged'
     },
     
     gridSettingsChanged:function()
     {
       console.log("grid settings changed");
       this.transformControls.setSnap(this.gridSettings.step);
+    },
+    transformSettingsChanged:function()
+    {
+      this.transformControls.setScaleSnap(this.transformSettings.scaleStep);
+      this.transformControls.setRotateSnap(this.transformSettings.rotateStep);
     },
     viewerSceneReady:function(event)
     {
@@ -647,6 +670,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
       switch(keyCode)
       {
+        case 67://c
+          
+        break;
+      
         case 68://d
           if(ctrlPressed){
             this.fire("reqShapeOperation",{type:"clone"});
