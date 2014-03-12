@@ -35,6 +35,9 @@
 
 <script src="lib/helpers/parent-child-links-helper.js"></script>
 <script src="lib/helpers/linked-clone-helper.js"></script>
+<script src="lib/helpers/computeBounding.js"></script>
+<script src="lib/helpers/textDraw-helper.js"></script>
+<script src="lib/helpers/object-dimensions-helper.js"></script>
 
 <script src="lib/connectors/connector.js"></script>
 
@@ -92,8 +95,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
     <!-- for various "visual" settings-->
     <div style="position:absolute;left:30%;top:20px;z-index:9">
-
-    
         <span> Cursor </span>
         Snap to grid <input type="checkbox" checked="{{cursorSettings.snapToGrid}}"> </input>
         
@@ -101,9 +102,23 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         Translate step <input type="number" value="{{gridSettings.step}}"></input>
         Rotate    step <input type="number" value="{{transformSettings.rotateStep}}" step=0.01 min=0.1 max=1 ></input>
         Scale     step <input type="number" value="{{transformSettings.scaleStep}}"  step=0.1 min=0.1 max=1></input>
-        
     </div>    
     
+    
+    <div id="selectedObjectInfo" style="position:absolute;right:10px;bottom:20px;z-index:9">
+      x:<input type="number" value="{{selectedObject.position.x}}"></input>
+      y:<input type="number" value="{{selectedObject.position.y}}"></input>
+      z:<input type="number" value="{{selectedObject.position.z}}"></input>
+      <br>
+      x:<input type="number" value="{{selectedObject._rotation.x}}"></input>
+      y:<input type="number" value="{{selectedObject._rotation.y}}"></input>
+      z:<input type="number" value="{{selectedObject._rotation.z}}"></input>
+      
+      <br>
+      w:<input type="number" value="{{selectedObject.boundingBox.max.x - selectedObject.boundingBox.min.x}}"></input>
+      d:<input type="number" value="{{selectedObject.boundingBox.max.y - selectedObject.boundingBox.min.y}}"></input>
+      h:<input type="number" value="{{selectedObject.boundingBox.max.z - selectedObject.boundingBox.min.z}}"></input>
+    </div>
     
     <shape-creator id="contextMenu"> </shape-creator>
 
@@ -142,7 +157,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           </three-js-scene>
 
           <!--TODO: if no effects are added, effect composer/post process should deactivated -->
-          <!--<three-effect-composer>
+          <!--
+          <three-effect-composer>
             <vignette-fx darkness="5" offset="0.4"> </vignette-fx>
           </three-effect-composer>-->
      </three-js>
@@ -153,6 +169,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
     autorotate:false,
     showAxes : false,
+    showDimensions:false,
+    
     selectedObjects:null,
     selectedObject:null,
 
@@ -253,13 +271,13 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         switch(event.transform)
         {
           case "rotate":
-            operation = new Rotation(event.value,this.selectedObjects[0]);
+            operation = new Rotation(event.value,this.selectedObjects[0].sourceShape);
           break;
           case "translate":
             if(this.selectedObjects[0].standInFor){
               this.selectedObjects[0].dispatchEvent({type:'translated',value:event.value});
             }
-            operation = new Translation(event.value,this.selectedObjects[0]);
+            operation = new Translation(event.value,this.selectedObjects[0].sourceShape);
           break;
           case "scale":
             operation = new Scaling(event.value,this.selectedObjects[0]);
@@ -593,8 +611,19 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         }*/
         if(oldSelection.origColor)
         {
-          oldSelection.material.color = oldSelection.origColor;
+          //oldSelection.material.color = oldSelection.origColor;
         }
+        
+        if(this.showDimensions)
+        {
+          var dims = oldSelection.helpers.dims;
+          if(dims)
+          {
+            oldSelection.remove(dims);
+            oldSelection.helpers.dims = null;
+          }
+        }
+        
       }
       //add to new selection
       /*
@@ -641,8 +670,19 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         this.viewer.scene.add(this.transformControls);
         this.transformControls.attach( newSelections[0] ); 
 
-        newSelection.origColor = newSelection.material.color;
-        newSelection.material.color = 0xff0000;
+        //newSelection.origColor = newSelection.material.color;
+        //newSelection.material.color = 0xff0000;
+        
+        //TODO:refactor
+        if(this.showDimensions)
+        {
+          var objDims = new ObjectDimensionsHelper({mesh:newSelection});
+          newSelection.add( objDims );
+          if(!(newSelection.helpers)) newSelection.helpers = {}
+          newSelection.helpers.dims = objDims;
+        }
+        
+        
         /*
         if(newSelection.outline) continue;
         var outlineMaterial = new THREE.MeshBasicMaterial({
@@ -746,6 +786,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     if(data)
     {
         this.asyncFire('text-dropped', {data:data} );
+        
     }
 
     var files = e.dataTransfer.files;
@@ -755,10 +796,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     }
   } ,
   //temp hack
-  addToScene: function( bla )
+  addImportedResource: function( resource )
   {
     //if(bla instanceof THREE.Geometry)
     //{
+    operation = new Import(null, resource);
+    this.fire('newOperation', {msg: operation});
+    
+    var bla = resource.data;
     if('children' in bla)
     {
       var foo = new Part();
