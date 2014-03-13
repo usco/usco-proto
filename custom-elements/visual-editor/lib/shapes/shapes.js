@@ -24,7 +24,7 @@ Part.prototype.constructor = Part;
 
 Part.prototype.clone = function()
 {
-  var newInstance = new Part();
+  var newInstance = new this.constructor();
   newInstance.position = this.position.clone();
   newInstance.rotation = this.rotation.clone();
   newInstance.scale    = this.scale.clone();
@@ -46,6 +46,9 @@ Part.prototype.generateRenderables=function()
   this.renderable.matrixWorld   = this.matrixWorld;
   this.renderable._rotation = this._rotation ;
 	this.renderable._quaternion = this._quaternion;
+	
+	this.renderable._rotation._quaternion = this.quaternion;
+	this.renderable._quaternion._euler = this.rotation;
 	
   this.renderable.add( this.connectors[0].generateRenderables() );
 	
@@ -201,11 +204,13 @@ Part.prototype.subtract=function(objects)
 
 function Cube(options)
 {
+  options = options || {};
   this.w = options.w || 20;
   this.h = options.h || 20;
   this.d = options.d || 20;
 
   Part.call( this );
+  this.name = "Cube"+this.id;
   this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
   //this._bsp = new ThreeBSP(this);
 }
@@ -231,6 +236,7 @@ Cube.prototype.updateRenderables=function()
 
 function Sphere(options)
 {
+  options = options || {};
   this.r = options.r || 10;
   this.$fn = options.$fn || 10;
 
@@ -251,6 +257,7 @@ Sphere.prototype.updateRenderables=function()
 
 function Cylinder(options)
 {
+  options = options || {};
   this.r = options.r || 10;
   this.h = options.h || 10;
   this.$fn = options.$fn || 10;
@@ -275,6 +282,7 @@ Cylinder.prototype.updateRenderables=function()
 
 function Torus(options)
 {
+  options = options || {};
   this.r = options.r || 10;
   this.tube = options.tube || 4;
   this.$fn = options.$fn || 20;
