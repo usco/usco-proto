@@ -15,10 +15,17 @@ Creation.prototype.clone = function()
 
 Creation.prototype.undo = function()
 {
-    this.parentObject.remove(this.target);
+  this._oldParent = this.target.parent;
+  this.target.parent.remove(this.target);
+  
+  //hack
+  this.target.renderable.visible = false;
 }
 
 Creation.prototype.redo = function()
 {
-  this.parentObject.add(this.target);
+  this._oldParent.add(this.target);
+  
+  //hack
+  this.target.renderable.visible = true;
 }

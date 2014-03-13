@@ -19,8 +19,15 @@ Import.prototype.execute = function(value)
 
 Import.prototype.undo = function()
 {
+  this._oldParent = this.value.parent;
+  this.value.parent.remove(this.value);
+  //hack
+  this.value.renderable.visible = false;
 }
 
 Import.prototype.redo = function()
 {
+  this._oldParent.add(this.value);
+  //hack
+  this.value.renderable.visible = true;
 }
