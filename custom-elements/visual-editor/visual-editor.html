@@ -46,17 +46,16 @@
 <script src="lib/code-generation/code-generators.js"></script>
 <script src="lib/code-generation/code-generation-ui.js"></script>
 
-<link rel="import" href="../../components/code-mirror/code-mirror.html">
-
 
 <script src="fonts/helvetiker_regular.typeface.js"></script>
 <script src="fonts/fontawesome_regular.typeface_2.js"></script>
 
+<link rel="import" href="../material-editor/material-editor.html">
 
 
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
 on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}" on-drop="{{handleDrop}}"
-on-pointerup="{{onPointerUp}}" on-pointerdown="{{onPointerDown}}">
+>
   <template >
     <style>
       :host{
@@ -98,17 +97,17 @@ on-pointerup="{{onPointerUp}}" on-pointerdown="{{onPointerDown}}">
     <!-- for various "visual" settings-->
     <div style="position:absolute;left:30%;top:20px;z-index:9">
         <span> Cursor </span>
-        Snap to grid <input type="checkbox" checked="{{cursorSettings.snapToGrid}}"> </input>
+        Snap to grid <!--<input type="checkbox" checked="{{cursorSettings.snapToGrid}}"> </input>-->
         
         Snap transform <input type="checkbox" checked="{{cursorSettings.snapTransform}}"> </input>
-        Translate step <input type="number" value="{{gridSettings.step}}"></input>
+        Translate step <input type="number" value="{{gridSettings.step}}" step=1 min=0.01 max=100></input>
         Rotate    step <input type="number" value="{{transformSettings.rotateStep}}" step=0.01 min=0.1 max=1 ></input>
         Scale     step <input type="number" value="{{transformSettings.scaleStep}}"  step=0.1 min=0.1 max=1></input>
     </div>    
     
     
     <template if="{{selectedObject!=null}}">
-      <div id="selectedObjectInfo" style="position:absolute;right:10px;bottom:20px;z-index:9">
+      <div id="selectedObjectInfo" style="position:absolute;right:10px;bottom:80px;z-index:9">
         x:<input type="number" value="{{selectedObject.sourceShape.position.x}}"></input>
         y:<input type="number" value="{{selectedObject.sourceShape.position.y}}"></input>
         z:<input type="number" value="{{selectedObject.sourceShape.position.z}}"></input>
@@ -123,18 +122,19 @@ on-pointerup="{{onPointerUp}}" on-pointerdown="{{onPointerDown}}">
         h:<input type="number" value="{{selectedObject.boundingBox.max.z - selectedObject.boundingBox.min.z}}"></input>
       </div>
     </template>
+    <material-editor selection="{{selectedObject}}"> </material-editor>
     
     <shape-creator id="contextMenu"> </shape-creator>
 
     <!--testing editing of 2d shapes-->
-    <template if="{{selectedObjects.length>10}}">
+    <!--<template if="{{selectedObjects.length>0}}">-->
     <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:20px;top:300px;z-index:3">
       <div>
         <text-editor id="textEditor"> </text-editor>
         <cube-editor id="cubeEditor"> </cube-editor>
       </div>
     </div>
-    </template>
+   <!-- </template>-->
 
     <three-js postProcess fullscreen="{{fullscreen}}" 
     selectedObjects="{{selectedObjects}}" id="viewer" on-keydown="{{keyUp}}" on-sceneready="{{viewerSceneReady}}">
@@ -186,22 +186,20 @@ on-pointerup="{{onPointerUp}}" on-pointerdown="{{onPointerDown}}">
     
     gridSettings:{step:10},
     cursorSettings:{snapToGrid:false,snapTransform:true},
-    transformSettings:{rotateStep:Math.PI/20,scaleStep:0.1},
+    transformSettings:{rotateStep:Math.PI/4,scaleStep:0.1},
     
-    observe: {
-      'gridSettings.step': 'gridSettingsChanged'
-    },
     
      observe: {
+      'gridSettings.step': 'transformSettingsChanged',
       'transformSettings.rotateStep': 'transformSettingsChanged',
-      'transformSettings.scaleStep': 'transformSettingsChanged'
-    },
-    
-    observe:{
+      'transformSettings.scaleStep': 'transformSettingsChanged',
+      
       'selectedObject.sourceShape.position.x':'foo',
       'selectedObject.sourceShape.position.y':'foo',
       'selectedObject.sourceShape.position.z':'foo'
     },
+    
+    /*
     
     foo:function()
     {
@@ -210,9 +208,10 @@ on-pointerup="{{onPointerUp}}" on-pointerdown="{{onPointerDown}}">
       {
         if(this.selectedObjects.length>0)
         {
-          operation = new Translation(event.value,this.selectedObjects[0].sourceShape);
+          var offset = this.selectedObjects[0].sourceShape.position;
+          operation = new Translation(offset,this.selectedObjects[0].sourceShape);
           this.fire('newOperation', {msg: operation});
-          this.transformControls.detach(this.selectedObjects[0]);
+          //this.transformControls.detach(this.selectedObjects[0]);
           //this.transformControls.attach(this.selectedObjects[0]);
         }
       }
@@ -224,18 +223,14 @@ on-pointerup="{{onPointerUp}}" on-pointerdown="{{onPointerDown}}">
     onPointerUp:function()
     {
        this.ptrUp = true;
-    },
+    },*/
     
-    
-    gridSettingsChanged:function()
-    {
-      console.log("grid settings changed");
-      this.transformControls.setSnap(this.gridSettings.step);
-    },
     transformSettingsChanged:function()
     {
+      console.log("transformSettings changed");
       this.transformControls.setScaleSnap(this.transformSettings.scaleStep);
       this.transformControls.setRotateSnap(this.transformSettings.rotateStep);
+      this.transformControls.setSnap(this.gridSettings.step);
     },
     viewerSceneReady:function(event)
     {
