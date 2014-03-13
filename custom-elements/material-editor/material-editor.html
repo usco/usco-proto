@@ -1,0 +1,40 @@
+<link rel="import" href="../../components/polymer/polymer.html">
+
+<polymer-element name="material-editor" attributes="selection">
+<template>
+  <template if="{{selection!=null}}">
+    <div id="selectedObjectInfo" style="position:absolute;right:10px;bottom:20px;z-index:9">
+      <input type="color" value="{{selection.material.color | foo}}"> </input>
+    </div>
+  </template>
+</template>
+<script>
+Polymer("material-editor",{
+  selection:null,
+  
+  foo : {
+        toDOM: function(value) {
+          var result = value.getHexString();
+          console.log("foo toDom", value, result);
+          return "#"+result;
+        },
+        toModel: function(value) {
+          var result = new THREE.Color().setStyle(value);
+          console.log("foo toModel",value,result)
+          return result;
+        }
+      }
+   ,
+  
+  _threeColorToHex:function(threeColor)
+  {
+  
+  },
+  _HexTO0x:function(color)
+  {
+    var hex = parseInt("0x"+color.split('#').pop(),16);
+    return  hex;
+  }
+
+});
+</script>
