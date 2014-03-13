@@ -15,6 +15,7 @@
 <script src="lib/operations/creation.js"></script>
 <script src="lib/operations/deletion.js"></script>
 <script src="lib/operations/import.js"></script>
+<script src="lib/operations/clone.js"></script>
 
 <script src="lib/operations/translation.js"></script>
 <script src="lib/operations/rotation.js"></script>
@@ -54,7 +55,8 @@
 
 
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes xpos width depth height radius hue saturation darkness offset" 
-on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}" on-drop="{{handleDrop}}">
+on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}" on-drop="{{handleDrop}}"
+on-pointerup="{{onPointerUp}}" on-pointerdown="{{onPointerDown}}">
   <template >
     <style>
       :host{
@@ -105,20 +107,22 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     </div>    
     
     
-    <div id="selectedObjectInfo" style="position:absolute;right:10px;bottom:20px;z-index:9">
-      x:<input type="number" value="{{selectedObject.position.x}}"></input>
-      y:<input type="number" value="{{selectedObject.position.y}}"></input>
-      z:<input type="number" value="{{selectedObject.position.z}}"></input>
-      <br>
-      x:<input type="number" value="{{selectedObject._rotation.x}}"></input>
-      y:<input type="number" value="{{selectedObject._rotation.y}}"></input>
-      z:<input type="number" value="{{selectedObject._rotation.z}}"></input>
-      
-      <br>
-      w:<input type="number" value="{{selectedObject.boundingBox.max.x - selectedObject.boundingBox.min.x}}"></input>
-      d:<input type="number" value="{{selectedObject.boundingBox.max.y - selectedObject.boundingBox.min.y}}"></input>
-      h:<input type="number" value="{{selectedObject.boundingBox.max.z - selectedObject.boundingBox.min.z}}"></input>
-    </div>
+    <template if="{{selectedObject!=null}}">
+      <div id="selectedObjectInfo" style="position:absolute;right:10px;bottom:20px;z-index:9">
+        x:<input type="number" value="{{selectedObject.sourceShape.position.x}}"></input>
+        y:<input type="number" value="{{selectedObject.sourceShape.position.y}}"></input>
+        z:<input type="number" value="{{selectedObject.sourceShape.position.z}}"></input>
+        <br>
+        x:<input type="number" value="{{selectedObject.sourceShape.rotation.x}}"></input>
+        y:<input type="number" value="{{selectedObject.sourceShape.rotation.y}}"></input>
+        z:<input type="number" value="{{selectedObject.sourceShape.rotation.z}}"></input>
+        
+        <br>
+        w:<input type="number" value="{{selectedObject.boundingBox.max.x - selectedObject.boundingBox.min.x}}"></input>
+        d:<input type="number" value="{{selectedObject.boundingBox.max.y - selectedObject.boundingBox.min.y}}"></input>
+        h:<input type="number" value="{{selectedObject.boundingBox.max.z - selectedObject.boundingBox.min.z}}"></input>
+      </div>
+    </template>
     
     <shape-creator id="contextMenu"> </shape-creator>
 
@@ -170,6 +174,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     autorotate:false,
     showAxes : false,
     showDimensions:false,
+
+    //TODO move this to a structure
+    hierarchyRoot:new THREE.Object3D(),
     
     selectedObjects:null,
     selectedObject:null,
@@ -189,6 +196,36 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       'transformSettings.rotateStep': 'transformSettingsChanged',
       'transformSettings.scaleStep': 'transformSettingsChanged'
     },
+    
+    observe:{
+      'selectedObject.sourceShape.position.x':'foo',
+      'selectedObject.sourceShape.position.y':'foo',
+      'selectedObject.sourceShape.position.z':'foo'
+    },
+    
+    foo:function()
+    {
+      console.log("selected object position changed");
+      if(this.ptrUp)
+      {
+        if(this.selectedObjects.length>0)
+        {
+          operation = new Translation(event.value,this.selectedObjects[0].sourceShape);
+          this.fire('newOperation', {msg: operation});
+          this.transformControls.detach(this.selectedObjects[0]);
+          //this.transformControls.attach(this.selectedObjects[0]);
+        }
+      }
+    },
+    onPointerDown:function()
+    {
+      this.ptrUp = false;
+    },
+    onPointerUp:function()
+    {
+       this.ptrUp = true;
+    },
+    
     
     gridSettingsChanged:function()
     {
@@ -406,6 +443,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
                 this.selectedObjects=[instance.renderable];
               }
             }
+            
+            this.hierarchyRoot.add( instance );
             this.fire('newOperation', {msg: new Creation(instance, instance.parent, options)});
             console.log("instance", instance, this.viewer.scene);
           }
@@ -449,7 +488,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           switch(type)
           {
             case 'export':
-              var target = selections[0];
+              var target = selections[0].sourceShape;
               console.log("please export", target);
               
               this.asyncFire('export-requested', {data:target} );
@@ -528,6 +567,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             case 'clone':
               var newInstance = selections[0].sourceShape.clone();
               result = newInstance.generateRenderables();
+              
+              this.hierarchyRoot.add( result.sourceShape );
+              this.viewer.addToScene( result );
+          
+              operation = new Clone(result.sourceShape);
+              this.fire('newOperation', {msg: operation});
+              this.selectedObjects = [result];//make sure the new item is the selected one
+              return;
             break;
 
             case 'linkedClone':
@@ -566,8 +613,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           }
           else{
           console.log("adding to scene",result);
+          this.hierarchyRoot.add( result.sourceShape );
           this.viewer.addToScene( result );
-          operation = new Creation(result, result.parent);
+          
+          operation = new Creation(result.sourceShape, result.sourceShape.parent);
           this.fire('newOperation', {msg: operation});
           this.selectedObjects = [result];//make sure the new item is the selected one
           }
@@ -800,8 +849,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
   {
     //if(bla instanceof THREE.Geometry)
     //{
-    operation = new Import(null, resource);
-    this.fire('newOperation', {msg: operation});
     
     var bla = resource.data;
     if('children' in bla)
@@ -861,7 +908,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 		  geometry.computeBoundingSphere();
 		  
 		  //centering hack
-		  var autoCenter = true;
+		  var autoCenter = false;
       if( autoCenter)
       {
         var offset = geometry.boundingSphere.center;
@@ -873,21 +920,19 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       geometry.computeFaceNormals();
       
       foo.geometry = geometry;
+      foo.name = resource.name;
       
-      var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
+      this.hierarchyRoot.add( foo );
+      
+      /*var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
       foo.renderable = new THREE.Mesh( geometry, material);//new THREE.Mesh( new THREE.CubeGeometry( this.w, this.d, this.h ), material);
-      foo.renderable.sourceShape = foo;
+      foo.renderable.sourceShape = foo;*/
       
-       foo.renderable.position = foo.position;
-      foo.renderable.rotation = foo.rotation;
-      foo.renderable.scale    = foo.scale;
-      foo.renderable.matrix   = foo.matrix;
-      foo.renderable.matrixWorld   = foo.matrixWorld;
-      foo.renderable._rotation = foo._rotation ;
-	    foo.renderable._quaternion = foo._quaternion;
+      this.viewer.addToScene( foo.generateRenderables() );
+      this.selectedObjects = [foo];
       
-      this.viewer.addToScene( foo.renderable );
-    
+      operation = new Import(foo, resource);
+      this.fire('newOperation', {msg: operation});
   }
   
     //going down "one level" into an object hierarchy
