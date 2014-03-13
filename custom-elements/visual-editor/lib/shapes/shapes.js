@@ -12,6 +12,8 @@ function Part()
   //this is an abstract element, but it needs a visual representation
   this.renderable = null;
   
+  this.color = 0x17a9f5;
+  
   this.connectors = [];
   var testConnector = new Connector();
   testConnector.up = new THREE.Vector3(0,0,1);
@@ -34,7 +36,7 @@ Part.prototype.clone = function()
 
 Part.prototype.generateRenderables=function()
 {
-  var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ); 
+  var material = new THREE.MeshPhongMaterial( { color: this.color, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ); 
   
   this.renderable = new THREE.Mesh(this.geometry, material);
   this.renderable.sourceShape = this;
