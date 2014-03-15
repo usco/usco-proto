@@ -126,6 +126,17 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     
     <shape-creator id="contextMenu"> </shape-creator>
 
+    <!--for export-->
+    <div id="export" style="position:absolute;right:50%;bottom:20px;z-index:9" on-click="">
+      <select  value="{{exportFormat}}">
+        <option value="stl"> stl </option>
+        <option value="amf"> amf </option>
+        <option value="obj"> obj </option>
+      </select>
+      <input type="text" value="{{exportFileName}}"></input>
+      <button on-click="{{exportMesh}}"> Export </button>
+    </div>
+
     <!--testing editing of 2d shapes-->
     <!--<template if="{{selectedObjects.length>0}}">-->
     <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:20px;top:300px;z-index:3">
@@ -178,11 +189,16 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     //TODO move this to a structure
     hierarchyRoot:new THREE.Object3D(),
     
+    
+    groupSelectionHelper: new THREE.Object3D(),
     selectedObjects:null,
-    selectedObject:null,
+    selectedObject:null,//first or single selection
 
     source:"//testing\n",
     altSource:"",
+    
+    exportFormat:"stl",
+    exportFileName : "",
     
     gridSettings:{step:10},
     cursorSettings:{snapToGrid:false,snapTransform:true},
@@ -196,7 +212,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       
       'selectedObject.sourceShape.position.x':'foo',
       'selectedObject.sourceShape.position.y':'foo',
-      'selectedObject.sourceShape.position.z':'foo'
+      'selectedObject.sourceShape.position.z':'foo',
+      
+      //'selectedObjects':'selectionsChanged'
     },
     
     /*
@@ -232,6 +250,13 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.transformControls.setRotateSnap(this.transformSettings.rotateStep);
       this.transformControls.setSnap(this.gridSettings.step);
     },
+    
+    exportMesh:function()
+    {
+      var toExport = this.selectedObject || this.hierarchyRoot;
+      this.asyncFire('export-requested', {fileName:this.exportFileName, format:this.exportFormat, data:toExport} );
+    },
+    
     viewerSceneReady:function(event)
     {
       console.log("a scene is ready",event);
@@ -240,10 +265,24 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     created:function()
     {
       this.selectedObjects = [];
+      
+      //TODO: move this where it should be
+      if(window.webkitURL) window.URL = window.webkitURL;
     },
     enteredView:function()
     {
       this.viewer = this.$.viewer;
+      
+      var self = this;
+      this.addEventListener('selectionsAdded', function(e) {
+        //console.log("selections added", e.detail);
+        self.selectionsAdded(e.detail);
+      });
+      
+      this.addEventListener('selectionsRemoved', function(e) {
+        //console.log("selections removed", e.detail);
+        self.selectionsRemoved(e.detail);
+      });
     },
     setupElements : function()
     {
@@ -257,6 +296,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.fakeCursor = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 3 } ), THREE.Lines );
       this.viewer.addToScene( this.fakeCursor);
       
+      this.viewer.addToScene( this.groupSelectionHelper);
+      
       /*var points = [new THREE.Vector2(10,10), new THREE.Vector2(100,90) ,new THREE.Vector2(80,10)];
       var shape = new Shape2d();
       //shape.fromPoints(points);
@@ -265,6 +306,35 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 				shape.lineTo( 120, 80 );
 				shape.bezierCurveTo( 80,20,80,20,  80, 20 );
 			this.viewer.addToScene( shape.generateRenderables() );*/
+			
+			var geometry = new THREE.BufferGeometry();
+      geometry.addAttribute('position', Float32Array, 2, 3);
+      geometry.dynamic = true;
+
+      var position = geometry.attributes.position;
+      position.needsUpdate = true;
+
+      var p = position.array;
+
+      var i = 0;
+      p[i++] = 0;
+      p[i++] = 0;
+      p[i++] = 0;
+      p[i++] = 20;
+      p[i++] = 20;
+      p[i] = 20;
+
+      var color = new THREE.Color();
+      color.g = color.b = 1 - this.value;
+
+      var material = new THREE.LineBasicMaterial({
+        color: color.getHex(),
+        linewidth: 5 // THIS DON'T WORKS IN WINDOWS?
+      });
+
+      var model = new THREE.Line(geometry, material);
+			this.viewer.addToScene( model );
+			
 			
       function onControlsChange(event)
       {
@@ -486,7 +556,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               var target = selections[0].sourceShape;
               console.log("please export", target);
               
-              this.asyncFire('export-requested', {data:target} );
+              this.asyncFire('export-requested', {format:this.exportFormat,data:target} );
               return;
             break;
           
@@ -617,20 +687,119 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           }
         }
     });
-
     },
-    selectedObjectsChanged:function(oldSelections, newSelections)
+    computeAvgPos : function()
     {
+      var selections = this.selectedObjects;
+      var avgPosition = new THREE.Vector3();
+      console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
+      
+      if(selections.length>0)
+      {
+        avgPosition= selections[selections.length-1].position.clone();
+        for(var i= selections.length-2 ;i>=0;i--)
+        {
+          var selection = selections[i];
+          avgPosition.add( selection.position );
+        }
+        avgPosition.divideScalar( selections.length );
+      }
+      //console.log("avgposFinal", avgPosition);
+      //this.groupSelectionHelper.position = avgPosition;
+      //console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
+      console.log("avgPosition",avgPosition);
+      //this.transformControls.position = avgPosition;
+      
+      
+      return avgPosition;
+    },
+    selectionsAdded:function(addedSelections)
+    {
+      console.log("selections added",addedSelections);
+     // console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
+      this.computeAvgPos();
+      for(var i=0;i<addedSelections.length;i++)
+      {
+        var newSelection = addedSelections[i];
+        //if(!(newSelection)) continue;
+        /*for(var j=0;j<this.groupSelectionHelper.children.length;j++)
+        {
+          this.groupSelectionHelper.children[j].position = new THREE.Vector3();
+        }*/
+        this.groupSelectionHelper.add( newSelection );
+        //console.log("newSelection.pos",newSelection.position,"this.groupSelectionHelper.position",this.groupSelectionHelper.position);
+        //newSelection.position.sub( this.groupSelectionHelper.position );
+        //console.log("newSelection.pos",newSelection.position,"this.groupSelectionHelper.position",this.groupSelectionHelper.position);
+      
+       //TODO:refactor
+        if(this.showDimensions)
+        {
+          var objDims = new ObjectDimensionsHelper({mesh:newSelection});
+          newSelection.add( objDims );
+          if(!(newSelection.helpers)) newSelection.helpers = {}
+          newSelection.helpers.dims = objDims;
+        }
+        
+        if(newSelection.outline) continue;
+        var outlineMaterial = new THREE.MeshBasicMaterial({
+          color: 0xff0000,//0xffc200,
+          side: THREE.BackSide
+        });
+        var outline = new THREE.Mesh(newSelection.geometry.clone(), outlineMaterial);
+        outline.name = "selectOutline";
+        outline.scale.multiplyScalar(1.03);
+        newSelection.outline = outline;
+        newSelection.add(outline);
+      }
+            //this.computeAvgPos();
+      
+    },
+    selectionsRemoved:function(removedSelections)
+    {
+      console.log("selections removed",    removedSelections);
+      //console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
+      
+      for(var i=0;i<removedSelections.length;i++)
+      {
+        var oldSelection = removedSelections[i];
+        this.viewer.addToScene( oldSelection );
+        oldSelection.position.add( this.groupSelectionHelper.position );
+        
+        if(oldSelection.outline!=null)
+        { 
+          var outline = oldSelection.outline;
+          oldSelection.remove(outline);
+          delete oldSelection.outline;
+        }
+        if(this.showDimensions)
+        {
+          var dims = oldSelection.helpers.dims;
+          if(dims)
+          {
+            oldSelection.remove(dims);
+            oldSelection.helpers.dims = null;
+          }
+        }
+      }
+      this.computeAvgPos();
+      if(this.selectedObjects.length == 0)
+      {
+               this.groupSelectionHelper.position = new THREE.Vector3();
+      }
+      //console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
+    },
+    selectedObjectsChanged:function(oldSelections, newSelections, foo, bar)
+    {
+      //console.log("old", oldSelections,"new", newSelections, foo, bar);
       var newSelections = this.selectedObjects;
-      //console.log("selection", newSelections,"old",oldSelections);
+      //console.log("selections : new", newSelections,"old",oldSelections);
       
       if(!(oldSelections)) oldSelections = [];
       if(!(newSelections)) newSelections = [];
       if(oldSelections.length == 0 && newSelections.length == 0) {  this.contextMenu.target = '';this.contextMenu.mode = 'creation';    this.transformControls.detach(); return; }
 
-      this.transformControls.detach();
+
       var selectedObject = this.selectedObject = newSelections[0];
-      this.viewer.removeFromScene(this.transformControls);
 
       //TODO:move this elsewhere
       if(selectedObject instanceof Cube)
@@ -642,54 +811,17 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         this.$.textEditor.target = selectedObject.sourceElement;
       }
       
-      //remove from old
-      for(var i=oldSelections.length-1;i>=0;i--)
+
+      if(this.selectedObjects.length==0)
       {
-        var oldSelection = oldSelections[i];
-        if(!(oldSelection)) continue;
-        /*if(oldSelection.outline!=null)
-        { 
-          var outline = oldSelection.outline;
-          oldSelection.remove(outline);
-          delete oldSelection.outline;
-        }*/
-        if(oldSelection.origColor)
-        {
-          //oldSelection.material.color = oldSelection.origColor;
-        }
-        
-        if(this.showDimensions)
-        {
-          var dims = oldSelection.helpers.dims;
-          if(dims)
-          {
-            oldSelection.remove(dims);
-            oldSelection.helpers.dims = null;
-          }
-        }
-        
+        this.transformControls.detach();
+        this.viewer.removeFromScene(this.transformControls);
       }
-      //add to new selection
-      /*
-      this.viewer.removeFromScene(this.selectedObject);
-      this.selectedObject = null;
-      if(newSelections.length>0)
+      if(this.selectedObjects.length>0)
       {
-      this.selectedObject = new THREE.Object3D();//"group" object
-      this.transformControls.attach( this.selectedObject ); 
-      this.viewer.scene.add(this.transformControls);     
-      this.viewer.addToScene(this.selectedObject);
-
-        var avgPosition = new THREE.Vector3();
-
-        for(var i= newSelections.length-1 ;i>=0;i--)
-        {
-          var newSelection = newSelections[i];
-          avgPosition.add( newSelection.position );
-        }
-        avgPosition.divideScalar( newSelections.length );
-        this.selectedObject.position = avgPosition;
-      }*/
+        this.viewer.scene.add(this.transformControls);
+        this.transformControls.attach( this.groupSelectionHelper );  // //this.selectedObjects[0]
+      }
    
       if(newSelections.length>0)
       {
@@ -705,39 +837,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       {
         this.contextMenu.target = '';
         this.contextMenu.mode = 'creation';
-      }
-      for(var i= newSelections.length-1 ;i>=0;i--)
-      {
-        var newSelection = newSelections[i];
-        if(!(newSelection)) continue;
-        //helpers drawn on screen : TODO: cleanup
-        this.viewer.scene.add(this.transformControls);
-        this.transformControls.attach( newSelections[0] ); 
-
-        //newSelection.origColor = newSelection.material.color;
-        //newSelection.material.color = 0xff0000;
-        
-        //TODO:refactor
-        if(this.showDimensions)
-        {
-          var objDims = new ObjectDimensionsHelper({mesh:newSelection});
-          newSelection.add( objDims );
-          if(!(newSelection.helpers)) newSelection.helpers = {}
-          newSelection.helpers.dims = objDims;
-        }
-        
-        
-        /*
-        if(newSelection.outline) continue;
-        var outlineMaterial = new THREE.MeshBasicMaterial({
-          color: 0xff0000,//0xffc200,
-          side: THREE.BackSide
-        });
-        var outline = new THREE.Mesh(newSelection.geometry.clone(), outlineMaterial);
-        outline.name = "selectOutline";
-        outline.scale.multiplyScalar(1.03);
-        newSelection.outline = outline;
-        newSelection.add(outline);*/
       }
     },
     onMouseWheel:function (event)
@@ -787,14 +886,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           console.log("set to translate");
           this.transformControls.setMode("translate");
         case 90:
-          if(ctrlPressed && shiftPressed) {
-            this.commandManager.redo();return;
+          if(ctrlPressed && shiftPressed) {//ctrl+shift+z
+            this.asyncFire("redoOperation",{});
+            return;
           } 
-          if(ctrlPressed)
+          if(ctrlPressed)//ctrl+z was typed.
           {
-            console.log("undo");
-            // ctrl+z was typed.
-            this.commandManager.undo();return;
+            this.asyncFire("undoOperation",{});
+            return;
           }
           break; 
         case 46:
@@ -813,11 +912,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       }
 
     },
-    handleDragOver:function(e) {
+  handleDragOver:function(e) {
     if (e.preventDefault) {
       e.preventDefault();
     }
-    console.log("drag over")
   },
   handleDrop:function(e)
   {
@@ -830,7 +928,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     if(data)
     {
         this.asyncFire('text-dropped', {data:data} );
-        
     }
 
     var files = e.dataTransfer.files;
@@ -842,22 +939,18 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
   //temp hack
   addImportedResource: function( resource )
   {
-    //if(bla instanceof THREE.Geometry)
+    if(resource.data instanceof THREE.Geometry) console.log("geometry, groovy!");
     //{
     
     var bla = resource.data;
     if('children' in bla)
     {
-      var foo = new Part();
-      var geometry = new THREE.Geometry();
+      var importedPart = new Part();
+      var geometry = bla.children[0].geometry;
       
-      var bla = bla.children[0].geometry;
-      
-      for(var i=0;i<bla.faces.length;i++)
+      for(var i=0;i<geometry.faces.length;i++)
       {
-        var face = bla.faces[i];
-        geometry.faces.push( new THREE.Face3(face.a,face.b,face.c ) );
-        
+        var face = geometry.faces[i];
         //hack
         geometry.faceVertexUvs[0].push([
         new THREE.Vector2(), //new THREE.Vector2( ( v1.x + offset.x ) / range.x , ( v1.y + offset.y ) / range.y ),
@@ -866,35 +959,19 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       ]);
         
       }
-      
-      for(var i=0;i<bla.vertices.length;i++)
-      {
-        var vertex = bla.vertices[i];
-        geometry.vertices.push( new THREE.Vector3(vertex.x, vertex.y, vertex.z ));
-      }
-
-    geometry.applyMatrix(new THREE.Matrix4().makeScale( 4,4,4));
-    
+      //geometry.applyMatrix(new THREE.Matrix4().makeScale( 4,4,4));
     }else
     {
-      var foo = new Part();
-      var geometry = new THREE.Geometry();
-      for(var i=0;i<bla.faces.length;i++)
+      var importedPart = new Part();
+      var geometry = bla;
+      for(var i=0;i<geometry.faces.length;i++)
       {
-        var face = bla.faces[i];
-        geometry.faces.push( new THREE.Face3(face.a,face.b,face.c ) );
-        
+        var face = geometry.faces[i];
          geometry.faceVertexUvs[0].push([
           new THREE.Vector2(), //new THREE.Vector2( ( v1.x + offset.x ) / range.x , ( v1.y + offset.y ) / range.y ),
           new THREE.Vector2(),//new THREE.Vector2( ( v2.x + offset.x ) / range.x , ( v2.y + offset.y ) / range.y ),
           new THREE.Vector2(),//new THREE.Vector2( ( v3.x + offset.x ) / range.x , ( v3.y + offset.y ) / range.y )
         ]);
-      }
-      
-      for(var i=0;i<bla.vertices.length;i++)
-      {
-        var vertex = bla.vertices[i];
-        geometry.vertices.push( new THREE.Vector3(vertex.x, vertex.y, vertex.z ));
       }
     }
       
@@ -914,19 +991,15 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       geometry.computeVertexNormals();
       geometry.computeFaceNormals();
       
-      foo.geometry = geometry;
-      foo.name = resource.name;
+      importedPart.geometry = geometry;
+      importedPart.name = resource.name;
       
-      this.hierarchyRoot.add( foo );
+      this.hierarchyRoot.add( importedPart );
       
-      /*var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} );
-      foo.renderable = new THREE.Mesh( geometry, material);//new THREE.Mesh( new THREE.CubeGeometry( this.w, this.d, this.h ), material);
-      foo.renderable.sourceShape = foo;*/
+      this.viewer.addToScene( importedPart.generateRenderables() );
+      this.selectedObjects = [importedPart];
       
-      this.viewer.addToScene( foo.generateRenderables() );
-      this.selectedObjects = [foo];
-      
-      operation = new Import(foo, resource);
+      operation = new Import(importedPart, resource);
       this.fire('newOperation', {msg: operation});
   }
   
