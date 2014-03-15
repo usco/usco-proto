@@ -10,6 +10,7 @@
 <link rel="import" href="../../components/usco-desktop-store/desktop-store.html">
 <!--<link rel="import" href="../../components/usco-dropbox-store/dropbox-store.html">
 <link rel="import" href="../../components/usco-fs-store/fs-store.html">-->
+<link rel="import" href="../../components/code-mirror/code-mirror.html">
 
 <link rel="import" href="../../components/usco-amf-serializer/amf-serializer.html">
 <link rel="import" href="../../components/usco-stl-serializer/stl-serializer.html">
@@ -115,6 +116,13 @@ Polymer("usco-editor",{
       console.log(e.type, e.detail.msg); 
       self.commandManager.addCommand( e.detail.msg );
     });
+    this.addEventListener('undoOperation', function(e) {
+      self.commandManager.undo();
+    });
+    this.addEventListener('redoOperation', function(e) {
+      self.commandManager.redo();
+    });
+    
     this.addEventListener('text-dropped', function(e) {
       console.log(e.type, e.detail.data); 
       this.loadResource( e.detail.data );
@@ -128,24 +136,24 @@ Polymer("usco-editor",{
     });
     
     this.addEventListener('export-requested', function(e) {
-      console.log(e.type, e.detail.data); 
-      var stlSerializer = self.assetManager.assetManager.serializers["stl"];//STLSerializer//self.querySelector('stl-serializer');
-      console.log("stlSerializer",stlSerializer);
-      console.log("assetManager",self.assetManager.assetManager.serializers);
+      console.log(e.type, e.detail.data);
+      var fileName = e.detail.fileName || "test";
+      var format = e.detail.format;
+      var data = e.detail.data;
+      var fullName = ( fileName.indexOf(".") == -1)? fileName+"."+format : fileName;
+      var serializer = self.assetManager.assetManager.serializers[format];//STLSerializer//self.querySelector('stl-serializer');
       
-      var resultSTL = stlSerializer.serialize(e.detail.data.parent);
-      console.log("resultStl", resultSTL);
-      
-      var ext = "stl";
-      var link = document.createElement("a");
-
-      var blob = new Blob([resultSTL],{type : 'application/'+ext})
-      var url =  window.webkitURL.createObjectURL(blob);
-        //var blobURL = window.webkitURL.createObjectURL(blob);
-      
-      link.href = url;
-      link.download = "test.stl";
-		  link.click();
+      if(serializer)
+      {
+        var result = serializer.serialize(data);
+        var link = document.createElement("a");
+        var blob = new Blob([result],{type : 'application/'+format})
+        var url =  window.webkitURL.createObjectURL(blob);
+          //var blobURL = window.webkitURL.createObjectURL(blob);
+        link.href = url;
+        link.download = fullName;
+        link.click();
+      }
       
     });
   },
@@ -160,8 +168,8 @@ Polymer("usco-editor",{
       //geometry
       var geometry = resource.data;
       /*geometry.computeBoundingBox();
-		  geometry.computeCentroids();
-		  geometry.computeBoundingSphere();
+      geometry.computeCentroids();
+      geometry.computeBoundingSphere();
 
       //needed at least for .ply files
       geometry.computeVertexNormals();
