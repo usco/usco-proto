@@ -163,7 +163,7 @@ THREE.CustomGridHelper.prototype.toggleText = function(toggle) {
 
 THREE.CustomGridHelper.prototype.setTextColor = function(color) {
   this.textColor = color;
-  return this._drawNumbering();
+  this._drawNumbering();
 };
 
 THREE.CustomGridHelper.prototype.setTextLocation = function(location) {

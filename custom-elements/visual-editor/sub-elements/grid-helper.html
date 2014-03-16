@@ -1,12 +1,12 @@
 <script src="custom-grid-helper.js"></script>
 
-<polymer-element name="grid-helper" extends="three-js-object" attributes="size step ">
+<polymer-element name="grid-helper" extends="three-js-object" attributes="size step color opacity textColor">
   <script>Polymer('grid-helper',{
       object:null,
       size: 1000,
       step: 100,
       color: 0x00baff,
-      opacity: 0.1,
+      opacity: 0.2,
       addText: true,
       textColor: "#000000",
       textLocation: "f",
@@ -14,7 +14,6 @@
         this.object = new THREE.CustomGridHelper(this.size, this.step, new THREE.Vector3(0,0,1), this.color, this.opacity, this.addText, this.textColor, this.textLocation);
         this.super();
         this.object.receiveShadow = true;
-        //console.log("blah", this.object.receiveShadow);
       },
       enteredView:function()
       {
@@ -26,6 +25,18 @@
       {
         this.object.step = this.step;
         this.object.resize(this.size);
+      },
+      colorChanged:function()
+      {
+        this.object.setColor( this.color );
+      },
+      opacityChanged:function()
+      {
+        this.object.setOpacity( this.opacity );
+      },
+      textColorChanged:function()
+      {
+        this.object.setTextColor( this.textColor );
       }
     });
   </script>
