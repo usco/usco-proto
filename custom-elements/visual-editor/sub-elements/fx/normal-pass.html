@@ -1,0 +1,22 @@
+
+<polymer-element name="normal-pass" extends="three-post-fx" attributes="">
+  <script>Polymer('normal-pass',{
+    name: 'normal-pass',
+    effect: null,
+    ready: function()
+    {
+      this.material = new THREE.MeshNormalMaterial();
+      this.effect = new THREE.RenderPass(this.scene, this.camera, this.material);
+    },
+    init:function(renderer, scene, camera)
+    {
+      //this.normalTarget = new THREE.WebGLRenderTarget(this.width, this.height, { minFilter: THREE.NearestFilter, magFilter: THREE.NearestFilter, format: THREE.RGBFormat } );
+      //this.renderer = this.effect.renderer = renderer;
+      this.scene  = this.effect.scene = scene;
+      this.camera = this.effect.camera = camera;
+      //this.effect = new THREE.RenderPass(this.scene, this.camera, this.material);
+    },
+  });
+  </script>
+</polymer-element>
+

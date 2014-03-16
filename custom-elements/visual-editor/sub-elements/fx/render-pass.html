@@ -1,0 +1,25 @@
+
+<polymer-element name="render-pass" extends="three-post-fx" attributes="">
+  <script>Polymer('render-pass',{
+    name: 'render-pass',
+    effect: null,
+    ready: function()
+    {
+      this.effect = new THREE.RenderPass();
+    },
+    init:function(renderer, scene, camera)
+    {
+      this.effect.renderer = renderer;
+      this.effect.scene = scene;
+      this.effect.camera = camera;
+      
+      this.renderer = renderer;
+      this.scene = scene;
+      this.camera= camera;
+      
+      this.effect.needsSwap = true;
+    }
+  });
+  </script>
+</polymer-element>
+

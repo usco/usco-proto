@@ -1,0 +1,13 @@
+
+<polymer-element name="copy-pass" extends="three-post-fx" attributes="">
+  <script>Polymer('copy-pass',{
+    name: 'copy-pass',
+    effect: null,
+    ready: function()
+    {
+      this.effect = new THREE.ShaderPass( THREE.CopyShader );
+    },
+  });
+  </script>
+</polymer-element>
+

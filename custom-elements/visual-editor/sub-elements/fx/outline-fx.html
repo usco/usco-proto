@@ -1,0 +1,45 @@
+<script src="OutlineShader.js"></script>
+
+<polymer-element name="outline-fx" extends="three-post-fx" attributes="tDiffuse tNormal tDepth">
+  <script>Polymer('outline-fx',{
+    name: 'outline-fx',
+    effect: null,
+    tDiffuse : null,
+    tNormal: null,
+    tDepth: null,
+    
+    normalThreshold: 0.1,
+    depthThreshold:  0.05,
+    strength : 0.4,
+    color: 0x000002,
+    
+    observe: {
+       tDiffuse: 'uniformsChanged',
+       tNormal: 'uniformsChanged',
+       tDepth: 'uniformsChanged',
+       normalThreshold: 'uniformsChanged',
+       depthThreshold: 'uniformsChanged',
+       strength: 'uniformsChanged',
+       color : 'uniformsChanged'
+    },
+    ready: function()
+    {
+      this.effect = new THREE.ShaderPass(THREE.OutlineShader);
+      this.uniformsChanged();
+    },
+    uniformsChanged:function()
+    {
+      console.log("outline effects changed",this.tDiffuse,this.tNormal, this.tDepth);
+      this.effect.uniforms[ 'tDiffuse' ].value = this.tDiffuse;
+      this.effect.uniforms[ 'tNormal' ].value  = this.tNormal;
+      this.effect.uniforms[ 'tDepth' ].value   = this.tDepth;
+      
+      this.effect.uniforms[ 'normalThreshold' ].value = this.normalThreshold;
+      this.effect.uniforms[ 'depthThreshold' ].value  = this.depthThreshold;
+      this.effect.uniforms[ 'strength' ].value   = this.strength;
+      this.effect.uniforms[ 'color' ].value   = new THREE.Color( this.color );
+    }
+  });
+  </script>
+</polymer-element>
+

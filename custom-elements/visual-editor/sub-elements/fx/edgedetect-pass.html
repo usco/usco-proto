@@ -1,0 +1,25 @@
+<script src="EdgeShader3.js"></script>
+
+<polymer-element name="edgeDetect-pass" extends="three-post-fx" attributes="">
+  <script>Polymer('edgeDetect-pass',{
+    name: 'edgeDetect-pass',
+    effect: null,
+    width : 640,
+    height: 480,
+    observe: {
+       width: 'uniformsChanged',
+       height: 'uniformsChanged'
+    },
+    ready: function()
+    {
+      this.effect = new THREE.ShaderPass(THREE.EdgeShader3);
+      this.effect.uniforms[ 'aspect' ].value = new THREE.Vector2( this.width, this.height )
+    },
+    uniformsChanged:function()
+    {
+      this.effect.uniforms[ 'aspect' ].value = new THREE.Vector2( this.width, this.height );
+    }
+  });
+  </script>
+</polymer-element>
+
