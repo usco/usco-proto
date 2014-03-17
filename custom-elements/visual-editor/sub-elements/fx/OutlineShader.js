@@ -8,7 +8,7 @@
 
 THREE.OutlineShader = {
     uniforms: {
-        "tDiffuse": { type: "t", value: null },
+        "tDiffuse2": { type: "t", value: null },
         "tNormal": { type: "t", value: null },
         "tDepth": { type: "t", value: null },
         "normalThreshold": { type: "f", value: 0.1 },
@@ -32,7 +32,7 @@ THREE.OutlineShader = {
 
     fragmentShader: [
 
-        "uniform sampler2D tDiffuse;",
+        "uniform sampler2D tDiffuse2;",
         "uniform sampler2D tNormal;",
         "uniform sampler2D tDepth;",
         "uniform float normalThreshold;",
@@ -44,7 +44,7 @@ THREE.OutlineShader = {
 
         "void main() {",
 
-            "vec4 colorTexel = texture2D( tDiffuse, vUv );",
+            "vec4 colorTexel = texture2D( tDiffuse2, vUv );",
             "vec4 normalTexel = texture2D( tNormal, vUv );",
             "vec4 depthTexel = texture2D( tDepth, vUv );",
             "gl_FragColor = colorTexel;",

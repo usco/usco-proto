@@ -4,8 +4,8 @@
   <script>Polymer('edgeDetect-pass',{
     name: 'edgeDetect-pass',
     effect: null,
-    width : 640,
-    height: 480,
+    width :  1368*2,//window.innerWidth || 640,
+    height:  768*2,//window.innerHeight || 480,
     observe: {
        width: 'uniformsChanged',
        height: 'uniformsChanged'
@@ -13,12 +13,26 @@
     ready: function()
     {
       this.effect = new THREE.ShaderPass(THREE.EdgeShader3);
-      this.effect.uniforms[ 'aspect' ].value = new THREE.Vector2( this.width, this.height )
+      this.effect.uniforms[ 'aspect' ].value = new THREE.Vector2( this.width, this.height );
+
+    },
+    enteredView:function()
+    {
+      this.super();
+      
+       window.onresize = this.onResize.bind(this);
+    },
+    onResize:function(event)
+    {
+      this.width = window.innerWidth*1;
+      this.height = window.innerHeight*1;
+      console.log("resized", this.width, this.height);
+            //this.effect.uniforms[ 'aspect' ].value = new THREE.Vector2( this.width, this.height );
     },
     uniformsChanged:function()
     {
       this.effect.uniforms[ 'aspect' ].value = new THREE.Vector2( this.width, this.height );
-    }
+    },
   });
   </script>
 </polymer-element>
