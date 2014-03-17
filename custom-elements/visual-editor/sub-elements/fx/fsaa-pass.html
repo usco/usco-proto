@@ -1,0 +1,38 @@
+<script src="FXAAShader.js"></script>
+
+<polymer-element name="fsaa-pass" extends="three-post-fx" attributes="tDiffuse">
+  <script>Polymer('fsaa-pass',{
+    name: 'fsaa-pass',
+    effect: null,
+    resolution : null,
+    observe: {
+       resolution: 'uniformsChanged',
+    },
+    ready: function()
+    {
+      this.effect = new THREE.ShaderPass(THREE.FXAAShader);
+      this.uniformsChanged();
+    },
+    enteredView:function()
+    {
+      this.super();
+      
+       window.onresize = this.onResize.bind(this);
+    },
+    onResize:function(event)
+    {
+      console.log("resized", this.width, this.height);
+      this.uniformsChanged();
+    },
+    uniformsChanged:function()
+    {
+      dpr = 1;
+      if (window.devicePixelRatio !== undefined) {
+        dpr = window.devicePixelRatio;
+      }
+      this.effect.uniforms['resolution'].value.set(1 / (window.innerWidth * dpr), 1 / (window.innerHeight * dpr));
+    }
+  });
+  </script>
+</polymer-element>
+
