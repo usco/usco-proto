@@ -10,13 +10,8 @@
     },
     init:function(renderer, scene, camera)
     {
-      this.effect.renderer = renderer;
-      this.effect.scene = scene;
-      this.effect.camera = camera;
-      
-      this.renderer = renderer;
-      this.scene = scene;
-      this.camera= camera;
+      this.scene  = this.effect.scene = scene;
+      this.camera = this.effect.camera = camera;
     },
   });
   </script>

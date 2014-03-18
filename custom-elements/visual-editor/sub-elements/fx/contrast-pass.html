@@ -1,0 +1,26 @@
+<script src="BrightnessContrastShader.js"></script>
+
+<polymer-element name="brightnessContrast-pass" extends="three-post-fx" attributes="brightness contrast">
+  <script>Polymer('brightnessContrast-pass',{
+    name: 'brightnessContrast-pass',
+    effect: null,
+    brightness : 0,
+    contrast: 0,
+    observe: {
+       brightness: 'uniformsChanged',
+       contrast: 'uniformsChanged',
+    },
+    ready: function()
+    {
+      this.effect = new THREE.ShaderPass(THREE.BrightnessContrastShader);
+      this.uniformsChanged();
+    },
+    uniformsChanged:function()
+    {
+      this.effect.uniforms['brightness'].value = this.brightness;
+      this.effect.uniforms['contrast'].value = this.contrast;
+    }
+  });
+  </script>
+</polymer-element>
+

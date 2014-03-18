@@ -1,0 +1,23 @@
+<script src="testShader.js"></script>
+
+<polymer-element name="test-fx" extends="three-post-fx" attributes="tDiffuse">
+  <script>Polymer('test-fx',{
+    name: 'test-fx',
+    effect: null,
+    tDiffuse : null,
+    observe: {
+       tDiffuse2: 'uniformsChanged',
+    },
+    ready: function()
+    {
+      this.effect = new THREE.ShaderPass(THREE.TestShader);
+      this.uniformsChanged();
+    },
+    uniformsChanged:function()
+    {
+      this.effect.uniforms[ 'tDiffuse2' ].value = this.tDiffuse;
+    }
+  });
+  </script>
+</polymer-element>
+

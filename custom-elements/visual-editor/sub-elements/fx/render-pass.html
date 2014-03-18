@@ -1,8 +1,9 @@
 
-<polymer-element name="render-pass" extends="three-post-fx" attributes="">
+<polymer-element name="render-pass" extends="three-post-fx" attributes="needsSwap">
   <script>Polymer('render-pass',{
     name: 'render-pass',
     effect: null,
+    needsSwap: false,
     ready: function()
     {
       this.effect = new THREE.RenderPass();
@@ -17,7 +18,7 @@
       this.scene = scene;
       this.camera= camera;
       
-      this.effect.needsSwap = true;
+      this.effect.needsSwap = this.needsSwap;
     }
   });
   </script>

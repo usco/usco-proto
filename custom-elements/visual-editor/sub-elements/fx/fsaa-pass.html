@@ -16,8 +16,8 @@
     enteredView:function()
     {
       this.super();
-      
-       window.onresize = this.onResize.bind(this);
+      console.log("mlk");
+      window.addEventListener('resize',this.onResize.bind(this));
     },
     onResize:function(event)
     {

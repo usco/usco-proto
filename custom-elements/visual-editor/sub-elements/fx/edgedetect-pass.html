@@ -1,38 +1,75 @@
 <script src="EdgeShader3.js"></script>
+<script src="EdgeShader2.js"></script>
+<script src="EdgeShader.js"></script>
 
-<polymer-element name="edgeDetect-pass" extends="three-post-fx" attributes="">
+<polymer-element name="edgeDetect-pass" extends="three-post-fx" attributes="textureID type">
   <script>Polymer('edgeDetect-pass',{
     name: 'edgeDetect-pass',
     effect: null,
-    width :  1368*2,//window.innerWidth || 640,
-    height:  768*2,//window.innerHeight || 480,
+    textureID: undefined,
+    type:1,
+    width :  1368,//window.innerWidth || 640,
+    height:  768,//window.innerHeight || 480,
     observe: {
        width: 'uniformsChanged',
        height: 'uniformsChanged'
     },
     ready: function()
     {
-      this.effect = new THREE.ShaderPass(THREE.EdgeShader3);
+      switch(this.type)
+      {
+        case 1:
+          this.effect = new THREE.ShaderPass(THREE.EdgeShader);
+        break;
+        case 2:
+          this.effect = new THREE.ShaderPass(THREE.EdgeShader2);
+        case 3:
+          this.effect = new THREE.ShaderPass(THREE.EdgeShader3);
+        default:
+          this.effect = new THREE.ShaderPass(THREE.EdgeShader);
+        break;
+      }
+      
       this.effect.uniforms[ 'aspect' ].value = new THREE.Vector2( this.width, this.height );
-
     },
     enteredView:function()
     {
       this.super();
-      
-       window.onresize = this.onResize.bind(this);
+      window.addEventListener('resize', this.onResize.bind(this));
     },
     onResize:function(event)
     {
       this.width = window.innerWidth*1;
       this.height = window.innerHeight*1;
-      console.log("resized", this.width, this.height);
             //this.effect.uniforms[ 'aspect' ].value = new THREE.Vector2( this.width, this.height );
     },
     uniformsChanged:function()
     {
-      this.effect.uniforms[ 'aspect' ].value = new THREE.Vector2( this.width, this.height );
+      dpr = 1;
+      if (window.devicePixelRatio !== undefined) {
+        dpr = window.devicePixelRatio;
+      }
+      console.log("here");
+      this.effect.uniforms[ 'aspect' ].value = new THREE.Vector2( window.innerWidth, window.innerHeight );
+      //this.effect.uniforms[ 'aspect' ].value = new THREE.Vector2( 1 / (window.innerWidth * dpr), 1 / (window.innerHeight * dpr) );
     },
+    typeChanged:function()
+    {
+      console.log("edge detect type changed");
+      switch(this.type)
+      {
+        case 1:
+          this.effect = new THREE.ShaderPass(THREE.EdgeShader);
+        break;
+        case 2:
+          this.effect = new THREE.ShaderPass(THREE.EdgeShader2);
+        case 3:
+          this.effect = new THREE.ShaderPass(THREE.EdgeShader3);
+        default:
+          this.effect = new THREE.ShaderPass(THREE.EdgeShader);
+        break;
+      }
+    }
   });
   </script>
 </polymer-element>

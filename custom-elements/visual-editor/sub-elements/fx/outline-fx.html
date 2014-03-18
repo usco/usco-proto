@@ -1,20 +1,20 @@
 <script src="OutlineShader.js"></script>
 
-<polymer-element name="outline-fx" extends="three-post-fx" attributes="tDiffuse2 tNormal tDepth color strength">
+<polymer-element name="outline-fx" extends="three-post-fx" attributes="tNormal tDepth color strength">
   <script>Polymer('outline-fx',{
     name: 'outline-fx',
     effect: null,
-    tDiffuse2 : null,
+    //tDiffuse : null,
     tNormal: null,
     tDepth: null,
     
-    normalThreshold: 0.001,
+    normalThreshold: 0.09,
     depthThreshold:  0.05,
-    strength : 0.3,
-    color: 0x0000a2,
+    strength : 0.4,
+    color: 0x000002,
     
     observe: {
-       tDiffuse2: 'uniformsChanged',
+       //tDiffuse: 'uniformsChanged',
        tNormal: 'uniformsChanged',
        tDepth: 'uniformsChanged',
        normalThreshold: 'uniformsChanged',
@@ -29,8 +29,7 @@
     },
     uniformsChanged:function()
     {
-      console.log("outline effects changed",this.tDiffuse,this.tNormal, this.tDepth);
-      this.effect.uniforms[ 'tDiffuse2' ].value = this.tDiffuse;
+      //this.effect.uniforms[ 'tDiffuse' ].value = this.tDiffuse;
       this.effect.uniforms[ 'tNormal' ].value  = this.tNormal;
       this.effect.uniforms[ 'tDepth' ].value   = this.tDepth;
       
