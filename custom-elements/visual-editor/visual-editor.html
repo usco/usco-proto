@@ -7,8 +7,17 @@
 <link rel="import" href="../shape-creator/text-editor.html">
 
 
-<link rel="import" href="./sub-elements/grid-helper.html">
-<link rel="import" href="./sub-elements/drag-drop.html">
+<link rel="import" href="./sub-elements/grid/grid-helper.html">
+<link rel="import" href="./sub-elements/fx/edgedetect-pass.html">
+<link rel="import" href="./sub-elements/fx/outline-fx.html">
+<link rel="import" href="./sub-elements/fx/depth-pass.html">
+<link rel="import" href="./sub-elements/fx/normal-pass.html">
+<link rel="import" href="./sub-elements/fx/copy-pass.html">
+<link rel="import" href="./sub-elements/fx/render-pass.html">
+<link rel="import" href="./sub-elements/fx/fsaa-pass.html">
+<link rel="import" href="./sub-elements/fx/contrast-pass.html">
+
+<link rel="import" href="./sub-elements/fx/test-fx.html">
 
 <link rel="import" href="../../components/usco-command-manager/usco-command-manager.html">
 <script src="lib/operations/commands.js"></script>
@@ -79,8 +88,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         width: 100%;
          height:100%;
       }
-
-      code-mirror{position:absolute;top:80px;right:20px;width:400px;height:200px;z-index:9999;}
       
       input[type="number"]{
         width:50px;
@@ -138,14 +145,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     </div>
 
     <!--testing editing of 2d shapes-->
-    <!--<template if="{{selectedObjects.length>0}}">-->
+    <template if="{{selectedObjects.length>0}}">
     <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:20px;top:300px;z-index:3">
       <div>
         <text-editor id="textEditor"> </text-editor>
         <cube-editor id="cubeEditor"> </cube-editor>
       </div>
     </div>
-   <!-- </template>-->
+   </template>
 
     <three-js postProcess fullscreen="{{fullscreen}}" 
     selectedObjects="{{selectedObjects}}" id="viewer" on-keydown="{{keyUp}}" on-sceneready="{{viewerSceneReady}}">
@@ -160,7 +167,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
             <three-js-object helpersRoot>
               <three-axis-helper show="{{showAxes}}"> </three-axis-helper>
-              <grid-helper       show="{{showGrid}}" size="200" step="{{gridSettings.step}}" receiveShadow> </grid-helper>
+              <!--<grid-helper show="{{showGrid}}" size="200" step="{{gridSettings.step}}" receiveShadow > </grid-helper>-->
 
               <three-js-light kind="dir" color="0xffEEEE" intensity="0.2" castShadow y=50 z=300 > </three-js-light> 
                <three-js-light kind="ambient" color="0x161515" intensity="0.8"> </three-js-light>
@@ -172,10 +179,30 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           </three-js-scene>
 
           <!--TODO: if no effects are added, effect composer/post process should deactivated -->
-          <!--
-          <three-effect-composer>
-            <vignette-fx darkness="5" offset="0.4"> </vignette-fx>
-          </three-effect-composer>-->
+          <three-effect-composer name="finalComposer" toScreen>
+           <!-- <vignette-fx darkness="5" offset="0.4"> </vignette-fx>-->
+            
+            <three-effect-composer name="normals" renderTarget2="{{normalRT}}">
+              <normal-pass> </normal-pass>
+              <!--<brightnessContrast-pass brightness=-0.1 contrast=0.8> </brightnessContrast-pass> -->
+              <edgeDetect-pass type=2> </edgeDetect-pass>
+              <copy-pass></copy-pass>
+            </three-effect-composer>
+            
+            <three-effect-composer name="depths" renderTarget2="{{depthRT}}">
+              <depth-pass> </depth-pass>
+              <!--<brightnessContrast-pass brightness=-0.1 contrast=0.8> </brightnessContrast-pass> -->
+              <edgeDetect-pass> </edgeDetect-pass>
+              <copy-pass> </copy-pass>
+            </three-effect-composer>
+            
+            <render-pass> </render-pass>
+            <!--<vignette-fx darkness="5" offset="0.4"> </vignette-fx>-->
+            <outline-fx tNormal="{{normalRT}}" tDepth="{{normalRT}}" color="{{outlineColor}}" strength="{{outlineStrength}}"> </outline-fx>  
+            <!--<fsaa-pass> </fsaa-pass>-->
+            <copy-pass> </copy-pass>     
+            
+          </three-effect-composer>
      </three-js>
   </template>
   <script>
@@ -183,6 +210,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     applyAuthorStyles: true,
 
     autorotate:false,
+    showGrid:false,
     showAxes : false,
     showDimensions:false,
 
@@ -253,7 +281,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     
     exportMesh:function()
     {
-      var toExport = this.selectedObject || this.hierarchyRoot;
+      var selection = (this.selectedObject)? this.selectedObject.sourceShape: this.hierarchyRoot;
+      var toExport = selection;
       this.asyncFire('export-requested', {fileName:this.exportFileName, format:this.exportFormat, data:toExport} );
     },
     
@@ -290,7 +319,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.transformControls.setMode( "translate" );
       this.transformControls.setSpace("local");
       this.transformControls.setSnap(this.gridSettings.step);
-      this.viewer.updatables.push( this.transformControls.update ) ;
+      this.viewer.updatables.push( this.transformControls ) ;
 
       var geometry = new THREE.Geometry();
       this.fakeCursor = new THREE.Line( geometry, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 3 } ), THREE.Lines );
@@ -554,7 +583,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           {
             case 'export':
               var target = selections[0].sourceShape;
-              console.log("please export", target);
               
               this.asyncFire('export-requested', {format:this.exportFormat,data:target} );
               return;
@@ -716,6 +744,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     selectionsAdded:function(addedSelections)
     {
       console.log("selections added",addedSelections);
+      
+      this.outlineColor = 0xff0000;
+      this.outlineStrength = 1.0;
      // console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
       this.computeAvgPos();
       for(var i=0;i<addedSelections.length;i++)
@@ -741,7 +772,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         }
         
         if(newSelection.outline) continue;
-        var outlineMaterial = new THREE.MeshBasicMaterial({
+        /*var outlineMaterial = new THREE.MeshBasicMaterial({
           color: 0xff0000,//0xffc200,
           side: THREE.BackSide
         });
@@ -749,7 +780,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         outline.name = "selectOutline";
         outline.scale.multiplyScalar(1.03);
         newSelection.outline = outline;
-        newSelection.add(outline);
+        newSelection.add(outline);*/
       }
             //this.computeAvgPos();
       
@@ -758,6 +789,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     {
       console.log("selections removed",    removedSelections);
       //console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
+      this.outlineColor = 0x000002;
+      this.outlineStrength = 0.4;
       
       for(var i=0;i<removedSelections.length;i++)
       {
