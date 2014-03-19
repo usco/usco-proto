@@ -179,30 +179,27 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           </three-js-scene>
 
           <!--TODO: if no effects are added, effect composer/post process should deactivated -->
+          <!--
           <three-effect-composer name="finalComposer" toScreen>
-           <!-- <vignette-fx darkness="5" offset="0.4"> </vignette-fx>-->
-            
             <three-effect-composer name="normals" renderTarget2="{{normalRT}}">
               <normal-pass> </normal-pass>
-              <!--<brightnessContrast-pass brightness=-0.1 contrast=0.8> </brightnessContrast-pass> -->
-              <edgeDetect-pass type=2> </edgeDetect-pass>
+              <edgeDetect-pass type=3> </edgeDetect-pass>
               <copy-pass></copy-pass>
             </three-effect-composer>
             
             <three-effect-composer name="depths" renderTarget2="{{depthRT}}">
               <depth-pass> </depth-pass>
-              <!--<brightnessContrast-pass brightness=-0.1 contrast=0.8> </brightnessContrast-pass> -->
-              <edgeDetect-pass> </edgeDetect-pass>
+              <edgeDetect-pass type=3> </edgeDetect-pass>
               <copy-pass> </copy-pass>
             </three-effect-composer>
             
             <render-pass> </render-pass>
-            <!--<vignette-fx darkness="5" offset="0.4"> </vignette-fx>-->
+            <vignette-fx darkness="5" offset="0.4"> </vignette-fx>
             <outline-fx tNormal="{{normalRT}}" tDepth="{{normalRT}}" color="{{outlineColor}}" strength="{{outlineStrength}}"> </outline-fx>  
-            <!--<fsaa-pass> </fsaa-pass>-->
-            <copy-pass> </copy-pass>     
-            
+            <fsaa-pass> </fsaa-pass>
+            <copy-pass> </copy-pass>
           </three-effect-composer>
+          -->
      </three-js>
   </template>
   <script>
