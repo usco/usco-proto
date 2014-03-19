@@ -20,6 +20,8 @@
     "polymer-ui-menu-item": "Polymer/polymer-ui-menu-item#master",
     "polymer-ui-submenu-item": "Polymer/polymer-ui-submenu-item#master",
     "polymer-ui-menu-button": "Polymer/polymer-ui-menu-button#master",
+    "polymer-ui-scaffold": "Polymer/polymer-ui-scaffold#master",
+    "polymer-ui-sidebar-menu":"Polymer/polymer-ui-sidebar-menu#master",
     
     
     "usco-client-deps":    "usco/usco-client-deps#master",
