@@ -8,7 +8,7 @@
 
 
 <link rel="import" href="./sub-elements/grid/grid-helper.html">
-<link rel="import" href="./sub-elements/fx/edgedetect-pass.html">
+<!--<link rel="import" href="./sub-elements/fx/edgedetect-pass.html">
 <link rel="import" href="./sub-elements/fx/outline-fx.html">
 <link rel="import" href="./sub-elements/fx/depth-pass.html">
 <link rel="import" href="./sub-elements/fx/normal-pass.html">
@@ -17,7 +17,7 @@
 <link rel="import" href="./sub-elements/fx/fsaa-pass.html">
 <link rel="import" href="./sub-elements/fx/contrast-pass.html">
 
-<link rel="import" href="./sub-elements/fx/test-fx.html">
+<link rel="import" href="./sub-elements/fx/test-fx.html">-->
 
 <link rel="import" href="../../components/usco-command-manager/usco-command-manager.html">
 <script src="lib/operations/commands.js"></script>
@@ -105,7 +105,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     <div style="position:absolute;left:30%;top:20px;z-index:9">
         <span> Cursor </span>
         Snap to grid <!--<input type="checkbox" checked="{{cursorSettings.snapToGrid}}"> </input>-->
-        
+        {{textBindingTest}}
         Snap transform <input type="checkbox" checked="{{cursorSettings.snapTransform}}"> </input>
         Translate step <input type="number" value="{{gridSettings.step}}" step=1 min=0.01 max=100></input>
         Rotate    step <input type="number" value="{{transformSettings.rotateStep}}" step=0.01 min=0.1 max=1 ></input>
@@ -167,7 +167,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
             <three-js-object helpersRoot>
               <three-axis-helper show="{{showAxes}}"> </three-axis-helper>
-              <!--<grid-helper show="{{showGrid}}" size="200" step="{{gridSettings.step}}" receiveShadow > </grid-helper>-->
+              <grid-helper show="{{showGrid}}" size="200" step="{{gridSettings.step}}" receiveShadow > </grid-helper>
 
               <three-js-light kind="dir" color="0xffEEEE" intensity="0.2" castShadow y=50 z=300 > </three-js-light> 
                <three-js-light kind="ambient" color="0x161515" intensity="0.8"> </three-js-light>
@@ -207,9 +207,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     applyAuthorStyles: true,
 
     autorotate:false,
-    showGrid:false,
+    showGrid:true,
     showAxes : false,
-    showDimensions:false,
+    showDimensions:true,
 
     //TODO move this to a structure
     hierarchyRoot:new THREE.Object3D(),
@@ -224,6 +224,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     
     exportFormat:"stl",
     exportFileName : "",
+    textBindingTest: "foobar",
     
     gridSettings:{step:10},
     cursorSettings:{snapToGrid:false,snapTransform:true},
@@ -301,12 +302,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       
       var self = this;
       this.addEventListener('selectionsAdded', function(e) {
-        //console.log("selections added", e.detail);
         self.selectionsAdded(e.detail);
       });
       
       this.addEventListener('selectionsRemoved', function(e) {
-        //console.log("selections removed", e.detail);
         self.selectionsRemoved(e.detail);
       });
     },
@@ -332,7 +331,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 				shape.lineTo( 120, 80 );
 				shape.bezierCurveTo( 80,20,80,20,  80, 20 );
 			this.viewer.addToScene( shape.generateRenderables() );*/
-			
+			/*
 			var geometry = new THREE.BufferGeometry();
       geometry.addAttribute('position', Float32Array, 2, 3);
       geometry.dynamic = true;
@@ -359,7 +358,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       });
 
       var model = new THREE.Line(geometry, material);
-			this.viewer.addToScene( model );
+			this.viewer.addToScene( model );*/
 			
 			
       function onControlsChange(event)
@@ -420,6 +419,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.transformControls.addEventListener( 'transform', onObjectTranform.bind(this) )
 
       var sC = this.$.contextMenu; //document.querySelector('shape-creator');
+      console.log("sC", sC);
        var self = this;
       this.addEventListener('contextmenu',function(event){
         var event = event.impl || event;
@@ -741,9 +741,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     selectionsAdded:function(addedSelections)
     {
       console.log("selections added",addedSelections);
+      var groupSelectionHelper = this.groupSelectionHelper;
       
-      this.outlineColor = 0xff0000;
-      this.outlineStrength = 1.0;
      // console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
       this.computeAvgPos();
       for(var i=0;i<addedSelections.length;i++)
@@ -759,17 +758,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         //newSelection.position.sub( this.groupSelectionHelper.position );
         //console.log("newSelection.pos",newSelection.position,"this.groupSelectionHelper.position",this.groupSelectionHelper.position);
       
-       //TODO:refactor
-        if(this.showDimensions)
-        {
-          var objDims = new ObjectDimensionsHelper({mesh:newSelection});
-          newSelection.add( objDims );
-          if(!(newSelection.helpers)) newSelection.helpers = {}
-          newSelection.helpers.dims = objDims;
-        }
-        
         if(newSelection.outline) continue;
-        /*var outlineMaterial = new THREE.MeshBasicMaterial({
+        var outlineMaterial = new THREE.MeshBasicMaterial({
           color: 0xff0000,//0xffc200,
           side: THREE.BackSide
         });
@@ -777,18 +767,23 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         outline.name = "selectOutline";
         outline.scale.multiplyScalar(1.03);
         newSelection.outline = outline;
-        newSelection.add(outline);*/
+        newSelection.add(outline);
       }
             //this.computeAvgPos();
+      //TODO:refactor
+      /*if(this.showDimensions)
+      {
+        var objDims = new ObjectDimensionsHelper({mesh:groupSelectionHelper});
+        groupSelectionHelper.add( objDims );
+        if(!(groupSelectionHelper.helpers)) groupSelectionHelper.helpers = {}
+        groupSelectionHelper.helpers.dims = objDims;
+      }*/
       
     },
     selectionsRemoved:function(removedSelections)
     {
       console.log("selections removed",    removedSelections);
       //console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
-      this.outlineColor = 0x000002;
-      this.outlineStrength = 0.4;
-      
       for(var i=0;i<removedSelections.length;i++)
       {
         var oldSelection = removedSelections[i];
@@ -801,21 +796,25 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           oldSelection.remove(outline);
           delete oldSelection.outline;
         }
-        if(this.showDimensions)
-        {
-          var dims = oldSelection.helpers.dims;
-          if(dims)
-          {
-            oldSelection.remove(dims);
-            oldSelection.helpers.dims = null;
-          }
-        }
       }
       this.computeAvgPos();
       if(this.selectedObjects.length == 0)
       {
-               this.groupSelectionHelper.position = new THREE.Vector3();
+        var groupSelectionHelper = this.groupSelectionHelper;
+        groupSelectionHelper.position = new THREE.Vector3();
+        if(this.showDimensions)
+        {
+          var dims = groupSelectionHelper.helpers.dims;
+          if(dims)
+          {
+            groupSelectionHelper.remove(dims);
+            groupSelectionHelper.helpers.dims = null;
+          }
+        }         
+               
       }
+
+      
       //console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
     },
     selectedObjectsChanged:function(oldSelections, newSelections, foo, bar)
