@@ -2,3 +2,4 @@ node_modules
 components
 build
 app.nw
+_tmp/

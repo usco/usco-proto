@@ -54,18 +54,18 @@ module.exports = (grunt) ->
 
     exec:
       standalone:
-        command: "vulcanize -i index.html -o build/<%= currentBuild %>/index.html"
+        command: "vulcanize -i custom-elements/usco-editor/demo.html -o build/<%= currentBuild %>/index.html"
         stdout: true
         stderr: true
 
       integration:
-        command: "vulcanize --csp -i smoke.html -o build/<%= currentBuild %>/usco-proto.html"
+        command: "vulcanize --csp -i demo.html -o build/<%= currentBuild %>/usco-proto.html"
         stdout: true
         stderr: true
 
     nodewebkit:
       options:
-        version: "0.6.3" #0.8.2 0.6.3 works with polymer but unresolved does not get removed, does not work from 0.7.0 onwards, 0.8.2 works only partially (wrong order of events)
+        version: "" #0.8.2 0.6.3 works with polymer but unresolved does not get removed, does not work from 0.7.0 onwards, 0.8.2 works only partially (wrong order of events)
         build_dir: "_tmp/desktop" # Where the build version of my node-webkit app is saved
         mac: false # We want to build it for mac
         win: false # We want to build it for win
@@ -112,10 +112,7 @@ module.exports = (grunt) ->
       standalone:
         src: ["build/<%= currentBuild %>/platform.js"]
         dest: "build/<%= currentBuild %>/platform.js"
-        replacements: [
-          from: "global" # string replacement
-          to: "fakeGlobal"
-        ]
+        replacements: []
         
 
     copy:
@@ -185,7 +182,7 @@ module.exports = (grunt) ->
   grunt.registerTask "core", ["browserify", "uglify:main"]
   
   #Builds
-  @registerTask 'build', 'Build usco-viewer for the chosen target/platform etc', (target = 'browser', subTarget='standalone') =>
+  @registerTask 'build', 'Build usco-proto for the chosen target/platform etc', (target = 'browser', subTarget='standalone') =>
     minify = grunt.option('minify');
     platform = grunt.option('platform');
     console.log("target", target, "sub", subTarget,"minify",minify,"platform",platform)
