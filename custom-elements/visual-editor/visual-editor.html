@@ -6,7 +6,6 @@
 <link rel="import" href="../shape-creator/cube-creator.html">
 <link rel="import" href="../shape-creator/text-editor.html">
 
-
 <link rel="import" href="./sub-elements/grid/grid-helper.html">
 <!--<link rel="import" href="./sub-elements/fx/edgedetect-pass.html">
 <link rel="import" href="./sub-elements/fx/outline-fx.html">
@@ -35,6 +34,8 @@
 <script src="lib/operations/intersection.js"></script>
 
 <script src="lib/operations/extrusion.js"></script>
+
+<script src="lib/class-creator/class-creator.js"></script>
 
 
 <script src="lib/transformControls.js"></script>
@@ -534,7 +535,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           {
             case 'export':
               var target = selections[0].sourceShape;
-              
               this.asyncFire('export-requested', {format:this.exportFormat,data:target} );
               return;
             break;
@@ -545,7 +545,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
               result = union( selections );
               operation = new Union(target, oldGeometry, selections.slice(1));
-
             break;
             case 'subtract':
               var target = selections[0];
@@ -632,15 +631,47 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               result._original = original;
 
               result.name = original.name+"linkedClone";
-              original.addEventListener('shapeChanged',function(event){
-               
-
-              });
+              original.addEventListener('shapeChanged',function(event){});
+            break;
+            
+            case 'templatize':
+              //TODO add a custom editor for this where you can specify stuff
+              
+              className = "FooPart";
+              var newClass = createCustomPartClass( className, this.selectedObjects );
+              var instance = new newClass();
+              
+              instance.execute();
+              instance.generateRenderables();
+              console.log("custom class instance:\n", result);
+              
+              for(var i=0;i<this.selectedObjects.length;i++)
+              {
+               //?????
+               var select = this.selectedObjects[i];
+               //TODO: remove its history too !
+               select.sourceShape.parent.remove( select.sourceShape );
+               select.parent.remove( select );
+              }
+              
+              //TODO: after we created our custom class, (see ClassDeclaration, esprima )
+              //we REMOVE all the selectedObjects from our CURRENT editing scope (CES)
+              //we INSTANCIATE an instance of the new class 
+              //we add it to our CES
+              
+              if(instance.renderable)
+              {
+                this.viewer.addToScene(instance.renderable);
+                this.selectedObjects=[instance.renderable];
+              }
+              this.hierarchyRoot.add( instance );
+              
+              
+              
             break;
             
           }
 
-          if(type != "clone" && type != "linkedClone" && type!='mirrorX' && type != 'extrude')
           {
             this.fire('newOperation', {msg: operation});
             return;
