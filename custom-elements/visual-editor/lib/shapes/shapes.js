@@ -71,7 +71,17 @@ Part.prototype.generateRenderables=function()
 	    this.renderable.add( this.connectors[i].generateRenderables() );
 	}
 
-	
+  for(var i=0;i<this.children.length;i++)
+	{
+	  var child = this.children[i];
+	  child.generateRenderables();
+	  this.renderable.add( child.renderable ) ;
+	}
+	/*this.traverse( function(child){
+	  console.log("child", child);
+	  child.generateRenderables();
+	  if(child.parent) child.parent.renderable.add( child.renderable );
+	});*/
   
   return this.renderable;
 }
@@ -241,7 +251,6 @@ function Cube(options)
   this.name = "Cube"+this.id;
   this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
   //this._bsp = new ThreeBSP(this);
-  
   //this.properties["w"] = {"width", "Width of the cuboid",20}
   //this.properties["h"] = {"height", "height of the cuboid",20}
   //this.properties["d"] = {"depth", "depth of the cuboid",20}
@@ -256,7 +265,6 @@ Cube.prototype.update=function( parameters )
   //delete this.__webglInit;
   //this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
 }
-
 
 Cube.prototype.updateRenderables=function()
 {
