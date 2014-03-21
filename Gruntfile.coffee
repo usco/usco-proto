@@ -54,7 +54,7 @@ module.exports = (grunt) ->
 
     exec:
       standalone:
-        command: "vulcanize -i custom-elements/usco-editor/demo.html -o build/<%= currentBuild %>/index.html"
+        command: "vulcanize --csp -i custom-elements/usco-editor/demo.html -o build/<%= currentBuild %>/index.html"
         stdout: true
         stderr: true
 
@@ -65,7 +65,7 @@ module.exports = (grunt) ->
 
     nodewebkit:
       options:
-        version: "" #0.8.2 0.6.3 works with polymer but unresolved does not get removed, does not work from 0.7.0 onwards, 0.8.2 works only partially (wrong order of events)
+        version: "0.8.2" #0.8.2 0.6.3 works with polymer but unresolved does not get removed, does not work from 0.7.0 onwards, 0.8.2 works only partially (wrong order of events)
         build_dir: "_tmp/desktop" # Where the build version of my node-webkit app is saved
         mac: false # We want to build it for mac
         win: false # We want to build it for win
@@ -200,7 +200,7 @@ module.exports = (grunt) ->
       @task.run "clean:post#{postClean}"
 
     if target is 'desktop'
-      @task.run "replace:bla"
+      #@task.run "replace:bla"
       @task.run "copy:desktop"
       @task.run "nodewebkit"
       @task.run "rename:desktopFinal"
