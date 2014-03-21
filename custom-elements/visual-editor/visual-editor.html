@@ -5,6 +5,8 @@
 <link rel="import" href="../shape-creator/shape-creator.html">
 <link rel="import" href="../shape-creator/cube-creator.html">
 <link rel="import" href="../shape-creator/text-editor.html">
+<link rel="import" href="../shape-creator/properties-editor.html">
+<link rel="import" href="../mesh-exporter/mesh-exporter.html">
 
 <link rel="import" href="./sub-elements/grid/grid-helper.html">
 <!--<link rel="import" href="./sub-elements/fx/edgedetect-pass.html">
@@ -107,10 +109,12 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     <!--testing editing of 2d shapes-->
     <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:20px;top:300px;z-index:3">
       <div>
-        <text-editor id="textEditor"> </text-editor>
-        <cube-editor id="cubeEditor"> </cube-editor>
+        <!--<text-editor id="textEditor"> </text-editor>
+        <cube-editor id="cubeEditor"> </cube-editor>-->
+        <properties-editor selection="{{selectedObject}}"> <properties-editor>
       </div>
     </div>
+    <mesh-exporter selection="{{selectedObject}}" hierarchyRoot="{{hierarchyRoot}}"> </mesh-exporter>
 
     <three-js postProcess fullscreen="{{fullscreen}}" 
     selectedObjects="{{selectedObjects}}" id="viewer" on-keydown="{{keyUp}}" on-sceneready="{{viewerSceneReady}}">
@@ -184,7 +188,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     
     gridSettings:{step:10},
     cursorSettings:{snapToGrid:false,snapTransform:true},
-    transformSettings:{rotateStep:Math.PI/4,scaleStep:0.1},
+    transformSettings:{translateStep:10, rotateStep:45, scaleStep:0.1},
     
     
      observe: {
@@ -229,7 +233,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     {
       console.log("transformSettings changed");
       this.transformControls.setScaleSnap(this.transformSettings.scaleStep);
-      this.transformControls.setRotateSnap(this.transformSettings.rotateStep);
+      //convert to radians
+      var radians = this.transformSettings.rotateStep*Math.PI/180;
+      this.transformControls.setRotateSnap(radians);
       this.transformControls.setSnap(this.gridSettings.step);
     },
     
@@ -267,7 +273,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.transformControls = new THREE.TransformControls(this.viewer.camera, this.$.viewer);
       this.transformControls.setMode( "translate" );
       this.transformControls.setSpace("local");
-      this.transformControls.setSnap(this.gridSettings.step);
+      this.transformSettingsChanged();//FIXME do this more cleanly: set all snaps       
+      
       this.viewer.updatables.push( this.transformControls ) ;
 
       var geometry = new THREE.Geometry();
@@ -789,7 +796,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       {
         var groupSelectionHelper = this.groupSelectionHelper;
         groupSelectionHelper.position = new THREE.Vector3();
-        if(this.showDimensions)
+        if(this.showDimensions && groupSelectionHelper.helpers)
         {
           var dims = groupSelectionHelper.helpers.dims;
           if(dims)
@@ -951,34 +958,96 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.asyncFire('files-dropped', {data:files});
     }
   } ,
-  //temp hack
+  //TODO: temp hack, down the line, parsers should return the correct types directly
+  //TODO how to handle errors, as we are in a deferred's success callback
   addImportedResource: function( resource )
   {
-    if(resource.data instanceof THREE.Geometry) console.log("geometry, groovy!");
-    //{
+    //if(resource.data instanceof THREE.Geometry) console.log("geometry, groovy!");
+    var self = this;
     
-    var bla = resource.data;
-    if('children' in bla)
-    {
-      var importedPart = new Part();
-      var geometry = bla.children[0].geometry;
-      
-      for(var i=0;i<geometry.faces.length;i++)
+    function createImportedFromGeometry(geometry, resource)
       {
-        var face = geometry.faces[i];
-        //hack
-        geometry.faceVertexUvs[0].push([
-        new THREE.Vector2(), //new THREE.Vector2( ( v1.x + offset.x ) / range.x , ( v1.y + offset.y ) / range.y ),
-        new THREE.Vector2(),//new THREE.Vector2( ( v2.x + offset.x ) / range.x , ( v2.y + offset.y ) / range.y ),
-        new THREE.Vector2(),//new THREE.Vector2( ( v3.x + offset.x ) / range.x , ( v3.y + offset.y ) / range.y )
-      ]);
+        var importedPart = new Part();
+        importedPart.geometry = geometry;
+        importedPart.name = resource.name;
         
+        self.hierarchyRoot.add( importedPart );
+        self.viewer.addToScene( importedPart.generateRenderables() );
+        self.selectedObjects = [importedPart];
+        operation = new Import(importedPart, resource);
+        self.fire('newOperation', {msg: operation});
       }
-      //geometry.applyMatrix(new THREE.Matrix4().makeScale( 4,4,4));
+      
+      function createImported(importedPart, resource)
+      {
+        importedPart.name = resource.name;
+        self.hierarchyRoot.add( importedPart );
+        self.viewer.addToScene( importedPart.generateRenderables() );
+        self.selectedObjects = [importedPart.renderable];
+        operation = new Import(importedPart, resource);
+        self.fire('newOperation', {msg: operation});
+      }
+    
+    
+    var importRoot = resource.data;
+    if('children' in importRoot)
+    {
+      console.log("foo");
+      var current;
+      var importedPart=null;
+      var parent=null;
+      
+      
+      function getChildrenData(current, parent)
+      {
+        var rootPart = new Part();
+        rootPart.name = current.name;
+        rootPart.position = current.position;
+        
+        if(current instanceof THREE.Mesh) 
+        {
+          var geometry = current.geometry;
+          computeVertexUvs( geometry);
+          rootPart.geometry = geometry;
+        }
+        if(parent) parent.add( rootPart );
+        
+        for(var i=0;i<current.children.length;i++)
+        {
+          var child = current.children[i];
+          getChildrenData(child, rootPart);
+        }
+        return rootPart;
+      }
+      
+      importedPart = getChildrenData(importRoot,null);
+      
+      function computeVertexUvs(geometry)
+      {
+        for(var i=0;i<geometry.faces.length;i++)
+        {
+          var face = geometry.faces[i];
+          //hack
+          geometry.faceVertexUvs[0].push([
+          new THREE.Vector2(), //new THREE.Vector2( ( v1.x + offset.x ) / range.x , ( v1.y + offset.y ) / range.y ),
+          new THREE.Vector2(),//new THREE.Vector2( ( v2.x + offset.x ) / range.x , ( v2.y + offset.y ) / range.y ),
+          new THREE.Vector2(),//new THREE.Vector2( ( v3.x + offset.x ) / range.x , ( v3.y + offset.y ) / range.y )
+        ]);
+        }
+        
+        var autoCenter = false;
+        geometry.computeBoundingSphere();
+        if( autoCenter)
+        {
+          var offset = geometry.boundingSphere.center;
+          geometry.applyMatrix( new THREE.Matrix4().makeTranslation( -offset.x, -offset.y, -offset.z ) );
+        }
+     }
+     createImported(importedPart, resource);
+      
     }else
     {
-      var importedPart = new Part();
-      var geometry = bla;
+      var geometry = importRoot;
       for(var i=0;i<geometry.faces.length;i++)
       {
         var face = geometry.faces[i];
@@ -988,34 +1057,30 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           new THREE.Vector2(),//new THREE.Vector2( ( v3.x + offset.x ) / range.x , ( v3.y + offset.y ) / range.y )
         ]);
       }
+      
+      geometry = updateGeometry( geometry);
+      createImportedFromGeometry(geometry, resource);
     }
       
-      geometry.computeBoundingBox();
-		  geometry.computeCentroids();
-		  geometry.computeBoundingSphere();
-		  
-		  //centering hack
-		  var autoCenter = false;
-      if( autoCenter)
+      function updateGeometry( geometry)
       {
-        var offset = geometry.boundingSphere.center;
-        geometry.applyMatrix( new THREE.Matrix4().makeTranslation( -offset.x, -offset.y, -offset.z ) );
+        geometry.computeBoundingBox();
+		    geometry.computeCentroids();
+		    geometry.computeBoundingSphere();
+		  
+		    //centering hack
+		    var autoCenter = false;
+        if( autoCenter)
+        {
+          var offset = geometry.boundingSphere.center;
+          geometry.applyMatrix( new THREE.Matrix4().makeTranslation( -offset.x, -offset.y, -offset.z ) );
+        }
+        //needed at least for .ply files
+        geometry.computeVertexNormals();
+        geometry.computeFaceNormals();
+        
+        return geometry;
       }
-
-      //needed at least for .ply files
-      geometry.computeVertexNormals();
-      geometry.computeFaceNormals();
-      
-      importedPart.geometry = geometry;
-      importedPart.name = resource.name;
-      
-      this.hierarchyRoot.add( importedPart );
-      
-      this.viewer.addToScene( importedPart.generateRenderables() );
-      this.selectedObjects = [importedPart];
-      
-      operation = new Import(importedPart, resource);
-      this.fire('newOperation', {msg: operation});
   }
   
     //going down "one level" into an object hierarchy
