@@ -5,21 +5,32 @@ function Connector()
     //needs position, orientation (up vector)
 }
 
+
 Connector.prototype = Object.create( THREE.Object3D.prototype );
 Connector.prototype.constructor = Connector;
+
+Connector.prototype.attachTo = function(connector)
+{
+  
+}
+
+Connector.prototype.detachFrom = function(connector)
+{
+  
+}
 
 Connector.prototype.generateRenderables=function()
 {
   //this.visualHelper =  new THREE.Mesh( new THREE.CylinderGeometry( 10, 10, 20 ), new MeshBasicMaterial({color:0xff0000} );
   var color = 0xFF0000;
-  var to = this.up.clone().multiplyScalar(25);
+  var to = this.up.clone().multiplyScalar(30);
 
   var lineGeometry = new THREE.Geometry();
   var vertArray = lineGeometry.vertices;
   vertArray.push( this.position.clone(),to) ;
   lineGeometry.computeLineDistances();
 
-  var lineMaterial = new THREE.LineDashedMaterial( { color: color, dashSize: 2, gapSize: 1 } );
+  var lineMaterial = new THREE.LineDashedMaterial( { color: color, dashSize: 2, gapSize: 1, linewidth:2 } );
   var line = new THREE.Line( lineGeometry, lineMaterial );
   line.name = "connectorArrowHelper";
 
@@ -34,7 +45,7 @@ Connector.prototype.generateRenderables=function()
   
   var baseRadius  = 5,
     segments = 64,
-    material = new THREE.LineBasicMaterial( { color: 0x000000 , depthTest:false} ),
+    material = new THREE.LineBasicMaterial( { color: 0x000000 , depthTest:false,linewidth:2} ),
     geometry = new THREE.CircleGeometry( baseRadius, segments );
 
   //geometry.vertices.shift();
