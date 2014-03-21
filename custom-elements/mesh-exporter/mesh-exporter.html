@@ -1,0 +1,28 @@
+<polymer-element name="mesh-exporter" attributes="" >
+    <template>
+      <!--for export-->
+      <div id="export" style="position:absolute;right:50%;bottom:20px;z-index:9" on-click="">
+        <select  value="{{exportFormat}}">
+          <option value="stl"> stl </option>
+          <option value="amf"> amf </option>
+          <option value="obj"> obj </option>
+        </select>
+        <input type="text" value="{{exportFileName}}"></input>
+        <button on-click="{{exportMesh}}"> Export </button>
+      </div>
+    </template>
+    <script>
+      Polymer("mesh-exporter",{
+        selection: null,
+        hierarchyRoot: null,
+        exportFormat: "stl",
+        exportFileName : "",
+        exportMesh:function()
+        {
+          var selection = (this.selection)? this.selection.sourceShape: this.hierarchyRoot;
+          var toExport = selection;
+          this.asyncFire('export-requested', {fileName:this.exportFileName, format:this.exportFormat, data:toExport} );
+        },
+      });
+    </script>
+</polymer-element>
