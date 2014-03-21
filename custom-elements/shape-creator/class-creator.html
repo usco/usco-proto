@@ -1,0 +1,27 @@
+
+<polymer-element name="param-item" attributes="name type value" >
+  <script>
+      Polymer("param-item",{
+      });
+  </script>
+</polymer-element>
+
+<polymer-element name="class-creator" attributes="className params" >
+    <template>
+      <div> Class Name <input type="text" _value="{{className}}"/> </div>
+      <div>Parameters:
+        <!--TODO: here we need a dynamically growable list of parameters-->
+      </div>
+      <div> <button> Create Template From selections</button> </div>
+    </template>
+    <script>
+      Polymer("class-creator",{
+        className:"CustomPart",
+        params:null,
+        created:function()
+        {
+          this.params = [];
+        }
+      });
+    </script>
+</polymer-element>
