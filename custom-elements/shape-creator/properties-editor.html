@@ -1,0 +1,27 @@
+<polymer-element name="properties-editor" attributes="" >
+    <template>
+      <template if="{{selection!=null}}">
+        <div id="selectionInfo" style="position:absolute;right:10px;bottom:80px;z-index:9">
+          x:<input type="number" value="{{selection.sourceShape.position.x}}"></input>
+          y:<input type="number" value="{{selection.sourceShape.position.y}}"></input>
+          z:<input type="number" value="{{selection.sourceShape.position.z}}"></input>
+          <br>
+          x:<input type="number" value="{{selection.sourceShape.rotation.x}}"></input>
+          y:<input type="number" value="{{selection.sourceShape.rotation.y}}"></input>
+          z:<input type="number" value="{{selection.sourceShape.rotation.z}}"></input>
+          
+          <br>
+          w:<input type="number" value="{{selection.boundingBox.max.x - selection.boundingBox.min.x}}"></input>
+          d:<input type="number" value="{{selection.boundingBox.max.y - selection.boundingBox.min.y}}"></input>
+          h:<input type="number" value="{{selection.boundingBox.max.z - selection.boundingBox.min.z}}"></input>
+        </div>
+        
+        <material-editor selection="{{selection}}"> </material-editor>
+      </template>
+    </template>
+    <script>
+      Polymer("properties-editor",{
+        selection:null,
+      });
+    </script>
+</polymer-element>
