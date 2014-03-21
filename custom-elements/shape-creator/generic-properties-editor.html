@@ -1,0 +1,24 @@
+<polymer-element name="generic-properties-editor" attributes="selection" >
+    <template>
+      <template if="{{selection!=null}}">
+          x:<input type="number" value="{{selection.sourceShape.position.x}}"></input>
+      </template>
+    </template>
+    <script>
+      Polymer("generic-properties-editor",{
+        selection:null,
+        selectionChanged:function()
+        {
+          var selection = this.selection;
+          if(selection)
+          {
+            for (var name in selection) {
+              if (selection.hasOwnProperty(name)) {
+                console.log("I have a property called", name);
+              }
+            }
+          }
+        }
+      });
+    </script>
+</polymer-element>
