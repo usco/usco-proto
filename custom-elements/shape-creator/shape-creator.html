@@ -93,12 +93,14 @@ box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.1176
     operations2d:null,
     shapes3d : null,
     shapes2d : null,
+    shapesGeneric: null,
     created:function()
     {
-      this.operations = ["union", "subtract", "intersect","clone","linkedClone","mirrorX","mirrorY","mirrorZ","export"];
-      this.operations2d=["extrude"];
+      this.operations = ["union", "subtract", "intersect","templatize","clone","linkedClone","mirrorX","mirrorY","mirrorZ","export"];
+      this.operations2d=["extrude","linkedExtrude"];
       this.shapes3d =["Cube","Sphere", "Cylinder","Torus"];
       this.shapes2d =["Rectangle","Circle","Text","Polyline"];
+      this.shapesGeneric = ["connectors"];
     },
     headerTap:function(event)
     {
