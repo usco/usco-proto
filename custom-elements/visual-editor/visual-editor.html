@@ -73,14 +73,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         width:640px;
         height:480px;
       }
-
-      drag-drop{
-        z-index:2;
-        display:block;
-        position:absolute;
-        width: 100%;
-        height:100%
-      }
+      
       three-js{
          /*display:inline-block;*/
          z-index : 1;
@@ -88,13 +81,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         width: 100%;
          height:100%;
       }
-      
       input[type="number"]{
         width:50px;
         size:3;
       }
-      
-
     </style>
     <!--AutoSaving settings to localstorage-->
     <polymer-localstorage name="usco-proto-settings-showGrid"   value="{{showGrid}}"></polymer-localstorage>
@@ -105,54 +95,21 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     <div style="position:absolute;left:30%;top:20px;z-index:9">
         <span> Cursor </span>
         Snap to grid <!--<input type="checkbox" checked="{{cursorSettings.snapToGrid}}"> </input>-->
-        {{textBindingTest}}
         Snap transform <input type="checkbox" checked="{{cursorSettings.snapTransform}}"> </input>
         Translate step <input type="number" value="{{gridSettings.step}}" step=1 min=0.01 max=100></input>
         Rotate    step <input type="number" value="{{transformSettings.rotateStep}}" step=0.01 min=0.1 max=1 ></input>
         Scale     step <input type="number" value="{{transformSettings.scaleStep}}"  step=0.1 min=0.1 max=1></input>
     </div>    
     
-    
-    <template if="{{selectedObject!=null}}">
-      <div id="selectedObjectInfo" style="position:absolute;right:10px;bottom:80px;z-index:9">
-        x:<input type="number" value="{{selectedObject.sourceShape.position.x}}"></input>
-        y:<input type="number" value="{{selectedObject.sourceShape.position.y}}"></input>
-        z:<input type="number" value="{{selectedObject.sourceShape.position.z}}"></input>
-        <br>
-        x:<input type="number" value="{{selectedObject.sourceShape.rotation.x}}"></input>
-        y:<input type="number" value="{{selectedObject.sourceShape.rotation.y}}"></input>
-        z:<input type="number" value="{{selectedObject.sourceShape.rotation.z}}"></input>
-        
-        <br>
-        w:<input type="number" value="{{selectedObject.boundingBox.max.x - selectedObject.boundingBox.min.x}}"></input>
-        d:<input type="number" value="{{selectedObject.boundingBox.max.y - selectedObject.boundingBox.min.y}}"></input>
-        h:<input type="number" value="{{selectedObject.boundingBox.max.z - selectedObject.boundingBox.min.z}}"></input>
-      </div>
-    </template>
-    <material-editor selection="{{selectedObject}}"> </material-editor>
-    
     <shape-creator id="contextMenu"> </shape-creator>
 
-    <!--for export-->
-    <div id="export" style="position:absolute;right:50%;bottom:20px;z-index:9" on-click="">
-      <select  value="{{exportFormat}}">
-        <option value="stl"> stl </option>
-        <option value="amf"> amf </option>
-        <option value="obj"> obj </option>
-      </select>
-      <input type="text" value="{{exportFileName}}"></input>
-      <button on-click="{{exportMesh}}"> Export </button>
-    </div>
-
     <!--testing editing of 2d shapes-->
-    <template if="{{selectedObjects.length>0}}">
     <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:20px;top:300px;z-index:3">
       <div>
         <text-editor id="textEditor"> </text-editor>
         <cube-editor id="cubeEditor"> </cube-editor>
       </div>
     </div>
-   </template>
 
     <three-js postProcess fullscreen="{{fullscreen}}" 
     selectedObjects="{{selectedObjects}}" id="viewer" on-keydown="{{keyUp}}" on-sceneready="{{viewerSceneReady}}">
@@ -212,7 +169,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     showDimensions:true,
 
     //TODO move this to a structure
-    hierarchyRoot:new THREE.Object3D(),
+    hierarchyRoot:new Part(),
+    //the root of the active editing level
+    activeRoot:null,
     
     
     groupSelectionHelper: new THREE.Object3D(),
@@ -221,10 +180,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
     source:"//testing\n",
     altSource:"",
-    
-    exportFormat:"stl",
-    exportFileName : "",
-    textBindingTest: "foobar",
     
     gridSettings:{step:10},
     cursorSettings:{snapToGrid:false,snapTransform:true},
@@ -277,24 +232,16 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.transformControls.setSnap(this.gridSettings.step);
     },
     
-    exportMesh:function()
-    {
-      var selection = (this.selectedObject)? this.selectedObject.sourceShape: this.hierarchyRoot;
-      var toExport = selection;
-      this.asyncFire('export-requested', {fileName:this.exportFileName, format:this.exportFormat, data:toExport} );
-    },
-    
-    viewerSceneReady:function(event)
-    {
-      console.log("a scene is ready",event);
-      this.async(this.setupElements);
-    },
     created:function()
     {
       this.selectedObjects = [];
       
       //TODO: move this where it should be
       if(window.webkitURL) window.URL = window.webkitURL;
+      
+      //default active level : root of hierarchy
+      this.activeRoot = this.hierarchyRoot;
+      
     },
     enteredView:function()
     {
@@ -308,6 +255,11 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.addEventListener('selectionsRemoved', function(e) {
         self.selectionsRemoved(e.detail);
       });
+    },
+     viewerSceneReady:function(event)
+    {
+      console.log("a scene is ready",event);
+      this.async(this.setupElements);
     },
     setupElements : function()
     {
@@ -404,7 +356,12 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             if(this.selectedObjects[0].standInFor){
               this.selectedObjects[0].dispatchEvent({type:'translated',value:event.value});
             }
-            operation = new Translation(event.value,this.selectedObjects[0].sourceShape);
+            //operation = new Translation(event.value,this.selectedObjects[0].sourceShape);
+            
+            op = this.selectedObjects[0].sourceShape.translate( event.value );
+            //console.log("object translated", this.selectedObjects[0].sourceShape )
+            this.activeRoot.operations.push( op );
+            
           break;
           case "scale":
             operation = new Scaling(event.value,this.selectedObjects[0]);
@@ -413,14 +370,13 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         
         if( operation != null)
         {
-          this.fire('newOperation', {msg: operation});
+          //this.fire('newOperation', {msg: operation});
         }
       }
       this.transformControls.addEventListener( 'transform', onObjectTranform.bind(this) )
 
       var sC = this.$.contextMenu; //document.querySelector('shape-creator');
-      console.log("sC", sC);
-       var self = this;
+      var self = this;
       this.addEventListener('contextmenu',function(event){
         var event = event.impl || event;
         sC.enabled=true;
@@ -534,10 +490,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
                 this.selectedObjects=[instance.renderable];
               }
             }
-            
             this.hierarchyRoot.add( instance );
             this.fire('newOperation', {msg: new Creation(instance, instance.parent, options)});
-            console.log("instance", instance, this.viewer.scene);
           }
         }
      });
@@ -753,7 +707,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         {
           this.groupSelectionHelper.children[j].position = new THREE.Vector3();
         }*/
-        this.groupSelectionHelper.add( newSelection );
+        
+        //this.groupSelectionHelper.add( newSelection );
+        
         //console.log("newSelection.pos",newSelection.position,"this.groupSelectionHelper.position",this.groupSelectionHelper.position);
         //newSelection.position.sub( this.groupSelectionHelper.position );
         //console.log("newSelection.pos",newSelection.position,"this.groupSelectionHelper.position",this.groupSelectionHelper.position);
@@ -787,8 +743,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       for(var i=0;i<removedSelections.length;i++)
       {
         var oldSelection = removedSelections[i];
-        this.viewer.addToScene( oldSelection );
-        oldSelection.position.add( this.groupSelectionHelper.position );
+        //this.viewer.addToScene( oldSelection );
+        //oldSelection.position.add( this.groupSelectionHelper.position );
         
         if(oldSelection.outline!=null)
         { 
@@ -849,7 +805,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       if(this.selectedObjects.length>0)
       {
         this.viewer.scene.add(this.transformControls);
-        this.transformControls.attach( this.groupSelectionHelper );  // //this.selectedObjects[0]
+        this.transformControls.attach( this.selectedObjects[0]  );  //this.groupSelectionHelper
       }
    
       if(newSelections.length>0)
@@ -948,7 +904,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
   },
   handleDrop:function(e)
   {
-    console.log("drag drop")
     if (e.preventDefault) {
       e.preventDefault(); // Necessary. Allows us to drop.
     }
