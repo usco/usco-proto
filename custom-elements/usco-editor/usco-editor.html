@@ -1,21 +1,14 @@
 <link rel="import" href="../../components/polymer/polymer.html">
-<link rel="import" href="../../components/polymer-ui-scaffold/polymer-ui-scaffold.html">
-<link rel="import" href="../../components/polymer-ui-icon-button/polymer-ui-icon-button.html">
-<link rel="import" href="../../components/polymer-ui-menu-item/polymer-ui-menu-item.html">
-<link rel="import" href="../../components/polymer-ui-menu-button/polymer-ui-menu-button.html">
-<link rel="import" href="../../components/polymer-ui-sidebar-menu/polymer-ui-sidebar-menu.html">
 
-
+<link rel="import" href="../../components/code-mirror/code-mirror.html">
 <link rel="import" href="../visual-editor/visual-editor.html">
-
 <link rel="import" href="../../components/usco-client-deps/usco-client-deps.html">
 <link rel="import" href="../../components/usco-asset-manager/usco-asset-manager.html">
 
 <link rel="import" href="../../components/usco-xhr-store/xhr-store.html">
 <link rel="import" href="../../components/usco-desktop-store/desktop-store.html">
-<!--<link rel="import" href="../../components/usco-dropbox-store/dropbox-store.html">
-<link rel="import" href="../../components/usco-fs-store/fs-store.html">-->
-<link rel="import" href="../../components/code-mirror/code-mirror.html">
+<link rel="import" href="../../components/usco-dropbox-store/dropbox-store.html">
+<link rel="import" href="../../components/usco-fs-store/fs-store.html">
 
 <link rel="import" href="../../components/usco-amf-serializer/amf-serializer.html">
 <link rel="import" href="../../components/usco-stl-serializer/stl-serializer.html">
@@ -74,24 +67,6 @@
       overflow:auto;
     }
     code-mirror{position:absolute;top:80px;right:20px;width:400px;height:200px;z-index:9999;}
-    
-    [main] {
-        padding: 0px;
-        position: absolute;
-        top: 0;
-        right: 0;
-        bottom: 0;
-        left: 0;
-        /*border: 3px solid magenta;*/
-      }
-      [navigation] {
-        width: 156px;
-        height: 100%;
-      }
-    polymer-ui-toolbar{
-      height:20px;
-    }
-
   </style>
   <usco-client-deps> </usco-client-deps>
   <usco-asset-manager id="assetManager">
@@ -111,54 +86,72 @@
     <ctm-parser> </ctm-parser>
   </usco-asset-manager>
   
-  <polymer-ui-scaffold theme="polymer-ui-dark-theme" style="display: block; position: relative; height: 100%;">
-
-      <div tool flex>Usco</div>
-      <polymer-ui-icon-button tool icon="briefcase"></polymer-ui-icon-button>
-      <polymer-ui-icon-button tool icon="marker"></polymer-ui-icon-button>
-      <polymer-ui-menu-button tool icon="dots" Xtheme="polymer-ui-light-theme" halign="right">
-        <polymer-ui-menu-item>Item</polymer-ui-menu-item>
-        <polymer-ui-menu-item>Item</polymer-ui-menu-item>
-      </polymer-ui-menu-button>
-
-      <div main>
-        <visual-editor id="visualEditor"> </visual-editor>
-        <!--<code-editor> </code-editor>-->
-        <!--<code-mirror id="selectEdit" theme="monokai" mode="javascript" value="{{source}}" boundValue="{{altSource}}" >
-          </code-mirror>-->
-        
-        <history-editor id="historyEditor"> </history-editor>
-          <!--<drag-drop id="dragDropLayer"> </drag-drop>-->
-          
-        <!--various helpers: TODO:refactor-->
-        <div id="codeGen" class="codeGen" style="position:absolute; right:10px;top:30px;z-index:3">
-          <div>
-            <button on-click="{{generateCodeFromHistory}}"> Generate code from history </button> </br>
-            <button on-click="{{generateFromCode}}"> Generate shapes from code </button>
-          </div>
-        </div>
-        
-        <div id="modeSwitch" style="position:absolute; right:10px;top:100px;z-index:3">
-          <select>
-            <option> Design </option>
-            <option> Build Plate </option>
-            <option> Assembly Guide </option>
-          </select>
-        </div>
-      </div>
-
-      <polymer-ui-sidebar-menu navigation label="Menu" offscreen="basement">
-        <polymer-ui-menu-item>Item</polymer-ui-menu-item>
-        <polymer-ui-menu-item>Item</polymer-ui-menu-item>
-      </polymer-ui-sidebar-menu>
-
-  </polymer-ui-scaffold>
+  <visual-editor id="visualEditor"> </visual-editor>
+  
+  <div id="codeEditorStuff" style="position:absolute; right:10px;top:300px;z-index:3">
+    Code Editor <input type="checkbox"  checked="{{codeEditActive}}"> </input>
+    <!--<button on-click="{{saveFileTest}}"> </button>
+    <input type="file" nwdirectory />
+    <input type="file" />
+    <input type="file" nwsaveas />-->
+    
+    <button on-click="{{loginToDB}}">Login </button>
+  </div>
+  <!--<code-editor> </code-editor>-->
+  <template if="{{codeEditActive}}">
+   <code-mirror id="selectEdit" theme="monokai" mode="javascript" value="{{project.files['foo']}}" boundValue="{{project.files['foo']}}" >
+   </code-mirror>
+  </template>
+  
+  <history-editor id="historyEditor"> </history-editor>
+    
+  <!--various helpers: TODO:refactor-->
+  <div id="codeGen" class="codeGen" style="position:absolute; right:10px;top:30px;z-index:3">
+    <div>
+      <button on-click="{{generateCodeFromHistory}}"> Generate code from history </button> </br>
+      <button on-click="{{generateFromCode}}"> Generate shapes from code </button>
+    </div>
+  </div>
+  
+  <div id="modeSwitch" style="position:absolute; right:10px;top:100px;z-index:3">
+    <select>
+      <option> Design </option>
+      <option> Build Plate </option>
+      <option> Assembly Guide </option>
+    </select>
+  </div>
+</div>
   
 </template>
 <script>
 Polymer("usco-editor",{
+
+  project:null,
+  
+  observe:{
+    'project.files["foo"]':'codeChanged'
+  },
+  codeChanged:function()
+  {
+    console.log("code changed", this.project.files["foo"]);
+  },
+  loginToDB:function()
+  {
+    var dropbBoxStore = this.assetManager.querySelector("dropbox-store");
+    dropbBoxStore.login();
+  },
+  created:function()
+  {
+    this.project = {name:"testProject",files:{"foo":"bar"}};
+    console.log("created", this.$);
+  },
+  ready:function()
+  {
+    console.log("ready", this.$);
+  },
   enteredView:function()
   {
+    console.log("entering view", this.$);
     this.visualEditor   = this.$.visualEditor;
     this.commandManager = this.$.historyEditor;
     this.assetManager   = this.$.assetManager;
@@ -166,7 +159,8 @@ Polymer("usco-editor",{
     
     //if we recieve a "newOperation" event, add it to history  
     var self = this;
-    this.addEventListener('newOperation', function(e) {
+    document.addEventListener('newOperation', function(e) {
+          console.log(e);
       console.log(e.type, e.detail.msg); 
       self.commandManager.addCommand( e.detail.msg );
     });
@@ -250,6 +244,19 @@ Polymer("usco-editor",{
     var result = eval(this.altSource)
     console.log("result", result);
   },
+  
+  saveFileTest:function()
+  {
+    function chooseFile(name) {
+      var chooser = document.querySelector(name);
+      chooser.addEventListener("change", function(evt) {
+        console.log(this.value);
+      }, false);
+
+      chooser.click();  
+    }
+    chooseFile('#fileDialog');
+  }
 
 });
 </script>
