@@ -5,21 +5,34 @@ function Part()
 
   //holds object meta data ("reflexion", links between code and visual etc
   this.__meta = null;
-  
+  //this holds all the history of operations for the given shape
+  this.operations = [];
+  //not so sure, a hash of editable properties: TODO: how to handle this vs simple input params
+  this.properties = {};
   //curent implementation uses bsp under the hood...
   this._bsp = null;
   
   //this is an abstract element, but it needs a visual representation
   this.renderable = null;
-  
   this.color = 0x17a9f5;
+  //"r" is for "real", for now, do not overrid three.js material property
+  this.rMaterial = null;
   
   this.connectors = [];
+  
+  //just for testing
   var testConnector = new Connector();
   testConnector.up = new THREE.Vector3(0,0,1);
   testConnector.position.z = 10;
   this.add( testConnector );
   this.connectors.push( testConnector );
+  
+  var testConnector2 = new Connector();
+  testConnector2.up = new THREE.Vector3(0,0,-1);
+  testConnector2.position.z = -10;
+  this.add( testConnector2 );
+  
+  this.connectors.push( testConnector2 );
 }
 Part.prototype = Object.create( THREE.Mesh.prototype );
 Part.prototype.constructor = Part;
@@ -52,7 +65,12 @@ Part.prototype.generateRenderables=function()
 	this.renderable._rotation._quaternion = this.quaternion;
 	this.renderable._quaternion._euler = this.rotation;
 	
-  this.renderable.add( this.connectors[0].generateRenderables() );
+	
+	for(var i=0;i<this.connectors.length;i++)
+	{
+	    this.renderable.add( this.connectors[i].generateRenderables() );
+	}
+
 	
   
   return this.renderable;
@@ -77,16 +95,24 @@ Part.prototype.update = function( parameters )
   this.updateRenderables();
 }
 
-Part.prototype.translate=function(params)
+Part.prototype.translate=function( amount )
 {
+  var operation = new Translation( amount, this );
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
+  return operation;
 }
 
-Part.prototype.rotate=function(params)
+Part.prototype.rotate=function( amount )
 {
+  var operation = new Rotation( amount, this);
+  this.operations.push( operation );
 }
 
-Part.prototype.scale=function(params)
+Part.prototype.scale=function( amount )
 {
+  var operation = new Scaling( amount, this);
+  this.operations.push( operation );
 }
 
 Part.prototype.union=function(objects)
@@ -215,6 +241,10 @@ function Cube(options)
   this.name = "Cube"+this.id;
   this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
   //this._bsp = new ThreeBSP(this);
+  
+  //this.properties["w"] = {"width", "Width of the cuboid",20}
+  //this.properties["h"] = {"height", "height of the cuboid",20}
+  //this.properties["d"] = {"depth", "depth of the cuboid",20}
 }
 Cube.prototype = Object.create( Part.prototype );
 Cube.prototype.constructor = Cube;
