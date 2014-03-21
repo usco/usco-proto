@@ -24,15 +24,15 @@ function Part()
   var testConnector = new Connector();
   testConnector.up = new THREE.Vector3(0,0,1);
   testConnector.position.z = 10;
-  this.add( testConnector );
-  this.connectors.push( testConnector );
   
   var testConnector2 = new Connector();
   testConnector2.up = new THREE.Vector3(0,0,-1);
   testConnector2.position.z = -10;
-  this.add( testConnector2 );
   
-  this.connectors.push( testConnector2 );
+  /*this.add( testConnector );
+  this.add( testConnector2 );
+  this.connectors.push( testConnector );
+  this.connectors.push( testConnector2 );*/
 }
 Part.prototype = Object.create( THREE.Mesh.prototype );
 Part.prototype.constructor = Part;
