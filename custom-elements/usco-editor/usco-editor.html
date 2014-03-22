@@ -1,7 +1,12 @@
 <link rel="import" href="../../components/polymer/polymer.html">
 
-<link rel="import" href="../../components/code-mirror/code-mirror.html">
+<link rel="import" href="../../components/polymer-signals/polymer-signals.html">
+
+
 <link rel="import" href="../visual-editor/visual-editor.html">
+
+<link rel="import" href="../../components/code-mirror/code-mirror.html">
+
 <link rel="import" href="../../components/usco-client-deps/usco-client-deps.html">
 <link rel="import" href="../../components/usco-asset-manager/usco-asset-manager.html">
 
@@ -19,6 +24,8 @@
 <link rel="import" href="../../components/usco-obj-parser/obj-parser.html">
 <link rel="import" href="../../components/usco-ply-parser/ply-parser.html">
 <link rel="import" href="../../components/usco-ctm-parser/ctm-parser.html">
+
+
 
 
 <polymer-element name="usco-editor">
@@ -94,9 +101,17 @@
     <input type="file" nwdirectory />
     <input type="file" />
     <input type="file" nwsaveas />-->
-    
     <button on-click="{{loginToDB}}">Login </button>
   </div>
+  
+  <div id="saveLoad" style="position:absolute; right:10px;top:5px;z-index:3">
+    <div> 
+      <button on-click="{{reqSave}}"> Save Design</button>
+    </div>
+    <button on-click="{{reqLoad}}"> Load Design</button>
+    <button on-click="{{reqScreenshot}}">Screenshot</button>
+  </div>
+  
   <!--<code-editor> </code-editor>-->
   <template if="{{codeEditActive}}">
    <code-mirror id="selectEdit" theme="monokai" mode="javascript" value="{{project.files['foo']}}" boundValue="{{project.files['foo']}}" >
@@ -106,7 +121,7 @@
   <history-editor id="historyEditor"> </history-editor>
     
   <!--various helpers: TODO:refactor-->
-  <div id="codeGen" class="codeGen" style="position:absolute; right:10px;top:30px;z-index:3">
+  <div id="codeGen" class="codeGen" style="position:absolute; right:10px;top:50px;z-index:3">
     <div>
       <button on-click="{{generateCodeFromHistory}}"> Generate code from history </button> </br>
       <button on-click="{{generateFromCode}}"> Generate shapes from code </button>
@@ -226,7 +241,9 @@ Polymer("usco-editor",{
     
       //console.log("shape", shape);
       self.visualEditor.addImportedResource( resource ); 
-    });
+    }).fail(function(error){
+      console.log("failed to load resource", error);
+    })
   
   },
   
@@ -244,7 +261,11 @@ Polymer("usco-editor",{
     var result = eval(this.altSource)
     console.log("result", result);
   },
-  
+  reqScreenshot:function()
+  {
+    console.log("requesting screenshot");
+    this.asyncFire('polymer-signal', {name: "request-screenshot", data:null});
+  },
   saveFileTest:function()
   {
     function chooseFile(name) {
@@ -256,6 +277,24 @@ Polymer("usco-editor",{
       chooser.click();  
     }
     chooseFile('#fileDialog');
+  },
+  reqSave:function()
+  {
+    console.log("requesting save design");
+    this.asyncFire('polymer-signal', {name: "request-save-design", data:null});
+    /*var exporter = new THREE.ObjectExporter()
+    var exported = exporter.parse(this.assembly)
+    exported = JSON.stringify(exported);*/
+  },
+  reqLoad:function()
+  {
+    console.log("requesting load design");
+    this.asyncFire('polymer-signal', {name: "request-load-design", data:null});
+    /*var reloadedAssembly = JSON.parse(reloadedAssembly.content);
+    var loader = new THREE.ObjectParser()
+    
+    var assembly = loader.parse(reloadedAssembly)
+    //@scene.add @assembly*/
   }
 
 });
