@@ -86,6 +86,14 @@ Part.prototype.generateRenderables=function()
   return this.renderable;
 }
 
+Part.prototype.updateRenderables=function()
+{
+  this.renderable.geometry.dispose();
+  delete this.renderable.__webglInit;
+  this.renderable.geometry =  this.geometry;
+}
+
+
 Part.prototype.fromThreeMesh=function(object){}
 
 Part.prototype.attributeChanged = function(attrName, oldVal, newVal)
@@ -251,12 +259,28 @@ function Cube(options)
   this.name = "Cube"+this.id;
   this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
   //this._bsp = new ThreeBSP(this);
-  //this.properties["w"] = {"width", "Width of the cuboid",20}
-  //this.properties["h"] = {"height", "height of the cuboid",20}
-  //this.properties["d"] = {"depth", "depth of the cuboid",20}
+  
+  this.properties["test"] = ["fake", "Some fake property", "amazing"]//optional min max?
+  this.properties["w"] = ["width", "Width of the cuboid", 30]//optional min max?
+  this.properties["h"] = ["height", "height of the cuboid",20,0.0000001,100,0.1]
+  this.properties["d"] = ["depth", "depth of the cuboid",20]
+  //TODO: how to provide a preset list of acceptable values (to use with select etc)
+  //TODO: add ability to provide range functions, select functions etc (generator functions for the previous
+  //params
 }
 Cube.prototype = Object.create( Part.prototype );
 Cube.prototype.constructor = Cube;
+
+Cube.prototype.attributeChanged=function( attrName, newValue, oldValue)
+{
+  console.log("cube's attribute changed", attrName, newValue, oldValue);
+  
+  this[attrName] = newValue;
+    this.properties[attrName][2] = newValue;
+  this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
+  
+  this.updateRenderables();
+}
 
 Cube.prototype.update=function( parameters )
 {
@@ -264,13 +288,6 @@ Cube.prototype.update=function( parameters )
   //this.geometry.dispose();
   //delete this.__webglInit;
   //this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
-}
-
-Cube.prototype.updateRenderables=function()
-{
-  //this.renderable.geometry.dispose();
-  //delete this.renderable.__webglInit;
-  //this.renderable.geometry =  new THREE.CubeGeometry( this.w, this.d, this.h ); 
 }
 
 
@@ -281,17 +298,24 @@ function Sphere(options)
   this.$fn = options.$fn || 10;
 
   Part.call( this );
-  this.geometry = new THREE.SphereGeometry( this.r, 30, 30 );
+  this.geometry = new THREE.SphereGeometry( this.r, this.$fn, this.$fn );
+  
+  this.properties["r"] = ["radius", "Radius of the sphere", 10]//optional min max?
+  this.properties["$fn"] = ["resolution", "resolution of the sphere",10]
 }
 Sphere.prototype = Object.create( Part.prototype );
 Sphere.prototype.constructor = Sphere;
 
 
-Sphere.prototype.updateRenderables=function()
+Sphere.prototype.attributeChanged=function( attrName, newValue, oldValue)
 {
-  this.renderable.geometry.dispose();
-  delete this.renderable.__webglInit;
-  this.renderable.geometry =  new THREE.SphereGeometry( this.r, this.$fn, 20 ); 
+  console.log("sphere's attribute changed", attrName, newValue, oldValue);
+  
+  this[attrName] = newValue;
+  this.properties[attrName][2] = newValue;
+  this.geometry = new THREE.SphereGeometry( this.r, this.$fn, this.$fn );
+  
+  this.updateRenderables();
 }
 
 
@@ -299,25 +323,34 @@ function Cylinder(options)
 {
   options = options || {};
   this.r = options.r || 10;
+  this.r2 = options.r2 || 10;
   this.h = options.h || 10;
   this.$fn = options.$fn || 10;
 
   Part.call( this );
-  this.geometry = new THREE.CylinderGeometry( this.r, this.r, this.h ,this.$fn,this.$fn);
+  this.geometry = new THREE.CylinderGeometry( this.r2, this.r, this.h ,this.$fn );
   this.geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
+  
+  this.properties["r"] = ["bottom radius", "Radius of the bottom of cylinder", 10]
+  this.properties["r2"] =["top radius", "Radius of the top of the cylinder", 10]//optional min max?
+  this.properties["h"] =["height", "Height of the cylinder", 10]//optional min max?
+  this.properties["$fn"] = ["resolution", "resolution of the cylinder (polygonal)",10]
 }
 Cylinder.prototype = Object.create( Part.prototype );
 Cylinder.prototype.constructor = Cylinder;
 
-
-Cylinder.prototype.updateRenderables=function()
+Cylinder.prototype.attributeChanged=function( attrName, newValue, oldValue)
 {
-  this.renderable.geometry.dispose();
-  delete this.renderable.__webglInit;
-  var geometry = new THREE.CylinderGeometry( this.r, this.r, this.h ,this.$fn,this.$fn)
-  geometry.applyMatrix(new THREE.Matrix4().makeRotationY( Math.PI/2));
-  this.renderable.geometry = geometry;
+  this[attrName] = newValue;
+  this.properties[attrName][2] = newValue;
+  this.geometry = new THREE.CylinderGeometry( this.r2, this.r, this.h ,this.$fn);
+  this.geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
+  
+    console.log("Cylinder's attribute changed", attrName, newValue, oldValue, this, this.properties, this.geometry);
+  
+  this.updateRenderables();
 }
+
 
 
 function Torus(options)
@@ -331,16 +364,23 @@ function Torus(options)
   //var geometry = new THREE.TorusKnotGeometry( 20, 6, 200, 100, 1, 3 );
   this.geometry = new THREE.TorusGeometry( this.r,this.tube, this.$fn, this.$fn );
   //radius, tube, segmentsR, segmentsT, arc
+  
+  this.properties["r"] = ["radius", "Radius of torus", 10]
+  this.properties["tube"] =["tube","bla", 4]
+  this.properties["$fn"] = ["resolution", "resolution of the torus (polygonal)",20]
 }
 Torus.prototype = Object.create( Part.prototype );
 Torus.prototype.constructor = Torus;
 
-
-Torus.prototype.updateRenderables=function()
+Torus.prototype.attributeChanged=function( attrName, newValue, oldValue)
 {
-  this.renderable.geometry.dispose();
-  delete this.renderable.__webglInit;
-  var geometry = new THREE.TorusGeometry( this.r,this.tube , this.$fn, this.$fn);
-  this.renderable.geometry = geometry;
+  this[attrName] = newValue;
+  this.properties[attrName][2] = newValue;
+    console.log("Torus's attribute changed", attrName, newValue, oldValue, this, this.properties);
+  this.geometry = new THREE.TorusGeometry( this.r,this.tube, this.$fn, this.$fn );
+  
+
+  
+  this.updateRenderables();
 }
               

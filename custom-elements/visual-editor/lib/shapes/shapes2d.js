@@ -13,6 +13,8 @@ function Shape2d()
   this.controlPoints = [];
   
   this.__visualContols = [];
+  
+  this.properties = {};
 }
 Shape2d.prototype = Object.create( THREE.Shape.prototype );
 Shape2d.__id = 0;
@@ -450,11 +452,28 @@ Shape2d.prototype.generateRenderables = function()
 	  });
 	  
 	  //flag the visual representation as comming from this shape2D
-	  line.sourceElement = this;
+	  line.sourceShape = this;
 	  this.renderable = line;
 	  this.generateVisualControlPoints(); 
 	  
 	  return this.renderable;
+}
+
+Shape2d.prototype.updateRenderables=function()
+{
+  for(var i=0;i< this.renderable.children.length;i++)
+  {
+    var child = this.renderable.children[i];
+    this.renderable.remove( child );
+  }
+  
+  this.renderable.geometry.dispose(); 
+  delete this.renderable.__webglInit;
+  
+  //this.generateVisualControlPoints();
+  
+  var points = this.createPointsGeometry();
+  this.renderable.geometry = points;
 }
 
 
@@ -723,42 +742,94 @@ Shape2d.prototype.getPoints = function( divisions, closedPath ) {
 
 function Rectangle(width, height, center, radius)
 {
-    var width = width || 40;
-    var height = height || 40;
-    var radius = radius || 5;
-    var center = center || new THREE.Vector3();
+    this.width = width || 40;
+    this.height = height || 40;
+    this.radius = radius || 5;
+    this.center = center || new THREE.Vector3();
     
     Shape2d.apply( this, arguments );
-    var x = center.x, y = center.y;
-	  
-	  this.moveTo( x, y + radius );
-		this.lineTo( x, y + height - radius );
-		this.quadraticCurveTo( x, y + height, x + radius, y + height );
-		this.lineTo( x + width - radius, y + height) ;
-		this.quadraticCurveTo( x + width, y + height, x + width, y + height - radius );
-		this.lineTo( x + width, y + radius );
-		this.quadraticCurveTo( x + width, y, x + width - radius, y );
-		this.lineTo( x + radius, y );
-		this.quadraticCurveTo( x, y, x, y + radius );
+    
+    this.generate();
+		
+    this.properties["width"] = ["width", "Width of the rectangle", 40]
+    this.properties["height"] = ["height", "height of the rectangle", 40,0.0000001,100,0.1]
+    this.properties["radius"] = ["corner radius", "Radius of the rectangle's corners", 5]
 	  
 }
 Rectangle.prototype = Object.create( Shape2d.prototype );
 Rectangle.prototype.constructor = Rectangle;
 
+Rectangle.prototype.generate = function()
+{
+  var center=this.center,radius=this.radius,width=this.width, height=this.height;
+  var x = center.x, y = center.y;
+  
+  //TODO: move this to shape2D
+  this.actions = [];
+  this.curves = [];
+  this.controlPoints = [];
+  this.__visualContols = [];
+	  
+  this.moveTo( x, y + radius );
+	this.lineTo( x, y + height - radius );
+	this.quadraticCurveTo( x, y + height, x + radius, y + height );
+	this.lineTo( x + width - radius, y + height) ;
+	this.quadraticCurveTo( x + width, y + height, x + width, y + height - radius );
+	this.lineTo( x + width, y + radius );
+	this.quadraticCurveTo( x + width, y, x + width - radius, y );
+	this.lineTo( x + radius, y );
+	this.quadraticCurveTo( x, y, x, y + radius );
+}
+
+Rectangle.prototype.attributeChanged=function( attrName, newValue, oldValue)
+{
+  console.log("Rectangle's attribute changed", attrName, newValue, oldValue);
+  
+  this[attrName] = newValue;
+  this.properties[attrName][2] = newValue;
+  
+  this.generate();
+  this.updateRenderables();
+}
+
+
 function Circle(center, radius)
 {
-    var radius = radius || 20;
-    var center = center || new THREE.Vector3();
-    
+    this.radius = radius || 20;
+    this.center = center || new THREE.Vector3();
     Shape2d.apply( this, arguments );
-    var x = center.x, y = center.y;
-    
-		this.moveTo( radius+x, y );
-	  this.absarc( x, y, radius, 0, Math.PI*2, false );
+	  this.generate();
 	  
+    this.properties["radius"] = ["radius", "Radius of the circle", 20]
 }
 Circle.prototype = Object.create( Shape2d.prototype );
 Circle.prototype.constructor = Circle;
+
+Circle.prototype.generate = function()
+{
+  var center=this.center,radius=this.radius;
+  var x = center.x, y = center.y;
+  
+  //TODO: move this to shape2D
+  this.actions = [];
+  this.curves = [];
+  this.controlPoints = [];
+  this.__visualContols = [];
+  
+	this.moveTo( radius+x, y );
+  this.absarc( x, y, radius, 0, Math.PI*2, false );
+}
+
+Circle.prototype.attributeChanged=function( attrName, newValue, oldValue)
+{
+  console.log("Circle's attribute changed", attrName, newValue, oldValue);
+  
+  this[attrName] = newValue;
+  this.properties[attrName][2] = newValue;
+  
+  this.generate();
+  this.updateRenderables();
+}
 
 
 //TODO: find a way to make this work
@@ -796,10 +867,40 @@ function Text(options)
       this.holes.push( textShapes[0].holes[i] );
     }
     //console.log("text", this);
-	  
+    
+    this.properties["text"] = ["text", "Actual text", "foo"]
+    this.properties["size"] = ["size", "font size",20]
+    this.properties["font"] = ["font", "font type","helvetiker"]
 }
 Text.prototype = Object.create( Shape2d.prototype );
 Text.prototype.constructor = Text;
+
+Text.prototype.attributeChanged=function( attrName, newValue, oldValue)
+{
+  console.log("text's attribute changed", attrName, newValue, oldValue);
+  
+  this[attrName] = newValue;
+  this.properties[attrName][2] = newValue;
+  if(this.font == "fontawesome")
+  {
+    this.text = unescape('%u' + this.text);
+  }
+  console.log("text", this.text);
+
+  //TODO: only do this if something changed!
+  this.actions = [];
+  this.curves = [];
+  this.controlPoints = [];
+  this.__visualContols = [];
+  
+  var textShapes = THREE.FontUtils.generateShapes( this.text, {font:this.font,size:this.size} );
+  for(var i=0;i<textShapes.length;i++)
+  {
+      this.fromThreeShape( textShapes[i] );
+  }
+  this.updateRenderables();
+}
+
 
 Text.prototype.update=function( parameters )
 {
