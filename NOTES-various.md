@@ -25,7 +25,17 @@ and serializers are not writers so we seem to be good)
       
       * reqShapeOperation(??)
   - various events: newOperation
-  
+
+SHAPES:
+=======
+-mathematical representation, frep etc:
+ * default "resolution" parameters should be "pseudo infinite":
+  - this would perhaps provide compatibility with more mathematical representation
+  of shapes vs polygonal ones : ie not resolution means "as high precision as the 
+  system will allow"
+ * formalize parameter/attribute aliases:
+  - example : radius & diameter -> actually the same thing
+  - getters setters and a "strong" and "weak" one if they are both defined ?
 
   
 OVERALL LOGIC NOTES:
