@@ -1,23 +1,125 @@
+
+<polymer-element name="number-editor" attributes="selection propName value" >
+  <template>
+    {{propName}} {{value}}<input type="number" _value="{{value}}"></input>
+    
+  </template>
+  <script>
+    Polymer("number-editor",{
+      selection:null,
+      propName:"",
+      value:0,
+      valueChanged:function()
+      {
+        this.selection.attributeChanged(this.propName, Number(this.value));
+      },
+    });
+  </script>
+</polymer-element>
+
+<polymer-element name="text-editor" attributes="selection propName value" >
+  <template>
+    {{propName}} {{value}}<input type="text" _value="{{value}}"></input>
+    
+  </template>
+  <script>
+    Polymer("text-editor",{
+      selection:null,
+      propName:"",
+      value:"",
+      valueChanged:function()
+      {
+        this.selection.attributeChanged(this.propName, this.value);
+      },
+    });
+  </script>
+</polymer-element>
+
+
 <polymer-element name="generic-properties-editor" attributes="selection" >
     <template>
-      <template if="{{selection!=null}}">
-          x:<input type="number" value="{{selection.sourceShape.position.x}}"></input>
-      </template>
+      <style>
+      .listItem{
+        border:1px;border-color:black;display: list-item;
+background-color: red;margin:2px;padding:2px
+      }
+      
+      </style>
+      <div style="position:absolute;left:20%;bottom:10px;display:block;width:400px">
+        <template if="{{selection!=null}}">
+          Selection Properties
+          <template repeat="{{prop in _temp}}">
+            <div class="listItem"> {{prop.fullName}}
+              <template if="{{prop.type == 'text'}}">
+                <text-editor selection="{{_selection}}" propName="{{prop.name}}" value="{{prop.value}}"> </text-editor>
+                <!--<input type="text" value="{{prop.value}}"></input>-->
+              </template>
+              
+                <template if="{{prop.type == 'number'}}">
+                  <number-editor selection="{{_selection}}" propName="{{prop.name}}" value="{{prop.value}}"> </number-editor>
+                  <!--<input type="number" _value="{{prop[0][2]}}"></input>-->
+                </template>
+                
+                <!--
+                <template if="{{prop[0].length > 3}}">
+                  <input type="range" _value="{{prop[0][2]}}" min="{{prop[0][3]}}" max="{{prop[0][4]}}" 
+                  step="{{prop[0][5]}}"
+                  ></input>
+                </template>
+              </template>
+              
+              <template if="{{prop[1] == 'boolean'}}">
+                <input type="checkbox" _checked="{{prop[0][2]}}"></input>
+              </template>-->
+              
+            </div>
+          </template>
+          <div class="listItem">
+            <input type="select"></input><button>Add property</button>
+          </div>
+        </template>
+      </div>
     </template>
     <script>
       Polymer("generic-properties-editor",{
         selection:null,
+        _selection :null,
+        _temp: null,
         selectionChanged:function()
         {
-          var selection = this.selection;
-          if(selection)
+          
+          if(this.selection && this.selection.sourceShape)
           {
-            for (var name in selection) {
+            var selection = this.selection.sourceShape;
+            this._selection = selection;
+            /*for (var name in selection) {
               if (selection.hasOwnProperty(name)) {
                 console.log("I have a property called", name);
               }
+            }*/
+            this._temp = [];
+            for(var name in selection.properties)
+            {
+              var value = selection.properties[name];
+                console.log("I have a property called", name, "value", selection.properties[name]);
+                //this._temp.push( [value, );
+                //HACK FIXME!!
+                var type = "text";
+                
+                if(this._isNumber(value[2]) ) type = "number";
+                if(this._isBoolean(value[2]) ) type = "boolean";
+                
+                var data = {"name":name,"fullName":value[0], "description": value[1], value: value[2], type:type};
+                this._temp.push( data );//[value, type, name]
             }
           }
+        },
+        //helpers
+        _isNumber:function( n ){
+          return (Object.prototype.toString.call(n) === '[object Number]' || Object.prototype.toString.call(n) === '[object String]') &&!isNaN(parseFloat(n)) && isFinite(n.toString().replace(/^-/, ''));
+        },
+        _isBoolean:function( n ){
+          return typeof(n) === "boolean";
         }
       });
     </script>
