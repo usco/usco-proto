@@ -655,7 +655,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               var newClass = createCustomPartClass( className, this.selectedObjects );
               var instance = new newClass();
               
-              instance.execute();
+              instance.generate();
               instance.generateRenderables();
               console.log("custom class instance:\n", result);
               
