@@ -1,32 +1,39 @@
+<polymer-element name="property-item-editor" attributes="selection propName value description" >
+  <script>
+    Polymer("property-item-editor",{
+      selection:null,
+      propName:"",
+      value:null,
+      description:"",
+      locked:false,
+    });
+  </script>
+</polymer-element>
 
-<polymer-element name="number-editor" attributes="selection propName value" >
+<polymer-element name="number-editor" extends="property-item-editor">
   <template>
-    {{propName}} {{value}}<input type="number" _value="{{value}}"></input>
-    
+    {{propName}} {{value}}<input type="number" _value="{{value}}" disabled?="{{locked}}"></input> 
+    Lock <input type=checkbox checked="{{locked}}"></input>
+    <span> <a _title="{{description}}">?</a> </span>
   </template>
   <script>
     Polymer("number-editor",{
-      selection:null,
-      propName:"",
-      value:0,
-      valueChanged:function()
+      valueChanged:function(oldValue,newValue)
       {
-        this.selection.attributeChanged(this.propName, Number(this.value));
+        if(oldValue != null ) this.selection.attributeChanged(this.propName, Number(this.value));
       },
     });
   </script>
 </polymer-element>
 
-<polymer-element name="text-editor" attributes="selection propName value" >
+<polymer-element name="text-editor" extends="property-item-editor" >
   <template>
-    {{propName}} {{value}}<input type="text" _value="{{value}}"></input>
-    
+    {{propName}} {{value}}<input type="text" _value="{{value}}" disabled?="{{locked}}"></input>
+    Lock <input type=checkbox checked="{{locked}}"></input>
+    <span> ? </span>
   </template>
   <script>
     Polymer("text-editor",{
-      selection:null,
-      propName:"",
-      value:"",
       valueChanged:function()
       {
         this.selection.attributeChanged(this.propName, this.value);
@@ -39,24 +46,25 @@
 <polymer-element name="generic-properties-editor" attributes="selection" >
     <template>
       <style>
+      .container{
+        position:absolute;left:20%;bottom:10px;display:block;width:400px
+      }
       .listItem{
         border:1px;border-color:black;display: list-item;
 background-color: red;margin:2px;padding:2px
       }
-      
       </style>
-      <div style="position:absolute;left:20%;bottom:10px;display:block;width:400px">
+      <div class="container">
         <template if="{{selection!=null}}">
           Selection Properties
           <template repeat="{{prop in _temp}}">
             <div class="listItem"> {{prop.fullName}}
               <template if="{{prop.type == 'text'}}">
-                <text-editor selection="{{_selection}}" propName="{{prop.name}}" value="{{prop.value}}"> </text-editor>
-                <!--<input type="text" value="{{prop.value}}"></input>-->
+                <text-editor selection="{{_selection}}" propName="{{prop.name}}" value="{{prop.value}}" description="{{prop.description}}"> </text-editor>
               </template>
               
                 <template if="{{prop.type == 'number'}}">
-                  <number-editor selection="{{_selection}}" propName="{{prop.name}}" value="{{prop.value}}"> </number-editor>
+                  <number-editor selection="{{_selection}}" propName="{{prop.name}}" value="{{prop.value}}" description="{{prop.description}}"> </number-editor>
                   <!--<input type="number" _value="{{prop[0][2]}}"></input>-->
                 </template>
                 
@@ -87,7 +95,11 @@ background-color: red;margin:2px;padding:2px
         _temp: null,
         selectionChanged:function()
         {
-          
+          if(!(this.selection))
+          {
+            this.temp = null;
+          }
+           
           if(this.selection && this.selection.sourceShape)
           {
             var selection = this.selection.sourceShape;
@@ -101,7 +113,7 @@ background-color: red;margin:2px;padding:2px
             for(var name in selection.properties)
             {
               var value = selection.properties[name];
-                console.log("I have a property called", name, "value", selection.properties[name]);
+                //console.log("I have a property called", name, "value", selection.properties[name]);
                 //this._temp.push( [value, );
                 //HACK FIXME!!
                 var type = "text";
@@ -109,7 +121,7 @@ background-color: red;margin:2px;padding:2px
                 if(this._isNumber(value[2]) ) type = "number";
                 if(this._isBoolean(value[2]) ) type = "boolean";
                 
-                var data = {"name":name,"fullName":value[0], "description": value[1], value: value[2], type:type};
+                var data = {name:name,fullName:value[0], description: value[1], value: value[2], type:type};
                 this._temp.push( data );//[value, type, name]
             }
           }
