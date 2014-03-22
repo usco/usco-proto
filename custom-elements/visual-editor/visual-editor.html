@@ -5,8 +5,9 @@
 <link rel="import" href="../../components/usco-polymer-three-js/three-js.html">
 <link rel="import" href="../shape-creator/shape-creator.html">
 <link rel="import" href="../shape-creator/cube-creator.html">
-<link rel="import" href="../shape-creator/text-editor.html">
+<!--<link rel="import" href="../shape-creator/text-editor.html">-->
 <link rel="import" href="../shape-creator/properties-editor.html">
+<link rel="import" href="../shape-creator/generic-properties-editor.html">
 <link rel="import" href="../mesh-exporter/mesh-exporter.html">
 
 <link rel="import" href="./sub-elements/grid/grid-helper.html">
@@ -115,11 +116,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     <shape-creator id="contextMenu"> </shape-creator>
 
     <!--testing editing of 2d shapes-->
-    <div id="shapeEdit" class="shapeEdit" style="position:absolute; right:20px;top:300px;z-index:3">
+    <div id="shapeEdit" class="shapeEdit" style="position:absolute; left:20px;top:300px;z-index:10">
       <div>
-        <!--<text-editor id="textEditor"> </text-editor>
-        <cube-editor id="cubeEditor"> </cube-editor>-->
-        <properties-editor selection="{{selectedObject}}"> <properties-editor>
+        <!--<properties-editor selection="{{selectedObject}}"> <properties-editor>-->
+        <generic-properties-editor selection="{{selectedObject}}" style="z-index:999"> <generic-properties-editor>
       </div>
     </div>
     <mesh-exporter selection="{{selectedObject}}" hierarchyRoot="{{hierarchyRoot}}"> </mesh-exporter>
@@ -468,8 +468,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             case "Text":
               //options = {text:this.testText,font:this.textFont,size:this.textSize};
               //options = {text:"\uf112",font:'fontawesome',size:20};
-              instance = new Text(options);
-              this.$.textEditor.target = instance;
+              instance = new Text({});
               instance.generateRenderables();
               
             break;
@@ -831,17 +830,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 
 
       var selectedObject = this.selectedObject = newSelections[0];
-
-      //TODO:move this elsewhere
-      if(selectedObject instanceof Cube)
-      {
-        this.$.cubeEditor.target = selectedObject;
-      }
-      if(selectedObject && selectedObject.sourceElement && selectedObject.sourceElement instanceof Text)
-      {
-        this.$.textEditor.target = selectedObject.sourceElement;
-      }
-      
 
       if(this.selectedObjects.length==0)
       {
