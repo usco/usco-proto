@@ -1,5 +1,6 @@
 <link rel="import" href="../../components/polymer/polymer.html">
 <link rel="import" href="../../components/polymer-localstorage/polymer-localstorage.html">
+<link rel="import" href="../../components/polymer-signals/polymer-signals.html">
 
 <link rel="import" href="../../components/usco-polymer-three-js/three-js.html">
 <link rel="import" href="../shape-creator/shape-creator.html">
@@ -89,10 +90,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         size:3;
       }
     </style>
+    
     <!--AutoSaving settings to localstorage-->
     <polymer-localstorage name="usco-proto-settings-showGrid"   value="{{showGrid}}"></polymer-localstorage>
     <polymer-localstorage name="usco-proto-settings-showAxes"   value="{{showAxes}}"></polymer-localstorage>
     <polymer-localstorage name="usco-proto-settings-autoRotate" value="{{autoRotate}}"></polymer-localstorage>
+
+    <!--pub sub messages handling-->
+    <polymer-signals on-polymer-signal-request-screenshot="{{makeScreenShot}}"></polymer-signals>
 
     <!-- for various "visual" settings-->
     <div style="position:absolute;left:30%;top:20px;z-index:9">
@@ -958,6 +963,28 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.asyncFire('files-dropped', {data:files});
     }
   } ,
+  //pub sub mesages handling
+  makeScreenShot:function()
+  {
+    console.log("fmkklm");
+    function callback(data)
+    {
+      console.log("got screenshot data",data);
+      var fileName = "usco-screenshot.png";
+      var format = "png";
+      
+      var link = document.createElement("a");
+      //var blob = new Blob([data],{type : 'image/'+format})
+      //var url =  window.URL.createObjectURL(blob);
+      //var blobURL = window.webkitURL.createObjectURL(blob);
+      link.href = data;
+      link.download = fileName;
+      link.click();
+      
+    }
+    this.viewer.captureScreen(callback, window.innerWidth, window.innerHeight)
+  },
+  
   //TODO: temp hack, down the line, parsers should return the correct types directly
   //TODO how to handle errors, as we are in a deferred's success callback
   addImportedResource: function( resource )
@@ -992,17 +1019,23 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     var importRoot = resource.data;
     if('children' in importRoot)
     {
-      console.log("foo");
-      var current;
       var importedPart=null;
-      var parent=null;
-      
       
       function getChildrenData(current, parent)
       {
         var rootPart = new Part();
         rootPart.name = current.name;
         rootPart.position = current.position;
+        rootPart.rotation = current.rotation;
+        rootPart.scale    = current.scale;
+        rootPart.matrix   = current.matrix;
+        rootPart.matrixWorld   = current.matrixWorld;
+        rootPart._rotation = current._rotation ;
+	      rootPart._quaternion = current._quaternion;
+	      
+	      rootPart._rotation._quaternion = current.quaternion;
+	      rootPart._quaternion._euler = current.rotation;
+        
         
         if(current instanceof THREE.Mesh) 
         {
