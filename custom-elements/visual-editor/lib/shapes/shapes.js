@@ -1,3 +1,5 @@
+shapeDefaultMaxResolution = 30;
+
 function Part()
 {
   var material = new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ); 
@@ -44,6 +46,13 @@ Part.prototype.clone = function()
   newInstance.rotation = this.rotation.clone();
   newInstance.scale    = this.scale.clone();
   newInstance.geometry = this.geometry.clone();
+  
+  for(var propName in this.properties)
+  {
+    newInstance.properties[propName] = this.properties[propName].slice(0);; 
+  }
+
+  console.log("newInstance", newInstance);  
   return newInstance;
 }
 
@@ -260,8 +269,7 @@ function Cube(options)
   this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
   //this._bsp = new ThreeBSP(this);
   
-  this.properties["test"] = ["fake", "Some fake property", "amazing"]//optional min max?
-  this.properties["w"] = ["width", "Width of the cuboid", 30]//optional min max?
+  this.properties["w"] = ["width", "Width of the cuboid", 20]//optional min max?
   this.properties["h"] = ["height", "height of the cuboid",20,0.0000001,100,0.1]
   this.properties["d"] = ["depth", "depth of the cuboid",20]
   //TODO: how to provide a preset list of acceptable values (to use with select etc)
@@ -295,13 +303,13 @@ function Sphere(options)
 {
   options = options || {};
   this.r = options.r || 10;
-  this.$fn = options.$fn || 10;
+  this.$fn = options.$fn || shapeDefaultMaxResolution;
 
   Part.call( this );
   this.geometry = new THREE.SphereGeometry( this.r, this.$fn, this.$fn );
   
   this.properties["r"] = ["radius", "Radius of the sphere", 10]//optional min max?
-  this.properties["$fn"] = ["resolution", "resolution of the sphere",10]
+  this.properties["$fn"] = ["resolution", "resolution of the sphere",shapeDefaultMaxResolution]
 }
 Sphere.prototype = Object.create( Part.prototype );
 Sphere.prototype.constructor = Sphere;
@@ -325,7 +333,7 @@ function Cylinder(options)
   this.r = options.r || 10;
   this.r2 = options.r2 || 10;
   this.h = options.h || 10;
-  this.$fn = options.$fn || 10;
+  this.$fn = options.$fn || shapeDefaultMaxResolution;
 
   Part.call( this );
   this.geometry = new THREE.CylinderGeometry( this.r2, this.r, this.h ,this.$fn );
@@ -334,7 +342,7 @@ function Cylinder(options)
   this.properties["r"] = ["bottom radius", "Radius of the bottom of cylinder", 10]
   this.properties["r2"] =["top radius", "Radius of the top of the cylinder", 10]//optional min max?
   this.properties["h"] =["height", "Height of the cylinder", 10]//optional min max?
-  this.properties["$fn"] = ["resolution", "resolution of the cylinder (polygonal)",10]
+  this.properties["$fn"] = ["resolution", "resolution of the cylinder (polygonal)",shapeDefaultMaxResolution]
 }
 Cylinder.prototype = Object.create( Part.prototype );
 Cylinder.prototype.constructor = Cylinder;
