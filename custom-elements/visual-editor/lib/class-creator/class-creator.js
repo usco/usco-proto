@@ -21,7 +21,6 @@ function createCustomPartClass( className, selections )
   " options = options || {};",
   "  Part.call( this );",
   "  this.name = '"+className+"'+this.id;",
-  //"  this.geometry = new THREE.CubeGeometry( 15, 5, 10 );",
   "  this.blabla = 24;",
   "}",
   className+".prototype = Object.create( Part.prototype );",
@@ -29,7 +28,7 @@ function createCustomPartClass( className, selections )
   
   //not sure about "execute", but this is inspired by freecad python API
   //TODO: this is where all our current selections get added 
-  className+".prototype.execute = function()",
+  className+".prototype.generate = function()",
   "{",
    transformedSelections.join("\n"), 
   "}",
