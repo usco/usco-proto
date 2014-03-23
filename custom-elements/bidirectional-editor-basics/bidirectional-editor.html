@@ -31,7 +31,7 @@
 <script src="ast-node-identificator-coffee.js" ></script>
 <script src="ast-manipulator.js" ></script>  
 
-<polymer-element name="foo-editor">
+<polymer-element name="bidirectional-editor">
     <template>
       <polymer-localstorage name="usco-proto-language"   value="{{sourceLanguage}}"></polymer-localstorage>
       <polymer-localstorage name="usco-proto-source"     value="{{source}}"></polymer-localstorage>
@@ -99,7 +99,7 @@
       </div>
     </template>
     <script>
-    Polymer("foo-editor",{
+    Polymer("bidirectional-editor",{
       source:null,
       selectedText:null,
       cursorLocation : null,
