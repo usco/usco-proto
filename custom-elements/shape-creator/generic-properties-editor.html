@@ -10,9 +10,30 @@
   </script>
 </polymer-element>
 
+<polymer-element name="boolean-editor" extends="property-item-editor">
+  <template>
+    {{propName}}<input type="checkbox" _checked="{{value}}" disabled?="{{locked}}"></input> 
+    Lock <input type=checkbox checked="{{locked}}"></input>
+    <span> <a _title="{{description}}">?</a> </span>
+  </template>
+  <script>
+    Polymer("boolean-editor",{
+      valueChanged:function(oldValue,newValue)
+      {
+        if(oldValue != null ) this.selection.attributeChanged(this.propName, this.value);
+      },
+    });
+  </script>
+</polymer-element>
+
+
 <polymer-element name="number-editor" extends="property-item-editor">
   <template>
-    {{propName}} {{value}}<input type="number" _value="{{value}}" disabled?="{{locked}}"></input> 
+    ({{propName}})<input type="number" _value="{{value}}" disabled?="{{locked}}"></input> 
+    <!--<input type="range" _value="{{prop[0][2]}}" min="{{prop[0][3]}}" max="{{prop[0][4]}}" 
+                  step="{{prop[0][5]}}"
+                  ></input>-->
+    
     Lock <input type=checkbox checked="{{locked}}"></input>
     <span> <a _title="{{description}}">?</a> </span>
   </template>
@@ -47,46 +68,53 @@
     <template>
       <style>
       .container{
-        position:absolute;left:20%;bottom:10px;display:block;width:400px
+        position:absolute;left:20%;bottom:10px;display:block;width:300px
       }
       .listItem{
         border:1px;border-color:black;display: list-item;
-background-color: red;margin:2px;padding:2px
+        color:#ffd200;
+background-color: #444444;margin:2px;padding:2px;line-height:8px;
+        font-size: 0.8em;
+font-weight: bold;
       }
+      input[type="number"]{
+        width:50px;
+        height: 18px;
+        size:3;
+        border: none;
+
+      }
+      
+      
       </style>
       <div class="container">
+      
         <template if="{{selection!=null}}">
-          Selection Properties
-          <template repeat="{{prop in _temp}}">
-            <div class="listItem"> {{prop.fullName}}
-              <template if="{{prop.type == 'text'}}">
-                <text-editor selection="{{_selection}}" propName="{{prop.name}}" value="{{prop.value}}" description="{{prop.description}}"> </text-editor>
-              </template>
-              
-                <template if="{{prop.type == 'number'}}">
-                  <number-editor selection="{{_selection}}" propName="{{prop.name}}" value="{{prop.value}}" description="{{prop.description}}"> </number-editor>
-                  <!--<input type="number" _value="{{prop[0][2]}}"></input>-->
+          <div id="properties">
+            Selection Properties
+            <template repeat="{{prop in _temp}}">
+              <div class="listItem"> {{prop.fullName}}
+                <template if="{{prop.type == 'text'}}">
+                  <text-editor selection="{{_selection}}" propName="{{prop.name}}" value="{{prop.value}}" description="{{prop.description}}"> </text-editor>
                 </template>
                 
-                <!--
-                <template if="{{prop[0].length > 3}}">
-                  <input type="range" _value="{{prop[0][2]}}" min="{{prop[0][3]}}" max="{{prop[0][4]}}" 
-                  step="{{prop[0][5]}}"
-                  ></input>
+                  <template if="{{prop.type == 'number'}}">
+                    <number-editor selection="{{_selection}}" propName="{{prop.name}}" value="{{prop.value}}" description="{{prop.description}}"> </number-editor>
+                  </template>
+                
+                <template if="{{prop.type == 'boolean'}}">
+                    <boolean-editor selection="{{_selection}}" propName="{{prop.name}}" value="{{prop.value}}" description="{{prop.description}}"> </boolean-editor>
                 </template>
-              </template>
-              
-              <template if="{{prop[1] == 'boolean'}}">
-                <input type="checkbox" _checked="{{prop[0][2]}}"></input>
-              </template>-->
-              
+                
+              </div>
+            </template>
+            <div class="listItem">
+              <input type="select"></input><button>Add property</button>
             </div>
-          </template>
-          <div class="listItem">
-            <input type="select"></input><button>Add property</button>
           </div>
         </template>
       </div>
+
     </template>
     <script>
       Polymer("generic-properties-editor",{
