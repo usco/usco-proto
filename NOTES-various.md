@@ -37,6 +37,18 @@ SHAPES:
   - example : radius & diameter -> actually the same thing
   - getters setters and a "strong" and "weak" one if they are both defined ?
 
+CUSTOMIZERS, on screen controls:
+================================
+
+- we need:
+  * text
+  * number (simple)
+  * number (range : ie if min, max, step are specified)
+  * boolean (checkbox)
+  * select (if a list is specified for the value param ?)
+  * color (erm ??)
+  * fieldsets support
+
   
 OVERALL LOGIC NOTES:
 ====================
@@ -66,6 +78,7 @@ OVERALL LOGIC NOTES:
     * select the new class/template, templatize it ...ETC
     
 
-
+Multi level editing
+===================
    
    
