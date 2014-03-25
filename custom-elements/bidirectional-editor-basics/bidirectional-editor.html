@@ -69,10 +69,10 @@
         <!----------------------------------Code editors---------------------------------------->
         <div id="codeEditor"><!--TODO:put this into a seperate element-->
           <div>
-            <button on-click="{{currentModule.compile}}"> Compile </button>
-            <button on-click="{{currentModule.analyze}}"> Analyze </button>
-            <button on-click="{{currentModule.traverseAst}}"> Traverse </button>
-            <button on-click="{{currentModule.experiment}}"> Experimental </button>
+            <button on-click="{{compile}}"> Compile </button>
+            <button on-click="{{analyze}}"> Analyze </button>
+            <button on-click="{{traverseAst}}"> Traverse </button>
+            <button on-click="{{experiment}}"> Experimental </button>
 
             <select value="{{currentModule.sourceLanguage}}">
               <option value="js"> Js </option>
@@ -103,6 +103,7 @@
     </template>
     <script>
     Polymer("bidirectional-editor",{
+      currentModule:null,
       selectedText:null,
       cursorLocation : null,
       selectedMesh : null,
@@ -131,6 +132,18 @@
     showRecompiledCode:function()
     {
       //TODO: find a way to display exactly WHAT section of the code was changed
+    },
+    compile:function()
+    {
+      this.currentModule.compile();
+    },
+    analyze:function()
+    {
+      this.currentModule.analyze();
+    },
+    traverseAst:function()
+    {
+      this.currentModule.traverseAst();
     },
     //change handlers
     sourceLanguageChanged:function()
