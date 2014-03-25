@@ -27,14 +27,17 @@
 <link rel="import" href="../../components/code-mirror/code-mirror.html">
 <link rel="import" href="../../components/usco-viewer-base/three-viewer.html">
 
+<!-- actual important code -->
+<script src="uModule.js" ></script>  
 <script src="ast-node-identificator.js" ></script>
 <script src="ast-node-identificator-coffee.js" ></script>
 <script src="ast-manipulator.js" ></script>  
 
+
 <polymer-element name="bidirectional-editor">
     <template>
-      <polymer-localstorage name="usco-proto-language"   value="{{sourceLanguage}}"></polymer-localstorage>
-      <polymer-localstorage name="usco-proto-source"     value="{{source}}"></polymer-localstorage>
+      <polymer-localstorage name="usco-proto-language"   value="{{currentModule.sourceLanguage}}"></polymer-localstorage>
+      <polymer-localstorage name="usco-proto-source"     value="{{currentModule.source}}"></polymer-localstorage>
 
       <div id="editorToolBar">
         <div style="position:absolute; right:300px; top:0px"> Selected mesh: {{selectedMesh.name}} {{selectedMesh.id}}</div>
@@ -66,12 +69,12 @@
         <!----------------------------------Code editors---------------------------------------->
         <div id="codeEditor"><!--TODO:put this into a seperate element-->
           <div>
-            <button on-click="{{compile}}"> Compile </button>
-            <button on-click="{{analyze}}"> Analyze </button>
-            <button on-click="{{traverseAst}}"> Traverse </button>
-            <button on-click="{{experiment}}"> Experimental </button>
+            <button on-click="{{currentModule.compile}}"> Compile </button>
+            <button on-click="{{currentModule.analyze}}"> Analyze </button>
+            <button on-click="{{currentModule.traverseAst}}"> Traverse </button>
+            <button on-click="{{currentModule.experiment}}"> Experimental </button>
 
-            <select value="{{sourceLanguage}}">
+            <select value="{{currentModule.sourceLanguage}}">
               <option value="js"> Js </option>
               <option value="coffee"> Coffee </option>
             </select>
@@ -79,7 +82,7 @@
           </div>
           <div class="flexbox" style="width:50%;height:95%">
             <div style="width:75%">
-            <code-mirror id="editor" theme="monokai" mode="javascript" boundValue="{{source}}" selection="{{selectedText}}" 
+            <code-mirror id="editor" theme="monokai" mode="javascript" value="{{currentModule.source}}" selection="{{selectedText}}" 
     cursorPos="{{cursorLocation}}" on-editor-input="{{editorChanged}}" style="width:98%;height:98%">
             </code-mirror>
             </div>
@@ -100,176 +103,29 @@
     </template>
     <script>
     Polymer("bidirectional-editor",{
-      source:null,
       selectedText:null,
       cursorLocation : null,
       selectedMesh : null,
 
-      compiledSource:null,
       compiledCursorLocation:null,
-
       //this is used to display the code of the currently selected mesh
       selectedMeshSource: null,
+      observe:{
+        'currentModule.source':'sourceChanged',
+        'currentModule.sourceLanguage':'sourceLanguageChanged'
+      },
 
     created:function()
     {
-      //for module system
-      this.assembly = new THREE.Object3D();
-      this.exports = {};
-      this.include = function(){};
-      this.importGeom = function(){};
-      this.name = "totoModule";
-
-      //for part instance tracing
-      this.partInstancesByType = {};
-
-      //language detec
-      this.sourceLanguage = "js";
-
-      //ast manipulation utilities
-      this.astUtil = new ASTManipulator(this.source);
+      this.currentModule = new UModule();
     },
     enteredView:function()
     {
-      this.assembly = this.$.viewer.rootAssembly;
+      this.currentModule.assembly = this.$.viewer.rootAssembly;
       //this.$.viewer.addToScene(this.assembly);
+      console.log("this.currentModule.assembly",this.currentModule.assembly);
 
       this.async(function(){ this.$.editor.refresh(); },200);
-    },
-    _wrapCode:function(code)
-    {
-       //var pre = "var assembly =  THREE.Object3D();\n"
-       var pre = "return (function ( exports, include, importGeom, module, __filename, assembly)";
-        pre +="{";
-        pre += "var partInstancesByType = module.partInstancesByType;\n";
-        pre += "var codeLocToinstances = module.codeLocToinstances;\n";
-        pre += code;
-        pre += "});";
-
-       var result = pre;
-       //console.log("result", result);
-       return result
-    },
-
-    //Determine if coffeescript or javascript
-    _detectLanguage:function()
-    {
-      var source = this.source;
-      var coffeeSymbols = ["class", "->", "=>", "extends"];//not totally true for harmony
-      var jsSymbols = ["var", "function"];
-      for(var i=0;i<jsSymbols.length;i++)
-      {
-        var token = jsSymbols[i];
-        if( source.indexOf(token) != -1 ){
-          this.sourceLanguage = "js";
-          return; }
-      } 
-
-      for(var i=0;i<coffeeSymbols.length;i++)
-      {
-        var token = coffeeSymbols[i];
-        if( source.indexOf(token) != -1 ){
-          this.sourceLanguage = "coffee";
-          
-          this.$.editor.mode = "coffeescript";
-          return;}
-      } 
-    },
-    compile:function()
-    {
-      console.log("Language",this.sourceLanguage);
-      //////////////////////////////////////////
-      //reset everything before compiling again
-      //clear root assembly
-      var child, i;
-      for ( i = this.assembly.children.length - 1; i >= 0 ; i -- ) {
-          child = this.assembly.children[ i ];
-          this.assembly.remove(child);
-      }
-      //reset instances count
-      this.partInstancesByType={};
-      this.codeLocToinstances = {};
-      ////////////////////////////////////////////
-
-      var source = this.source;
-      if(this.sourceLanguage == "coffee")
-      {
-        var pseudoModuleName = this.name+".coffee";
-        console.log("generating from coffeescript, pseudo module name", pseudoModuleName);
-
-        //coffeescript redux only
-        /*
-        var csAST = CoffeeScript.parse(this.source, {optimise: false, raw: true});
-        console.log("coffee ast", csAST);
-        var jsAST = CoffeeScript.compile(csAST, {bare: true});
-        var compiledSource = this.compiledSource = CoffeeScript.js(jsAST, {compact: false,sourceMap:true,sourceMapFile:pseudoModuleName});
-        console.log("compiledSource", compiledSource);
-        this.compiledSource = compiledSource;//we keep the generate js
-        //this.ast = jsAST;*/
-        
-        var compiledSourceData = CoffeeScript.compile(source,{bare:true,sourceMap:true,filename:pseudoModuleName});
-        var compiledSource = compiledSourceData.js;
-        console.log("compiled coffee", compiledSource);
-        this.compiledSource = compiledSource;//we keep the generate js
-  
-        var srcMap = JSON.parse(compiledSourceData.v3SourceMap);
-        console.log("source map", srcMap);
-        srcMap.sources = []
-        srcMap.sources.push( pseudoModuleName )
-        srcMap.file = "out.js"; 
-
-        this.sourcemapConsumer = new sourceMap.SourceMapConsumer(srcMap);
-        console.log("sourcemapConsumer",this.sourcemapConsumer);
-
-        this.astUtil.source = compiledSource;
-        source = compiledSource;
-      }
-      else
-      {
-        this.astUtil.source = source;
-      }
-
-      //generate ast, transform it
-      this.astUtil.generateAst(source);
-      this.astUtil.traverseAst();
-      var alteredSource = source;
-      alteredSource = this.astUtil.fallafelTest(source);
-      //console.log("AlteredSource, first pass:\n", alteredSource);
-      alteredSource = this.astUtil.injectTracing(alteredSource);
-      console.log("AlteredSource, second pass:\n", alteredSource);
-
-      //wrap modified source with module elements       
-      var endSource = this._wrapCode(alteredSource);
-
-      //compile "module"
-      console.log("compiling");
-      var startTime = new Date();
-      try
-      {
-        var f = new Function(endSource);
-        var fn = f();
-        var result = fn.call(fn, this.exports, this.include, this.importGeom, this, this.name , this.assembly)
-        console.log("result",this.assembly,this.partInstancesByType, this.codeLocToinstances);
-      }
-      catch(error)
-      {
-        console.log("failed to compile:", error.name + ': ' + error.message);
-      }
-      var endTime = new Date();
-      var elapsed = endTime - startTime;
-      console.log("code compiling took:"+ elapsed)
-    },
-    analyze:function()
-    {
-      this.astUtil.generateAst(this.compiledSource);
-    },
-    traverseAst:function()
-    {
-      this.astUtil.traverseAst();
-    },
-    experiment:function()
-    {
-      this.astUtil.fallafelTest(this.source);
     },
     //////////////////
     showRecompiledCode:function()
@@ -279,13 +135,17 @@
     //change handlers
     sourceLanguageChanged:function()
     {
-      this.compile();
-      this.astUtil.lang = this.sourceLanguage;
+      if(this.currentModule.sourceLanguage=="coffee")
+      {
+        this.$.editor.mode = "coffeescript";
+      }
+      this.currentModule.compile();
+      this.currentModule.astUtil.lang = this.currentModule.sourceLanguage;
     },
     sourceChanged:function()
     {
-       this._detectLanguage();
-       this.compile();
+       this.currentModule.detectLanguage();
+       this.currentModule.compile();
     },
     selectedMeshChanged:function(oldSelection,newSelection)
     {
@@ -329,7 +189,7 @@
         //display the current selected mesh's source
         var startCode = mesh.__meta.range[0];
         var endCode = mesh.__meta.range[1];
-        this.selectedMeshSource = this.source.substring(startCode,endCode);
+        this.selectedMeshSource = this.currentModule.source.substring(startCode,endCode);
         //this.selectedMeshSource ="blablabla";
 
     },
@@ -367,15 +227,15 @@
       this._clearVisualSelections();
 
       var context = new esrefactor.Context();
-      if(!(this.source)) return;
-      context.setCode(this.astUtil.ast);
+      if(!(this.currentModule.source)) return;
+      context.setCode(this.currentModule.astUtil.ast);
 
      
       //////////////////////////////////////////////////////
       if(context)
       {
         var cursorLocation = this.cursorLocation
-        if( this.sourceLanguage == "coffee" )
+        if( this.currentModule.sourceLanguage == "coffee" )
         {
           var pseudoModuleName = this.name+".coffee";
           
@@ -395,7 +255,7 @@
 
           //TODO: map back to zero based index
           //convert to index ?
-          var compiledSource = this.compiledSource;
+          var compiledSource = this.currentModule.compiledSource;
           //console.log("compiledSource length,",compiledSource.length);
           function coordToIndex(coords)
           {
@@ -440,14 +300,14 @@
         this.selectedMesh = null;
 
         //select all instances in 3d view of the currently selected class
-        if(type in this.partInstancesByType)
+        if(type in this.currentModule.partInstancesByType)
         {
           var selectedMesh = this.selectedMesh;
-          //selectedMesh = this.partInstancesByType[type].instances[0];
+          //selectedMesh = this.currentModule.partInstancesByType[type].instances[0];
 
-          for(var i=0; i< this.partInstancesByType[type].instances.length;i++)
+          for(var i=0; i< this.currentModule.partInstancesByType[type].instances.length;i++)
           {
-            var newSelection = this.partInstancesByType[type].instances[i];
+            var newSelection = this.currentModule.partInstancesByType[type].instances[i];
             if(!(newSelection instanceof THREE.Object3D)) continue;
             this.currentSelections.push(newSelection);
             var outlineMaterial = new THREE.MeshBasicMaterial({
@@ -467,9 +327,9 @@
         //TODO: refactor : perhaps just using the variable id + scope would be better
         var instanceSelect = id.declaration.range;
         if(!(instanceSelect)) return;
-        console.log("instanceSelect",instanceSelect,this.codeLocToinstances);
+        console.log("instanceSelect",instanceSelect,this.currentModule.codeLocToinstances);
 
-        for (var key in this.codeLocToinstances) 
+        for (var key in this.currentModule.codeLocToinstances) 
         {
            var range = key.replace(" ","").split(",");
            console.log("range",range);
@@ -477,10 +337,10 @@
            var end = parseInt(range[1]);
             console.log("start",start,"end", end);
            
-          //this.codeLocToinstances['471, 475']=toto;
+          //this.currentModule.codeLocToinstances['471, 475']=toto;
           if(!(start == instanceSelect[0] && end == instanceSelect[1])) continue
 
-          var newSelection = this.codeLocToinstances[key];
+          var newSelection = this.currentModule.codeLocToinstances[key];
           if(!(newSelection instanceof THREE.Object3D)) continue;
           this.currentSelections.push(newSelection);
           var outlineMaterial = new THREE.MeshBasicMaterial({
@@ -521,7 +381,6 @@
           newSelection.add(outline);
       }
     }
-  
     });
     </script>
   </polymer-element>
