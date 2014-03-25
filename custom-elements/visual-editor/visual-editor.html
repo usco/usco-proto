@@ -59,9 +59,6 @@
 <script src="lib/connectors/connector.js"></script>
 
 <!--<script src="lib/materials/materialTest.js"></script>-->
-<script src="lib/code-generation/code-generators.js"></script>
-<script src="lib/code-generation/code-generation-ui.js"></script>
-
 
 <script src="fonts/helvetiker_regular.typeface.js"></script>
 <script src="fonts/fontawesome_regular.typeface_2.js"></script>
@@ -102,6 +99,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     <!--pub sub messages handling-->
     <polymer-signals on-polymer-signal-request-screenshot="{{makeScreenShot}}"></polymer-signals>
 
+
     <!-- for various "visual" settings-->
     <div style="position:absolute;left:30%;top:20px;z-index:9">
         <span> Cursor </span>
@@ -111,6 +109,13 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         Rotate    step <input type="number" value="{{transformSettings.rotateStep}}" step=0.01 min=0.1 max=1 ></input>
         Scale     step <input type="number" value="{{transformSettings.scaleStep}}"  step=0.1 min=0.1 max=1></input>
     </div>    
+    
+    <div style="position:absolute;left:30%;top:50px;z-index:9">
+      <template if="{{selectedObject != null }}">
+        <button on-click="{{scopeEnter}}">Edit selection (go down into scope)</button>
+      </template>
+      <button on-click="{{scopeExit}}">Done editing (go up into parent scope)</button>
+    </div>
     
     <shape-creator id="contextMenu"> </shape-creator>
 
@@ -493,8 +498,11 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             }*/
             if(this.selectedObjects.length==1) //if we have a selection, add it to that selection
             {
-             this.selectedObjects[0].add( instance ) ;
+             this.selectedObjects[0].sourceShape.add( instance ) ;
+             this.selectedObjects[0].add( instance.renderable ) ;
              instance.position.x +=30;
+             this.selectedObjects=[instance.renderable];
+             //TODO: fire operation event with "addition"
             }
             else
             {
@@ -813,8 +821,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         }         
                
       }
-
-      
       //console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
     },
     selectedObjectsChanged:function(oldSelections, newSelections, foo, bar)
@@ -840,6 +846,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         this.viewer.scene.add(this.transformControls);
         this.transformControls.attach( this.selectedObjects[0]  );  //this.groupSelectionHelper
       }
+      //this.clearFocusOnSelection();
+      //this.setFocusOnSelection(selectedObject);
    
       if(newSelections.length>0)
       {
@@ -857,6 +865,55 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         this.contextMenu.mode = 'creation';
       }
     },
+    //TODO: move this somewhere else, preferably a helper
+    setFocusOnSelection : function(selection)
+    {
+      //visual helper: make object other than main selection slightly transparent
+      this.viewer.hierarchyRoot.traverse(function(child){
+      
+        if(child instanceof THREE.Mesh && child.material)
+        {
+           if(selection == child)
+          {
+            //console.log("BLAAAh",child.material.opacity, child.material.transparent);
+            child.material.opacity = child.material._oldOpacity || 1;
+            child.material.transparent = child.material._oldTransparent || false;
+            //child.material._oldOpacity = child.material.opacity;
+          }
+          else
+          {
+            child.material._oldOpacity = child.material.opacity || 1;
+            child.material._oldTransparent = child.material.transparent || false;
+            
+            child.oldRenderDepth = child.renderDepth;
+            child.material.opacity = 0.3;
+            child.material.transparent = true;
+            //console.log("prout", child, child.material.opacity, child.material._oldOpacity);
+          }
+          console.log("gnargh", child, child.material.opacity, child.material._oldOpacity);
+        }
+        
+      });
+    },
+    //TODO: move this somewhere else, preferably a helper
+    clearFocusOnSelection : function()
+    {
+      this.viewer.hierarchyRoot.traverse(function(child){
+      
+        //console.log("child", child);
+        if(child instanceof THREE.Mesh && child.material)
+        {
+
+          child.material.opacity = child.material._oldOpacity || 1;
+          child.material.transparent = child.material._oldTransparent || false;
+          
+          console.log("child.material._oldOpacity",child.material._oldOpacity,child.material.opacity);
+        }
+      
+      });
+    },
+    
+    //interaction handlers
     onMouseWheel:function (event)
     {
       //this blocks page scrolling if mouse is within this element
@@ -1106,9 +1163,17 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         
         return geometry;
       }
-  }
-  
-    //going down "one level" into an object hierarchy
-    });
+    },
+    scopeEnter:function()
+    {
+        //going down "one level" into an object hierarchy
+        if(this.selectedObject instanceof Part) this.activeRoot = this.selectedObject;
+    },
+    scopeExit:function()
+    {
+      if(this.activeRoot.parent) this.activeRoot = this.activeRoot.parent;
+    }
+
+  });
   </script>
 </polymer-element>
