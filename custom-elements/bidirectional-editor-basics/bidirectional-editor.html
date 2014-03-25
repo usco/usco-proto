@@ -128,23 +128,6 @@
 
       this.async(function(){ this.$.editor.refresh(); },200);
     },
-    //////////////////
-    showRecompiledCode:function()
-    {
-      //TODO: find a way to display exactly WHAT section of the code was changed
-    },
-    compile:function()
-    {
-      this.currentModule.compile();
-    },
-    analyze:function()
-    {
-      this.currentModule.analyze();
-    },
-    traverseAst:function()
-    {
-      this.currentModule.traverseAst();
-    },
     //change handlers
     sourceLanguageChanged:function()
     {
@@ -162,26 +145,7 @@
     },
     selectedMeshChanged:function(oldSelection,newSelection)
     {
-        //console.log("declaration", id.declaration); 
-        if(oldSelection)
-        {
-          oldSelection.remove(oldSelection.outline);
-          delete oldSelection.outline;
-        }
-
-        if(newSelection)
-        {
-          var outlineMaterial = new THREE.MeshBasicMaterial({
-            color: 0x00ff00,//0xffc200,
-            side: THREE.BackSide
-          });
-          outline = new THREE.Mesh(newSelection.geometry, outlineMaterial);
-          outline.name = "selectOutline";
-          outline.scale.multiplyScalar(1.02);
-          newSelection.outline = outline;
-          newSelection.add(outline);
-        }
-
+        this.addSelectionEffect(oldSelection,newSelection,0x00ff00,1.02);
 
         this.$.editor.clearMarkers();
         var mesh = this.selectedMesh;
@@ -203,9 +167,116 @@
         var startCode = mesh.__meta.range[0];
         var endCode = mesh.__meta.range[1];
         this.selectedMeshSource = this.currentModule.source.substring(startCode,endCode);
-        //this.selectedMeshSource ="blablabla";
-
     },
+    cursorLocationChanged:function()
+    {
+      this.highlightSelectionsFromCode();
+    },
+    compiledCursorLocationChanged:function()
+    {
+      console.log("compiled cursor location changed");
+    },
+    //event handlers
+    showRecompiledCode:function()
+    {
+      //TODO: find a way to display exactly WHAT section of the code was changed
+    },
+    compile:function()
+    {
+      this.currentModule.compile();
+    },
+    analyze:function()
+    {
+      this.currentModule.analyze();
+    },
+    traverseAst:function()
+    {
+      this.currentModule.traverseAst();
+    },
+    //API
+    highlightSelectionsFromCode:function()
+    {
+      //TODO: for coffeescript we need to re-map coordinates of code
+      //cursor location (0 based index, in coffeescript) to js
+
+      //TODO: add selection behaviour when cursor is WITHIN the definition of an object
+      // should it both select the surounding function/class and the items within that scope ?
+
+      this._clearVisualSelections();
+
+      var context = new esrefactor.Context();
+      if(!(this.currentModule.source)) return;
+      context.setCode(this.currentModule.astUtil.ast);
+     
+      //////////////////////////////////////////////////////
+      if(context)
+      {
+        var cursorLocation = this.cursorLocation
+         
+        var id = context.identify(cursorLocation);
+        this.$.editor.clearMarkers();
+        if( !(id && id.declaration)) { return;}
+
+        console.log("selection info (from ast)",id)
+        console.log("declaration", id.declaration); 
+        var pos = this.$.editor.mirror.posFromIndex(id.declaration.range[0]);
+        this.$.editor.addMarker(pos.line);
+
+        //now select the instances in 3D view
+        this.selectedMesh = null;
+
+        this.selectClassInstancesFromCode( id );
+        this.selectInstanceFromCode( id );
+      }
+    },
+    selectClassInstancesFromCode:function( contextId )
+    {
+      var type = contextId.declaration.name;
+      //select all instances in 3d view of the currently selected class
+      if(type in this.currentModule.partInstancesByType)
+      {
+        var selectedMesh = this.selectedMesh;
+        //selectedMesh = this.currentModule.partInstancesByType[type].instances[0];
+
+        for(var i=0; i< this.currentModule.partInstancesByType[type].instances.length;i++)
+        {
+          var newSelection = this.currentModule.partInstancesByType[type].instances[i];
+          if(!(newSelection instanceof THREE.Object3D)) continue;
+          this.currentSelections.push(newSelection);
+          
+          //apply visual styling
+          this.addSelectionEffect(null, newSelection, 0xff0000, 1.02)
+        }
+      }
+    },
+    selectInstanceFromCode:function(contextId)
+    {
+      //select a specific instance
+      //TODO: refactor : perhaps just using the variable id + scope would be better
+      var instanceSelect = contextId.declaration.range;
+      if(!(instanceSelect)) return;
+      console.log("instanceSelect",instanceSelect,this.currentModule.codeLocToinstances);
+
+      for (var key in this.currentModule.codeLocToinstances) 
+      {
+         var range = key.replace(" ","").split(",");
+         console.log("range",range);
+         var start = parseInt(range[0]);
+         var end = parseInt(range[1]);
+          console.log("start",start,"end", end);
+         
+        //this.currentModule.codeLocToinstances['471, 475']=toto;
+        if(!(start == instanceSelect[0] && end == instanceSelect[1])) continue
+
+        var newSelection = this.currentModule.codeLocToinstances[key];
+        if(!(newSelection instanceof THREE.Object3D)) continue;
+        this.currentSelections.push(newSelection);
+        
+        //apply visual styling
+        this.addSelectionEffect(null, newSelection, 0x00ff00, 1.1)
+      }
+    },
+    //Helpers
     _clearVisualSelections: function()
     {
       //TODO: refactor: this clears all current visual selections
@@ -223,31 +294,36 @@
         }
       }
     },
-    compiledCursorLocationChanged:function()
+    addSelectionEffect:function(oldSelection, newSelection, color, scale)
     {
-      console.log("compiled cursor location changed");
-    },
-    cursorLocationChanged:function()
-    {
-      //TODO: for coffeescript we need to re-map coordinates of code
-      //cursor location (0 based index, in coffeescript) to js
-
-      //TODO: add selection behaviour when cursor is WITHIN the definition of an object
-      // should it both select the surounding function/class and the items within that scope ?
-
-      console.log("cursor location changed");
-
-      this._clearVisualSelections();
-
-      var context = new esrefactor.Context();
-      if(!(this.currentModule.source)) return;
-      context.setCode(this.currentModule.astUtil.ast);
-
-     
-      //////////////////////////////////////////////////////
-      if(context)
+      var selectionColor = color || 0xfffccc;
+      var scale = scale || 1.02;
+      //remove from old selection
+      if(oldSelection != null && oldSelection.outline)
       {
-        var cursorLocation = this.cursorLocation
+        oldSelection.remove(oldSelection.outline);
+        oldSelection.cage = null;
+        oldSelection.outline = null;
+      }
+      //add to new selection
+      if(newSelection != null)
+      {
+          var outlineMaterial = new THREE.MeshBasicMaterial({
+            color: selectionColor,//0xffc200,
+            side: THREE.BackSide
+          });
+          outline = new THREE.Mesh(newSelection.geometry, outlineMaterial);
+          outline.name = "selectOutline";
+          outline.scale.multiplyScalar( scale );
+          newSelection.outline = outline;
+          newSelection.add(outline);
+      }
+    },
+    _coffeeScriptCoordinateConversion:function()
+    {
+      //TODO: this is actually obsolete 
+      //see issues with getting reliable coordinates from source maps
+      //an alternative approach is needed
         if( this.currentModule.sourceLanguage == "coffee" )
         {
           var pseudoModuleName = this.name+".coffee";
@@ -296,104 +372,7 @@
           cursorLocation = finalPos-1;
           console.log("cursor(coffee): original",this.cursorLocation,"coffee",coffeeCursorLocationData, "js cursor pos", cursorPosJs, "cursorLocation",finalPos);
         }
-         
-        var id = context.identify(cursorLocation);
-        console.log("selection info (from ast)",id)
-        this.$.editor.clearMarkers();
-        if( !(id && id.declaration)) { return;}
-
-        console.log("declaration", id.declaration); 
-        //TODO: converte coordinates back to coffee/original code
-        var pos = this.$.editor.mirror.posFromIndex(id.declaration.range[0]);
-        console.log("pos",pos)
-        this.$.editor.addMarker(pos.line);
-
-        //now select the instances in 3D view
-        var type = id.declaration.name;
-        this.selectedMesh = null;
-
-        //select all instances in 3d view of the currently selected class
-        if(type in this.currentModule.partInstancesByType)
-        {
-          var selectedMesh = this.selectedMesh;
-          //selectedMesh = this.currentModule.partInstancesByType[type].instances[0];
-
-          for(var i=0; i< this.currentModule.partInstancesByType[type].instances.length;i++)
-          {
-            var newSelection = this.currentModule.partInstancesByType[type].instances[i];
-            if(!(newSelection instanceof THREE.Object3D)) continue;
-            this.currentSelections.push(newSelection);
-            var outlineMaterial = new THREE.MeshBasicMaterial({
-              color: 0xff0000,//0xffc200,
-              side: THREE.BackSide
-            });
-            outline = new THREE.Mesh(newSelection.geometry, outlineMaterial);
-            outline.name = "selectOutline";
-            outline.scale.multiplyScalar(1.02);
-            newSelection.outline = outline;
-            newSelection.add(outline);
-          }
-        }
-
-
-        //select a specific instance
-        //TODO: refactor : perhaps just using the variable id + scope would be better
-        var instanceSelect = id.declaration.range;
-        if(!(instanceSelect)) return;
-        console.log("instanceSelect",instanceSelect,this.currentModule.codeLocToinstances);
-
-        for (var key in this.currentModule.codeLocToinstances) 
-        {
-           var range = key.replace(" ","").split(",");
-           console.log("range",range);
-           var start = parseInt(range[0]);
-           var end = parseInt(range[1]);
-            console.log("start",start,"end", end);
-           
-          //this.currentModule.codeLocToinstances['471, 475']=toto;
-          if(!(start == instanceSelect[0] && end == instanceSelect[1])) continue
-
-          var newSelection = this.currentModule.codeLocToinstances[key];
-          if(!(newSelection instanceof THREE.Object3D)) continue;
-          this.currentSelections.push(newSelection);
-          var outlineMaterial = new THREE.MeshBasicMaterial({
-            color: 0x00ff00,//0xffc200,
-            side: THREE.BackSide
-          });
-          outline = new THREE.Mesh(newSelection.geometry, outlineMaterial);
-          outline.name = "selectOutline";
-          outline.scale.multiplyScalar(1.1);
-          newSelection.outline = outline;
-          newSelection.add(outline);
-        }
-        
-        //var code = context.rename(id, 'answer');
-      }
-    },
-    addSelectionEffect:function(oldSelection, newSelection)
-    {
-      this.selectionColor = 0xfffccc;
-      //remove from old selection
-      if(oldSelection != null)
-      {
-        oldSelection.remove(oldSelection.outline);
-        oldSelection.cage = null;
-        oldSelection.outline = null;
-      }
-      //add to new selection
-      if(newSelection != null)
-      {
-          var outlineMaterial = new THREE.MeshBasicMaterial({
-            color: 0xff0000,//0xffc200,
-            side: THREE.BackSide
-          });
-          outline = new THREE.Mesh(newSelection.geometry, outlineMaterial);
-          outline.name = "selectOutline";
-          outline.scale.multiplyScalar(1.02);
-          newSelection.outline = outline;
-          newSelection.add(outline);
-      }
-    }
+      },
     });
     </script>
   </polymer-element>
