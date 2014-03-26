@@ -19,15 +19,12 @@ function Torus(options)
 Torus.prototype = Object.create( Part.prototype );
 Torus.prototype.constructor = Torus;
 
-Torus.prototype.attributeChanged=function( attrName, newValue, oldValue)
+Torus.prototype.attributeChanged=function(attrName, oldValue, newValue)
 {
-  this[attrName] = newValue;
-  this.properties[attrName][2] = newValue;
-    console.log("Torus's attribute changed", attrName, newValue, oldValue, this, this.properties);
+  Part.prototype.attributeChanged.call(this, attrName, oldValue, newValue );  
+  console.log("Torus's attribute changed", attrName, newValue, oldValue, this, this.properties);
   this.geometry = new THREE.TorusGeometry( this.r,this.tube, this.$fn, this.$fn );
-  
 
-  
   this.updateRenderables();
 }
               

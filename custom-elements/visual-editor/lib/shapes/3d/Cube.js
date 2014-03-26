@@ -23,14 +23,13 @@ function Cube(options)
 Cube.prototype = Object.create( Part.prototype );
 Cube.prototype.constructor = Cube;
 
-Cube.prototype.attributeChanged=function( attrName, newValue, oldValue)
+Cube.prototype.attributeChanged=function(attrName, oldValue, newValue)
 {
+  Part.prototype.attributeChanged.call(this, attrName, oldValue, newValue );
+  
   console.log("cube's attribute changed", attrName, newValue, oldValue);
-  
-  this[attrName] = newValue;
-    this.properties[attrName][2] = newValue;
   this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
-  
+
   this.updateRenderables();
 }
 

@@ -19,14 +19,13 @@ function Cylinder(options)
 Cylinder.prototype = Object.create( Part.prototype );
 Cylinder.prototype.constructor = Cylinder;
 
-Cylinder.prototype.attributeChanged=function( attrName, newValue, oldValue)
+Cylinder.prototype.attributeChanged=function(attrName, oldValue, newValue)
 {
-  this[attrName] = newValue;
-  this.properties[attrName][2] = newValue;
+  Part.prototype.attributeChanged.call(this, attrName, oldValue, newValue );
+  
   this.geometry = new THREE.CylinderGeometry( this.r2, this.r, this.h ,this.$fn);
   this.geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
-  
-    console.log("Cylinder's attribute changed", attrName, newValue, oldValue, this, this.properties, this.geometry);
+  console.log("Cylinder's attribute changed", attrName, newValue, oldValue, this, this.properties, this.geometry);  
   
   this.updateRenderables();
 }

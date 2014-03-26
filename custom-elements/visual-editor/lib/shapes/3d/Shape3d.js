@@ -105,8 +105,18 @@ Part.prototype.updateRenderables=function()
 
 Part.prototype.fromThreeMesh=function(object){}
 
-Part.prototype.attributeChanged = function(attrName, oldVal, newVal)
-{}
+Part.prototype.attributeChanged = function(attrName, oldValue, newValue)
+{
+  this[attrName] = newValue;
+  this.properties[attrName][2] = newValue;
+  
+  
+  var operation = new AttributeChange(this, attrName, oldValue,newValue);
+  //this.operations.push( operation );
+  //this.dispatchEvent({type:'rotated',value:amount}); 
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
+}
 
 Part.prototype.update = function( parameters ) 
 {
@@ -133,13 +143,21 @@ Part.prototype.translate=function( amount )
 Part.prototype.rotate=function( amount )
 {
   var operation = new Rotation( amount, this);
-  this.operations.push( operation );
+  //this.operations.push( operation );
+  //this.dispatchEvent({type:'rotated',value:amount}); 
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
+  return operation;
 }
 
-Part.prototype.scale=function( amount )
+//FIXME: THREE.Object3D already has a "scale" property...
+Part.prototype.Scale=function( amount )
 {
   var operation = new Scaling( amount, this);
-  this.operations.push( operation );
+  //this.operations.push( operation );
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
+  return operation;
 }
 
 Part.prototype.union=function(objects)

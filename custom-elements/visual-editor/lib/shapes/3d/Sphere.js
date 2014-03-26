@@ -15,12 +15,11 @@ Sphere.prototype = Object.create( Part.prototype );
 Sphere.prototype.constructor = Sphere;
 
 
-Sphere.prototype.attributeChanged=function( attrName, newValue, oldValue)
+Sphere.prototype.attributeChanged=function(attrName, oldValue, newValue)
 {
+  Part.prototype.attributeChanged.call(this, attrName, oldValue, newValue );
+
   console.log("sphere's attribute changed", attrName, newValue, oldValue);
-  
-  this[attrName] = newValue;
-  this.properties[attrName][2] = newValue;
   this.geometry = new THREE.SphereGeometry( this.r, this.$fn, this.$fn );
   
   this.updateRenderables();
