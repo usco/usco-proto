@@ -145,6 +145,7 @@ Polymer("usco-editor",{
 
   project:null,
   source:"",
+  generateCodeOnTheFly:true,
   
   observe:{
     'project.files["foo"]':'codeChanged'
@@ -185,13 +186,29 @@ Polymer("usco-editor",{
           console.log(e);
       console.log(e.type, e.detail.msg); 
       self.commandManager.addCommand( e.detail.msg );
+      
+      if(self.generateCodeOnTheFly) self.generateCodeFromHistory();
     });
+    
+    //handle requests( keyboard events fire these in the visual editor)
     this.addEventListener('undoOperation', function(e) {
       self.commandManager.undo();
     });
     this.addEventListener('redoOperation', function(e) {
       self.commandManager.redo();
     });
+    
+    //handle history/commands/operations manager events
+    this.addEventListener('commands-undone', function(e) {
+      //console.log("something is undone!!!", e);
+      if(self.generateCodeOnTheFly) self.generateCodeFromHistory();
+    })
+    
+    this.addEventListener('commands-redone', function(e) {
+      //console.log("something is redone!!!", e);
+      if(self.generateCodeOnTheFly) self.generateCodeFromHistory();
+    })
+    
     this.addEventListener('text-dropped', function(e) {
       console.log(e.type, e.detail.data); 
       this.loadResource( e.detail.data );
@@ -258,10 +275,10 @@ Polymer("usco-editor",{
   generateCodeFromHistory:function()
   {
      console.log("generating code from history");
-     var testSource = updateSelectionCode(this.visualEditor.selectedObject,this.commandManager.undos);
+     //generation scope priority order
+     var generationScope = this.visualEditor.selectedObject || this.visualEditor.activeRoot || this.visualEditor.hierarchyRoot;
+     var testSource = updateSelectionCode(generationScope,this.commandManager.undos);
      //this.source = updateSelectionCode(this.selectedObject,this.commandManager.undos);
-     
-     console.log("res source", testSource);
      this.source = testSource;
   },
   generateFromCode:function()
