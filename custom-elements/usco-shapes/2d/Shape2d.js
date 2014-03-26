@@ -737,3 +737,4 @@ Shape2d.prototype.getPoints = function( divisions, closedPath ) {
 	return points;
 
 };
+module.exports = Shape2d;

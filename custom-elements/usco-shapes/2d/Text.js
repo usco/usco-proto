@@ -1,6 +1,6 @@
-//TODO: find a way to make this work
-//TODO: how to deal with multiple shapes in one , like with text?
+Shape2d = require("./Shape2d");
 
+//TODO: how to deal CLEANLY with multiple shapes in one , like with text?
 function Text(options)
 {
     var options = options || {};
@@ -123,4 +123,6 @@ Text.prototype.update=function( parameters )
 
 Text.prototype = Object.create( Part.prototype );
 Text.prototype.constructor = Text;*/
+
+module.exports = Text;
 

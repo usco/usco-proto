@@ -1,4 +1,5 @@
 
+Shape2d = require("./Shape2d");
 
 function Rectangle(width, height, center, radius)
 {
@@ -51,4 +52,6 @@ Rectangle.prototype.attributeChanged=function( attrName, newValue, oldValue)
   this.generate();
   this.updateRenderables();
 }
+
+module.exports = Rectangle;
 

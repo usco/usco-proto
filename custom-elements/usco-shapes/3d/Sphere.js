@@ -1,3 +1,4 @@
+Part = require("./Shape3d");
 
 function Sphere(options)
 {
@@ -24,3 +25,5 @@ Sphere.prototype.attributeChanged=function(attrName, oldValue, newValue)
   
   this.updateRenderables();
 }
+
+module.exports = Sphere;

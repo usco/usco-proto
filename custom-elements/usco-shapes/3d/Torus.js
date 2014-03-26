@@ -1,4 +1,4 @@
-
+Part = require("./Shape3d");
 
 function Torus(options)
 {
@@ -27,4 +27,6 @@ Torus.prototype.attributeChanged=function(attrName, oldValue, newValue)
 
   this.updateRenderables();
 }
+
+module.exports = Torus;
               

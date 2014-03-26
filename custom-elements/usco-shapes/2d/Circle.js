@@ -1,3 +1,5 @@
+Shape2d = require("./Shape2d");
+
 function Circle(center, radius)
 {
     this.radius = radius || 20;
@@ -35,3 +37,5 @@ Circle.prototype.attributeChanged=function( attrName, newValue, oldValue)
   this.generate();
   this.updateRenderables();
 }
+
+module.exports = Circle;

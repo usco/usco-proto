@@ -1,3 +1,4 @@
+Part = require("./Shape3d");
 
 function Cylinder(options)
 {
@@ -29,4 +30,6 @@ Cylinder.prototype.attributeChanged=function(attrName, oldValue, newValue)
   
   this.updateRenderables();
 }
+
+module.exports = Cylinder;
 

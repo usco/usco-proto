@@ -273,3 +273,4 @@ Part.prototype.subtract=function(objects)
   this.renderable.geometry = this.geometry;
 }
 
+module.exports = Part

@@ -1,5 +1,5 @@
-
-
+//THREE = require("three");
+Part = require("./Shape3d");
 
 function Cube(options)
 {
@@ -41,3 +41,4 @@ Cube.prototype.update=function( parameters )
   //this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
 }
 
+module.exports = Cube
