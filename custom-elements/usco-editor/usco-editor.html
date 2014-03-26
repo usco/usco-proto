@@ -4,8 +4,7 @@
 
 
 <link rel="import" href="../visual-editor/visual-editor.html">
-
-<link rel="import" href="../../components/code-mirror/code-mirror.html">
+<link rel="import" href="../code-editor/code-editor.html">
 
 <link rel="import" href="../../components/usco-client-deps/usco-client-deps.html">
 <link rel="import" href="../../components/usco-asset-manager/usco-asset-manager.html">
@@ -75,7 +74,6 @@
       height:90%;
       overflow:auto;
     }
-    code-mirror{position:absolute;top:120px;right:20px;width:400px;height:150px;z-index:9999;}
   </style>
   <usco-client-deps> </usco-client-deps>
   <usco-asset-manager id="assetManager">
@@ -114,10 +112,8 @@
     <button on-click="{{reqScreenshot}}">Screenshot</button>
   </div>
   
-  <!--<code-editor> </code-editor>-->
   <template if="{{codeEditActive}}">
-   <code-mirror id="selectEdit" theme="monokai" mode="javascript"  value="{{source}}">
-   </code-mirror>
+    <code-editor id="codeEditor" theme="monokai" mode="javascript"  value="{{source}}"> </code-editor>
   </template>
   
   <history-editor id="historyEditor"> </history-editor>
@@ -176,6 +172,7 @@ Polymer("usco-editor",{
   {
     console.log("entering view", this.$);
     this.visualEditor   = this.$.visualEditor;
+    //this.codeEditor   = this.$.codeEditor;
     this.commandManager = this.$.historyEditor;
     this.assetManager   = this.$.assetManager;
     //document.querySelector('usco-asset-manager');
