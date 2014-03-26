@@ -76,8 +76,23 @@ OVERALL LOGIC NOTES:
     * select an object, templatize it
     * select the new class/template, templatize it
     * select the new class/template, templatize it ...ETC
-    
+   
+Transform history
+=================
+- always relative to the current  selection level / CES:
+- I repeat: every transform :translate, rotate, scale, relative to its parent
+  * we cannot store operations within the shape that gets transformed because it does not preserve the order
+  within the scope
+- needs to work both for compilation from code and visual
+  * for visual, in truth , only the current selection(s) can signal "new operations" (translate,
+rotate, scale) 
+  * perhaps if we use polymer's utilities /object.observe, we need to compound multiple consecutive changes
+(ie if you drag an object around, there are lots of changes, but only one compound interesting one) 
 
+- DANG ! very important: we also need to be able to go into the construction "graph" of an object:
+  * ie if a sphape is a cube subtract sphere , at the top level we only have the result, but we need
+  to get "into" that composite
+  * perhaps add notion of dedicated classes for that ? ie Substraction (notice uppercase) 
 Multi level editing
 ===================
    
