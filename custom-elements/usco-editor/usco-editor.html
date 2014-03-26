@@ -25,7 +25,9 @@
 <link rel="import" href="../../components/usco-ply-parser/ply-parser.html">
 <link rel="import" href="../../components/usco-ctm-parser/ctm-parser.html">
 
-
+<!--code generators and related -->
+<script src="../visual-editor/lib/code-generation/code-generators.js"></script>
+<script src="../visual-editor/lib/code-generation/code-generation-ui.js"></script>
 
 
 <polymer-element name="usco-editor">
@@ -73,7 +75,7 @@
       height:90%;
       overflow:auto;
     }
-    code-mirror{position:absolute;top:80px;right:20px;width:400px;height:200px;z-index:9999;}
+    code-mirror{position:absolute;top:120px;right:20px;width:400px;height:150px;z-index:9999;}
   </style>
   <usco-client-deps> </usco-client-deps>
   <usco-asset-manager id="assetManager">
@@ -114,7 +116,7 @@
   
   <!--<code-editor> </code-editor>-->
   <template if="{{codeEditActive}}">
-   <code-mirror id="selectEdit" theme="monokai" mode="javascript" value="{{project.files['foo']}}" boundValue="{{project.files['foo']}}" >
+   <code-mirror id="selectEdit" theme="monokai" mode="javascript"  value="{{source}}">
    </code-mirror>
   </template>
   
@@ -142,6 +144,7 @@
 Polymer("usco-editor",{
 
   project:null,
+  source:"",
   
   observe:{
     'project.files["foo"]':'codeChanged'
@@ -149,6 +152,10 @@ Polymer("usco-editor",{
   codeChanged:function()
   {
     console.log("code changed", this.project.files["foo"]);
+  },
+  sourceChanged:function()
+  {
+    console.log("source changed", this.source);
   },
   loginToDB:function()
   {
@@ -251,8 +258,11 @@ Polymer("usco-editor",{
   generateCodeFromHistory:function()
   {
      console.log("generating code from history");
-     this.source = updateSelectionCode(this.selectedObject,this.commandManager.undos);
-     console.log("res source", this.source);
+     var testSource = updateSelectionCode(this.visualEditor.selectedObject,this.commandManager.undos);
+     //this.source = updateSelectionCode(this.selectedObject,this.commandManager.undos);
+     
+     console.log("res source", testSource);
+     this.source = testSource;
   },
   generateFromCode:function()
   {
