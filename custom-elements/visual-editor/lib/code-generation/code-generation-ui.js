@@ -13,8 +13,8 @@ function updateSelectionCode(selection, history)
   var collapsedOps = collapseOperations( history,  selection);
   //console.log("collapsedOperations", collapsedOps);
   
-  selection.code = "class "+selection.name+ " extends Part\n  constructor:(params)->\n    super(params)\n    @name='"+selection.name+"'\n";
-  selection.code += "   makeGeometry:->\n"
+  //selection.code = "class "+selection.name+ " extends Part\n  constructor:(params)->\n    super(params)\n    @name='"+selection.name+"'\n";
+  //selection.code += "   makeGeometry:->\n"
   return generateCodeFromOperations( collapsedOps );
   /*for(var i=0;i<collapsedOps.length;i++)
   {

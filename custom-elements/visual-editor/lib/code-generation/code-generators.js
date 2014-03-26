@@ -84,18 +84,29 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
       var type = target.constructor.name || "foo";
       
       
-      //TODO: refactor: this same code is present multiple times
+      //TODO: refactor: this same code is present multiple times, and is clumsy
       var strValue = "";
-      
-      if( Object.keys(operation.value).length !== 0 )
+      var paramsRaw = operation.target.properties;
+      var params = {}
+      for(key in paramsRaw)
       {
-        var strValue = JSON.stringify(operation.value);
+        var value = paramsRaw[key][2];
+        console.log("key", key, value);
+        params[key] = value;
+      }
+      console.log("params", params);
+      //var params = operation.value
+      if( Object.keys(params).length !== 0 )
+      {
+        var strValue = JSON.stringify(params);
         strValue.replace(/\\"/g,"\uFFFF"); //U+ FFFF
         strValue = strValue.replace(/\"([^"]+)\":/g,"$1:").replace(/\uFFFF/g,"\\\"");
       }
       
       
-      code += "var "+targetName+" = new "+ type +"("+strValue+")"+lineCap+"\n";
+      code += "var "+targetName+" = new "+ type +"("+strValue+")"+lineCap;
+      var parentName = "assembly";
+      code += parentName+".add( "+ targetName +" )"+lineCap+"\n";
     break;
     case "deletion":
       //TODO: how to deal with this ?
