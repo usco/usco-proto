@@ -20,7 +20,7 @@
     Polymer("boolean-editor",{
       valueChanged:function(oldValue,newValue)
       {
-        if(oldValue != null ) this.selection.attributeChanged(this.propName, this.value);
+        if(oldValue != null ) this.selection.attributeChanged(this.propName, oldValue, this.value);
       },
     });
   </script>
@@ -41,7 +41,8 @@
     Polymer("number-editor",{
       valueChanged:function(oldValue,newValue)
       {
-        if(oldValue != null ) this.selection.attributeChanged(this.propName, Number(this.value));
+        console.log("value changed", oldValue, newValue);
+        if(oldValue != null ) this.selection.attributeChanged(this.propName, Number(oldValue), Number(this.value));
       },
     });
   </script>
@@ -55,9 +56,9 @@
   </template>
   <script>
     Polymer("text-editor",{
-      valueChanged:function()
+      valueChanged:function(oldValue,newValue)
       {
-        this.selection.attributeChanged(this.propName, this.value);
+        if(oldValue != null ) this.selection.attributeChanged(this.propName, oldValue, this.value );
       },
     });
   </script>
