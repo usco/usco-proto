@@ -1,24 +1,31 @@
-AttributeChange = function (target, oldAttributes, newAttributes)
+AttributeChange = function (target, attrName, oldValue, newValue)
 {
   Command.call( this );
   this.type = "attributeChange";
   this.target = target;
-  this.value = oldAttributes;
-  this.newAttributes = newAttributes;
+  this.attrName = attrName;
+  this.value = newValue;
+  this.oldValue = oldValue;
+  
+  console.log("new attribute change operation", target, attrName, newValue, oldValue);
 }
 AttributeChange.prototype = Object.create( Command.prototype );
 AttributeChange.prototype.constructor=AttributeChange;
 AttributeChange.prototype.clone = function()
 {
-  return new AttributeChange( this.target, this.value);
+  return new AttributeChange( this.target, this.attrName, this.oldValue, this.value );
 }
 
 AttributeChange.prototype.undo = function()
 {
-  this.target.update( this.oldAttributes );
+  console.log("undo attrib change", this.value, this.oldValue, this.attrName);
+  this.target.properties[this.attrName][2] = this.oldValue;//update( this.oldAttributes );
+  this.target[this.attrName] = this.oldValue;
+  //this.target.attributeChanged(this.attrName,
 }
 
 AttributeChange.prototype.redo = function()
 {
-  this.target.update( this.newAttributes );
+  this.target.properties[this.attrName][2] = this.value;//update( this.newAttributes );
+  this.target[this.attrName] = this.value;
 }
