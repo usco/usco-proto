@@ -41,7 +41,7 @@ function Text(options)
 Text.prototype = Object.create( Shape2d.prototype );
 Text.prototype.constructor = Text;
 
-Text.prototype.attributeChanged=function( attrName, newValue, oldValue)
+Text.prototype.attributeChanged=function( attrName, oldValue, newValue)
 {
   console.log("text's attribute changed", attrName, newValue, oldValue);
   

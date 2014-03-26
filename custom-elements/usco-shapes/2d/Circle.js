@@ -27,7 +27,7 @@ Circle.prototype.generate = function()
   this.absarc( x, y, radius, 0, Math.PI*2, false );
 }
 
-Circle.prototype.attributeChanged=function( attrName, newValue, oldValue)
+Circle.prototype.attributeChanged=function( attrName, oldValue, newValue )
 {
   console.log("Circle's attribute changed", attrName, newValue, oldValue);
   

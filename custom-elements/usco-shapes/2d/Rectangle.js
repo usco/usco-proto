@@ -42,7 +42,7 @@ Rectangle.prototype.generate = function()
 	this.quadraticCurveTo( x, y, x, y + radius );
 }
 
-Rectangle.prototype.attributeChanged=function( attrName, newValue, oldValue)
+Rectangle.prototype.attributeChanged=function( attrName, oldValue, newValue)
 {
   console.log("Rectangle's attribute changed", attrName, newValue, oldValue);
   
