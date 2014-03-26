@@ -21,7 +21,8 @@
     "grunt-contrib-uglify": "",
     "grunt-node-webkit-builder": "",
     "browserify": "",
-    "grunt-browserify": ""
+    "grunt-browserify": "",
+    "three-js": "git://github.com/usco/three.js.git"
   },
   
   "main": "app://usco/index.html",
