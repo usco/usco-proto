@@ -1,15 +1,16 @@
-Clone = function ( target, value )
+Clone = function ( source, target )
 {
   Command.call( this );
   this.type = "clone";
+  this.source = source;
   this.target = target;
-  this.value = value;
+  //this.value = value;
 }
 Clone.prototype = Object.create( Command.prototype );
 Clone.prototype.constructor=Clone;
 Clone.prototype.clone = function()
 {
-  return new Clone( this.target, this.value);
+  return new Clone( this.source, this.target);
 }
 
 Clone.prototype.undo = function()
