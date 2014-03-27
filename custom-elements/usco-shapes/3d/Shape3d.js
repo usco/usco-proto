@@ -1,3 +1,5 @@
+ThreeBSP = require("./THREECSG");
+
 shapeDefaultMaxResolution = 30;
 
 function Part()
@@ -14,11 +16,12 @@ function Part()
   //curent implementation uses bsp under the hood...
   this._bsp = null;
   
+  
   //this is an abstract element, but it needs a visual representation
   this.renderable = null;
-  this.color = 0x17a9f5;
+  this.color = new THREE.Color(0x17a9f5);
   //"r" is for "real", for now, do not overrid three.js material property
-  this.rMaterial = null;
+  this.rMaterial = {color:new THREE.Color(0x17a9f5)};
   
   this.connectors = [];
   
@@ -46,19 +49,20 @@ Part.prototype.clone = function()
   newInstance.rotation = this.rotation.clone();
   newInstance.scale    = this.scale.clone();
   newInstance.geometry = this.geometry.clone();
+  newInstance.rMaterial.color    = this.rMaterial.color.clone();
   
   for(var propName in this.properties)
   {
     newInstance.properties[propName] = this.properties[propName].slice(0);; 
   }
 
-  console.log("newInstance", newInstance);  
+  console.log("newInstance", newInstance, "current", this);  
   return newInstance;
 }
 
 Part.prototype.generateRenderables=function()
 {
-  var material = new THREE.MeshPhongMaterial( { color: this.color, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ); 
+  var material = new THREE.MeshPhongMaterial( { color: this.rMaterial.color, specular: 0xffffff, shininess: 10,shading: THREE.FlatShading} ); 
   
   this.renderable = new THREE.Mesh(this.geometry, material);
   this.renderable.sourceShape = this;
