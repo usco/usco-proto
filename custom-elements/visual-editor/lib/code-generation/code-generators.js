@@ -74,7 +74,7 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
   //we apply the operations to the actual object, not its visual representation
   if(target.sourceElement) target = target.sourceElement;
   
-  var targetName = target.name.toLowerCase()+new String(target.id);//    this.";//target.name;//@
+  var targetName = (target.constructor.name.toLowerCase() || target.name.toLowerCase()) +new String(target.id);//    this.";//target.name;//@
   var code = "";
   var lineCap = ";\n";
   //TODO: if translate, rotate etc values are integers, do not display as float, or give the option to do so
@@ -83,7 +83,6 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
     case "creation":
       var type = target.constructor.name || "foo";
       
-      
       //TODO: refactor: this same code is present multiple times, and is clumsy
       var strValue = "";
       var paramsRaw = operation.target.properties;
@@ -91,10 +90,8 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
       for(key in paramsRaw)
       {
         var value = paramsRaw[key][2];
-        console.log("key", key, value);
         params[key] = value;
       }
-      console.log("params", params);
       //var params = operation.value
       if( Object.keys(params).length !== 0 )
       {
@@ -104,12 +101,17 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
       }
       
       
-      code += "var "+targetName+" = new "+ type +"("+strValue+")"+lineCap;
+      code += "\nvar "+targetName+" = new "+ type +"("+strValue+")"+lineCap;
       var parentName = "assembly";
       code += parentName+".add( "+ targetName +" )"+lineCap+"\n";
     break;
     case "deletion":
       //TODO: how to deal with this ?
+    break;
+    case "clone":
+      var source = operation.source;
+      var sourceName = source.name.toLowerCase()+new String(source.id);
+      code += "var " + targetName+"= "+sourceName+".clone()"+lineCap;
     break;
     case "extrusion":
       var type = target.constructor.name || "foo";
@@ -192,7 +194,7 @@ function generateCodeFromOperations(operations)
     var operation = operations[i];
       code+=generateCodeFromOperation(operation);
   }
-  console.log("code:\n", code);
+  //console.log("code:\n", code);
   return code;
 }
 
