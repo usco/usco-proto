@@ -589,7 +589,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               var oldGeometry = target.geometry.clone();
 
               result = subtract(selections);
-              operation = new Subtraction(target, oldGeometry, selections.slice(1) ) ;
+              operands = this._sourceShapesFromVisuals( selections.slice(1) );
+              operation = new Subtraction(target.sourceShape, oldGeometry, operands ) ;
             break;
             case 'intersect':
               var target = selections[0];
@@ -646,13 +647,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
 					  break;
               
             case 'clone':
-              var newInstance = selections[0].sourceShape.clone();
+              var original = selections[0].sourceShape;
+              var newInstance = original.clone();
               result = newInstance.generateRenderables();
               
-              this.hierarchyRoot.add( result.sourceShape );
+              this.hierarchyRoot.add( newInstance );
               this.viewer.addToScene( result );
           
-              operation = new Clone(result.sourceShape);
+              operation = new Clone(original, newInstance);
               this.fire('newOperation', {msg: operation});
               this.selectedObjects = [result];//make sure the new item is the selected one
               return;
@@ -1049,6 +1051,16 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     this.viewer.captureScreen(callback, window.innerWidth, window.innerHeight)
   },
   
+  //helpers
+  _sourceShapesFromVisuals:function( visuals ) 
+  {
+    var sourceShapes = [];
+    for(var i=0; i<visuals.length;i++)
+    {
+      sourceShapes.push( visuals[i].sourceShape );
+    }
+    return sourceShapes;
+  },
   //TODO: temp hack, down the line, parsers should return the correct types directly
   //TODO how to handle errors, as we are in a deferred's success callback
   addImportedResource: function( resource )
