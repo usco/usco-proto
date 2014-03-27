@@ -9,7 +9,6 @@ function Cube(options)
   this.d = options.d || 20;
 
   Part.call( this );
-  this.name = "Cube"+this.id;
   this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
   //this._bsp = new ThreeBSP(this);
   
