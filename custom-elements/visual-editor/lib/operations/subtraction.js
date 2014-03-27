@@ -21,17 +21,15 @@ Subtraction.prototype.clone = function()
 Subtraction.prototype.undo = function()
 {
   var target = this.target;
-  this._undoBackup = target.geometry;
-  var pos = target.position.clone();
-
-  delete target.__webglInit;
-  target.geometry = this.original;
-  target.dispatchEvent( { type: 'shapeChanged' } );
+  if(!(this._undoBackup)) this._undoBackup = target.geometry.clone();
+  target.geometry = this.original.clone();//FIXME: seriously ? how many clones do we need ?
+  
+  target.updateRenderables();
 }
 Subtraction.prototype.redo = function()
 {
   var target = this.target;
-  delete target.__webglInit;
-  target.geometry = this._undoBackup;
-  target.dispatchEvent( { type: 'shapeChanged' } );
+  target.geometry = this._undoBackup.clone();//FIXME: seriously ? how many clones do we need ?
+  
+  target.updateRenderables();
 }
