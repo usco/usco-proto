@@ -18,14 +18,21 @@ Creation.prototype.undo = function()
   this._oldParent = this.target.parent;
   this.target.parent.remove(this.target);
   
-  //hack
-  this.target.renderable.visible = false;
+  //semi hack
+  if(this.target.renderable)
+  {
+    this.target.renderable._oldParent = this.target.renderable.parent;
+    this.target.renderable.parent.remove(this.target.renderable);
+  }
 }
 
 Creation.prototype.redo = function()
 {
   this._oldParent.add(this.target);
   
-  //hack
-  this.target.renderable.visible = true;
+  //semi-hack
+  if(this.target.renderable)
+  {
+    this.target.renderable._oldParent.add( this.target.renderable );
+  }
 }
