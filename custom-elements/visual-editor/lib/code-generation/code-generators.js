@@ -1,12 +1,12 @@
 function collapseOperations(operations)
 {
   //TODO: add "hardcore/compact mode" that generates matrix operations instead of multiple translate/rotate/scale operations
-  if(operations === undefined || operations.length==0)
-  { throw new Error("No valid list of operations given");}
-
   var collapsedHistory = [];
   var operation = null;
   var prevOperation = operation;
+  
+  /*if(operations === undefined || operations.length==0)
+  { return collapsedHistory }*/
 
   for( var i=0; i<operations.length;i++)
   {
@@ -128,7 +128,6 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
     break;
     case "translation":
       if (!("code" in target)){ target.code = ""};
-      console.log("target name", target);
       if(target.name == "Shape2dPointHelper")
       {
         console.log("we moved a shape2d helper",target.standInFor,target.sourceParent);
