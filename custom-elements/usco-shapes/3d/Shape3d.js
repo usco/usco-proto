@@ -101,13 +101,17 @@ Part.prototype.generateRenderables=function()
 
 Part.prototype.updateRenderables=function()
 {
-  this.renderable.geometry.dispose();
-  delete this.renderable.__webglInit;
-  this.renderable.geometry =  this.geometry;
+  if(!(this.renderable))
+  {
+    this.generateRenderables();
+  }
+  else
+  {
+    this.renderable.geometry.dispose();
+    delete this.renderable.__webglInit;
+    this.renderable.geometry =  this.geometry;
+  }
 }
-
-
-Part.prototype.fromThreeMesh=function(object){}
 
 Part.prototype.attributeChanged = function(attrName, oldValue, newValue)
 {
@@ -136,21 +140,26 @@ Part.prototype.update = function( parameters )
   this.updateRenderables();
 }
 
+Part.prototype.fromThreeMesh=function(object){}
+
 Part.prototype.translate=function( amount )
 {
   var operation = new Translation( amount, this );
   var event = new CustomEvent('newOperation',{detail: {msg: operation}});
   document.dispatchEvent(event);
+  
+  this.operations.push( operation );
   return operation;
 }
 
 Part.prototype.rotate=function( amount )
 {
   var operation = new Rotation( amount, this);
-  //this.operations.push( operation );
+  this.operations.push( operation );
   //this.dispatchEvent({type:'rotated',value:amount}); 
   var event = new CustomEvent('newOperation',{detail: {msg: operation}});
   document.dispatchEvent(event);
+  
   return operation;
 }
 
@@ -158,7 +167,7 @@ Part.prototype.rotate=function( amount )
 Part.prototype.Scale=function( amount )
 {
   var operation = new Scaling( amount, this);
-  //this.operations.push( operation );
+  this.operations.push( operation );
   var event = new CustomEvent('newOperation',{detail: {msg: operation}});
   document.dispatchEvent(event);
   return operation;
@@ -208,56 +217,14 @@ Part.prototype.intersect=function(objects)
 
 Part.prototype.subtract=function(objects)
 {
-  /*var myWorker = new Worker("lib/shapes/bspWorker.js");
-  myWorker.onmessage = function (oEvent) {
-    console.log("Called back by the worker!\n");
-  };
-  myWorker.postMessage("");*/
-
-  //if(!( this._bsp ) )
-  //{
-      this._bsp = new ThreeBSP(this);
-  //}
+  /*current instance modification variant
+  this._bsp = new ThreeBSP(this);
+  var oldGeometry = this.geometry.clone();
+  
   for(var i=0;i<objects.length;i++)
   {
     var object = objects[i];
-    /* TODO: find a way to do this without regenerating the bsp*/    
-    /*if(!( object._bsp ) )
-    {
-        object._bsp = new ThreeBSP(object);
-    }
-    else
-    { 
-      console.log("object matrix",object._bsp.matrix.elements);
-      //object.updateMatrix();
-      //object._bsp.matrix.copy( object.matrix );
-      console.log("object matrix",object._bsp.matrix.elements);
-
-      var matrix = object._bsp.matrix;
-      var matrix = new THREE.Matrix4();//.getInverse( matrix );
-      var polygons = object._bsp.tree.allPolygons(),
-			polygon_count = polygons.length;
-
-      for ( var z = 0; z < polygon_count; z++ ) 
-      {
-        polygon = polygons[z];
-			  polygon_vertice_count = polygon.vertices.length;
-        for ( j = 2; j < polygon_vertice_count; j++ ) {
-				  vertex = polygon.vertices[0];
-          if(z==0) console.log("vertex", vertex);
-				  vertex.applyMatrix4(matrix);
-          vertex = polygon.vertices[j-1];
-          vertex.applyMatrix4(matrix);
-          vertex = polygon.vertices[j];
-          vertex.applyMatrix4(matrix);
-        }
-        polygon.calculateProperties();
-      }
-          object._bsp.tree = new ThreeBSP.Node( polygons );
-          delete object.__webglInit;
-     object.geometry.dispose();
-     object.geometry = object._bsp.toGeometry();
-    }*/
+    // TODO: find a way to do this without regenerating the bsp   
      object._bsp = new ThreeBSP(object);
      this._bsp = new ThreeBSP( this ) ;
      this._bsp = this._bsp.subtract( object._bsp );
@@ -275,6 +242,49 @@ Part.prototype.subtract=function(objects)
   
   delete this.renderable.__webglInit;
   this.renderable.geometry = this.geometry;
+  
+  var operands = objects;
+  var operation = new Subtraction(this, oldGeometry, operands ) ;
+  this.operations.push ( operation );
+  
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
+  
+  return this;*/
+  var newPart = new Part();
+  newPart.geometry = this.geometry.clone();
+  
+  newPart._bsp = new ThreeBSP(newPart);
+  var oldGeometry = this.geometry.clone();
+  
+  for(var i=0;i<objects.length;i++)
+  {
+    var object = objects[i];
+    // TODO: find a way to do this without regenerating the bsp   
+     object._bsp = new ThreeBSP(object);
+     newPart._bsp = new ThreeBSP( newPart ) ;
+     newPart._bsp = newPart._bsp.subtract( object._bsp );
+     //TODO : only generate geometry on final pass ie make use of csg tree or processing tree/ast
+     newPart.geometry.dispose();
+     newPart.geometry = newPart._bsp.toGeometry();
+     newPart.geometry.computeVertexNormals()
+     newPart.geometry.computeBoundingBox()
+     newPart.geometry.computeCentroids()
+     newPart.geometry.computeFaceNormals();
+     newPart.geometry.computeBoundingSphere();
+  }  
+  newPart.updateRenderables(); 
+  
+  var operands = objects;
+  //var operation = new Subtraction(newPart, oldGeometry, operands ) ;
+  var operation = new Subtraction2(this, operands, newPart)
+  newPart.operations.push ( operation );
+  
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
+  
+  return newPart;
+  
 }
 
 module.exports = Part
