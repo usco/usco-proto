@@ -1333,11 +1333,20 @@ Part.prototype.subtract=function(objects)
   newPart.updateRenderables(); 
   
   var operands = objects;
-  var operation = new Subtraction(newPart, oldGeometry, operands ) ;
-  this.operations.push ( operation );
+  //var operation = new Subtraction(newPart, oldGeometry, operands ) ;
+  var operation = new Subtraction2(this, operands, newPart)
+  newPart.operations.push ( operation );
   
   var event = new CustomEvent('newOperation',{detail: {msg: operation}});
   document.dispatchEvent(event);
+  
+  //remove operands from view
+  this.renderable.parent.remove( this.renderable );
+  for(var i = 0; i < operands.length;i++)
+  {
+      var op = operands[i].renderable;
+      op.parent.remove( op );
+  }
   
   return newPart;
   
