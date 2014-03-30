@@ -1,4 +1,7 @@
 //THREE = require("three");
+
+Operations = require("./operations/operations");
+
 Part = require("./3d/Shape3d");
 Cube = require("./3d/Cube");
 Sphere = require("./3d/Sphere");

@@ -1964,6 +1964,9 @@ module.exports = Torus;
 
 },{"./Shape3d":7}],11:[function(require,module,exports){
 //THREE = require("three");
+
+Operations = require("./operations/operations");
+
 Part = require("./3d/Shape3d");
 Cube = require("./3d/Cube");
 Sphere = require("./3d/Sphere");
@@ -1975,4 +1978,546 @@ Rectangle = require("./2d/Rectangle");
 Circle = require("./2d/Circle");
 Text = require("./2d/Text");
 
-},{"./2d/Circle":1,"./2d/Rectangle":2,"./2d/Shape2d":3,"./2d/Text":4,"./3d/Cube":5,"./3d/Cylinder":6,"./3d/Shape3d":7,"./3d/Sphere":8,"./3d/Torus":10}]},{},[11])
+},{"./2d/Circle":1,"./2d/Rectangle":2,"./2d/Shape2d":3,"./2d/Text":4,"./3d/Cube":5,"./3d/Cylinder":6,"./3d/Shape3d":7,"./3d/Sphere":8,"./3d/Torus":10,"./operations/operations":21}],12:[function(require,module,exports){
+Command = require('./command');
+
+AttributeChange = function (target, attrName, oldValue, newValue)
+{
+  Command.call( this );
+  this.type = "attributeChange";
+  this.target = target;
+  this.attrName = attrName;
+  this.value = newValue;
+  this.oldValue = oldValue;
+  
+  console.log("new attribute change operation", target, attrName, newValue, oldValue);
+}
+AttributeChange.prototype = Object.create( Command.prototype );
+AttributeChange.prototype.constructor=AttributeChange;
+AttributeChange.prototype.clone = function()
+{
+  return new AttributeChange( this.target, this.attrName, this.oldValue, this.value );
+}
+
+AttributeChange.prototype.undo = function()
+{
+  console.log("undo attrib change", this.value, this.oldValue, this.attrName);
+  this.target.properties[this.attrName][2] = this.oldValue;//update( this.oldAttributes );
+  this.target[this.attrName] = this.oldValue;
+  //this.target.attributeChanged(this.attrName,
+}
+
+AttributeChange.prototype.redo = function()
+{
+  this.target.properties[this.attrName][2] = this.value;//update( this.newAttributes );
+  this.target[this.attrName] = this.value;
+}
+
+module.exports = AttributeChange;
+
+},{"./command":14}],13:[function(require,module,exports){
+Command = require('./command');
+
+Clone = function ( source, target )
+{
+  Command.call( this );
+  this.type = "clone";
+  this.source = source;
+  this.target = target;
+  //this.value = value;
+}
+Clone.prototype = Object.create( Command.prototype );
+Clone.prototype.constructor=Clone;
+Clone.prototype.clone = function()
+{
+  return new Clone( this.source, this.target);
+}
+
+Clone.prototype.undo = function()
+{
+  this._oldParent = this.target.parent;
+  this.target.parent.remove(this.target);
+  
+  //hack
+  this.target.renderable.visible = false;
+}
+
+Clone.prototype.redo = function()
+{
+  this._oldParent.add(this.target);
+  
+  //hack
+  this.target.renderable.visible = true;
+}
+
+module.exports = Clone;
+
+},{"./command":14}],14:[function(require,module,exports){
+//operation "class"
+Command = function ( type, value, target)
+{
+  this.type = type;
+  this.value = value;
+  this.target = target;
+}
+Command.prototype.clone = function()
+{
+  throw new Error("not implemented");
+}
+
+module.exports = Command;
+
+},{}],15:[function(require,module,exports){
+Command = require('./command');
+
+Creation = function (target, parentObject, options)
+{
+  Command.call( this );
+  this.type = "creation";
+  this.target = target;
+  this.parentObject = parentObject;
+  this.value = options;
+}
+Creation.prototype = Object.create( Command.prototype );
+Creation.prototype.constructor=Creation;
+Creation.prototype.clone = function()
+{
+  return new Creation( this.target, this.parentObject, this.value);
+}
+
+Creation.prototype.undo = function()
+{
+  this._oldParent = this.target.parent;
+  this.target.parent.remove(this.target);
+  
+  //semi hack
+  if(this.target.renderable)
+  {
+    this.target.renderable._oldParent = this.target.renderable.parent;
+    this.target.renderable.parent.remove(this.target.renderable);
+  }
+}
+
+Creation.prototype.redo = function()
+{
+  this._oldParent.add(this.target);
+  
+  //semi-hack
+  if(this.target.renderable)
+  {
+    this.target.renderable._oldParent.add( this.target.renderable );
+  }
+}
+
+module.exports = Creation;
+
+},{"./command":14}],16:[function(require,module,exports){
+Command = require('./command');
+
+Deletion = function (target, parentObject)
+{
+  Command.call( this );
+  this.type = "deletion";
+  this.target = target;
+  this.parentObject = parentObject;
+}
+Deletion.prototype = Object.create( Command.prototype );
+Deletion.prototype.constructor=Deletion;
+Deletion.prototype.clone = function()
+{
+  return new Creation( this.target, this.parentObject);
+}
+
+Deletion.prototype.undo = function()
+{
+    this.parentObject.add(this.target);
+}
+
+Deletion.prototype.redo = function()
+{
+  this.parentObject.remove(this.target);
+}
+
+module.exports = Deletion;
+
+},{"./command":14}],17:[function(require,module,exports){
+Command = require('./command');
+
+Extrusion = function (target, value, sourceShape, parentObject)
+{
+  Command.call( this );
+  this.type = "extrusion";
+  this.target = target;
+  this.value = value;
+  this.sourceShape = sourceShape;
+  this.parentObject = parentObject;
+}
+Extrusion.prototype = Object.create( Command.prototype );
+Extrusion.prototype.constructor=Extrusion;
+Extrusion.prototype.clone = function()
+{
+  return new Extrusion( this.target, this.value, this.sourceShape, this.parentObject);
+}
+
+Extrusion.prototype.undo = function()
+{
+    this.parentObject.remove(this.target);
+}
+
+Extrusion.prototype.redo = function()
+{
+  this.parentObject.add(this.target);
+}
+
+module.exports = Extrusion;
+
+},{"./command":14}],18:[function(require,module,exports){
+Command = require('./command');
+
+Import = function ( value, target)
+{
+  Command.call( this );
+  this.type = "import";
+  this.value = value;
+  this.target = target;
+}
+Import.prototype = Object.create( Command.prototype );
+Import.prototype.constructor=Import;
+Import.prototype.clone = function()
+{
+  return new Import( this.value.clone(), this.target);
+}
+/*Not sure about this
+Import.prototype.execute = function(value)
+{
+    this.target.position.add(value);
+}*/
+
+Import.prototype.undo = function()
+{
+  this._oldParent = this.value.parent;
+  this.value.parent.remove(this.value);
+  //hack
+  this.value.renderable.visible = false;
+}
+
+Import.prototype.redo = function()
+{
+  this._oldParent.add(this.value);
+  //hack
+  this.value.renderable.visible = true;
+}
+
+module.exports = Import;
+
+},{"./command":14}],19:[function(require,module,exports){
+Command = require('./command');
+
+//FIXME: HAAACK !
+Intersection = function ( target, originalGeometry, operands)
+{
+  Command.call( this );
+  this.type = "intersection";
+  this.target = target;
+  this.original = originalGeometry;
+  this.operands = operands || [];
+
+  this._undoBackup = null;
+}
+Intersection.prototype = Object.create( Command.prototype );
+Intersection.prototype.constructor=Intersection;
+Intersection.prototype.clone = function()
+{
+  return new Intersection( this.target, this.original, this.operands);
+}
+
+
+Intersection.prototype.undo = function()
+{
+  var target = this.target;
+  this._undoBackup = target.geometry;
+  var pos = target.position.clone();
+
+  delete target.__webglInit;
+  target.geometry = this.original;
+  target.dispatchEvent( { type: 'shapeChanged' } );
+}
+Intersection.prototype.redo = function()
+{
+  var target = this.target;
+  delete target.__webglInit;
+  target.geometry = this._undoBackup;
+  target.dispatchEvent( { type: 'shapeChanged' } );
+}
+
+module.exports = Intersection;
+
+},{"./command":14}],20:[function(require,module,exports){
+Command = require('./command');
+
+Mirror = function ( target, axis)
+{
+  Command.call( this );
+  this.type = "mirroring";
+  this.target = target;
+  this.value = axis
+}
+Mirror.prototype = Object.create( Command.prototype );
+Mirror.prototype.constructor=Translation;
+Mirror.prototype.clone = function()
+{
+  return new Mirror( this.target, this.value);
+}
+
+Mirror.prototype.undo = function()
+{
+    this.target.mirror(this.value);
+}
+
+Mirror.prototype.redo = function()
+{
+    this.target.mirror(this.value);
+}
+
+module.exports = Mirror;
+
+},{"./command":14}],21:[function(require,module,exports){
+
+Command = require('./command');
+
+Creation = require('./creation');
+Deletion = require('./deletion');
+Clone = require('./clone');
+Import = require('./import');
+AttributeChange = require('./attributeChange');
+
+Translation = require('./translation');
+Rotation = require('./rotation');
+Scaling = require('./scaling');
+
+Mirror = require('./mirror');
+Extrusion = require('./extrusion');
+
+Union = require('./union');
+Subtraction = require('./subtraction2');
+Intersection = require('./intersection');
+
+
+
+
+
+},{"./attributeChange":12,"./clone":13,"./command":14,"./creation":15,"./deletion":16,"./extrusion":17,"./import":18,"./intersection":19,"./mirror":20,"./rotation":22,"./scaling":23,"./subtraction2":24,"./translation":25,"./union":26}],22:[function(require,module,exports){
+Command = require('./command');
+
+Rotation = function ( value, target)
+{
+  Command.call( this );
+  this.type = "rotation";
+  this.value = value;
+  this.target = target;
+}
+Rotation.prototype = Object.create( Command.prototype );
+Rotation.prototype.constructor=Rotation;
+Rotation.prototype.clone = function()
+{
+  return new Rotation( this.value.clone(), this.target);
+}
+
+Rotation.prototype.undo = function()
+{
+    //this.target.position.sub(this.value);
+    this.target.rotation.x -= this.value.x;
+    this.target.rotation.y -= this.value.y;
+    this.target.rotation.z -= this.value.z;
+}
+
+Rotation.prototype.redo = function()
+{
+    this.target.rotation.x += this.value.x;
+    this.target.rotation.y += this.value.y;
+    this.target.rotation.z += this.value.z;
+}
+
+module.exports = Rotation;
+
+},{"./command":14}],23:[function(require,module,exports){
+Command = require('./command');
+
+Scaling = function ( value, target)
+{
+  Command.call( this );
+  this.type = "scaling";
+  this.value = value;
+  this.target = target;
+}
+Scaling.prototype = Object.create( Command.prototype );
+Scaling.prototype.constructor=Scaling;
+Scaling.prototype.clone = function()
+{
+  return new Scaling( this.value.clone(), this.target);
+}
+
+Scaling.prototype.undo = function()
+{
+  this.target.scale.x -= this.value.x;
+  this.target.scale.y -= this.value.y;
+  this.target.scale.z -= this.value.z;
+}
+
+Scaling.prototype.redo = function()
+{
+  this.target.scale.x += this.value.x;
+  this.target.scale.y += this.value.y;
+  this.target.scale.z += this.value.z;
+}
+
+module.exports = Scaling;
+
+},{"./command":14}],24:[function(require,module,exports){
+Command = require('./command');
+
+//FIXME: HAAACK !
+Subtraction2 = function ( leftOperand, rightOperands, result)
+{
+  Command.call( this );
+  this.type = "subtraction";
+  this.target = leftOperand;
+  this.result = result ;
+  //this.original = originalGeometry;
+  this.operands = rightOperands || [];
+
+  this._undoBackup = null;
+  
+}
+Subtraction2.prototype = Object.create( Command.prototype );
+Subtraction2.prototype.constructor=Subtraction2;
+Subtraction2.prototype.clone = function()
+{
+  return new Subtraction2( this.target, this.operands, this.result);
+}
+  
+
+Subtraction2.prototype.undo = function()
+{
+  /*var target = this.target;
+  if(!(this._undoBackup)) this._undoBackup = target.geometry.clone();
+  target.geometry = this.original.clone();//FIXME: seriously ? how many clones do we need ?*/
+  
+  //target.updateRenderables();
+  //remove resulting shape from view
+  var resRenderable = this.result.renderable;
+  var resRenderableParent = resRenderable.parent;
+  resRenderableParent.remove( resRenderable ) ;
+  
+  //re-add operands to view
+  var leftOpRenderable = this.target.renderable;
+  resRenderableParent.add( leftOpRenderable );
+  
+  var operands = this.operands;
+  for(var i = 0; i < operands.length;i++)
+  {
+      var op = operands[i].renderable;
+      resRenderableParent.add( op );
+  }
+  
+}
+Subtraction2.prototype.redo = function()
+{
+  /*var target = this.target;
+  target.geometry = this._undoBackup.clone();//FIXME: seriously ? how many clones do we need ?
+  
+  target.updateRenderables();*/
+
+
+  var leftOpRenderable = this.target.renderable;
+  var leftOpRenderableParent = leftOpRenderable.parent;
+  leftOpRenderableParent.remove( leftOpRenderable);
+  
+  leftOpRenderableParent.add(this.result.renderable);
+  
+  var operands = this.operands;
+  for(var i = 0; i < operands.length;i++)
+  {
+      var op = operands[i].renderable;
+      op.parent.remove( op );
+  }
+}
+
+module.exports = Subtraction;
+
+},{"./command":14}],25:[function(require,module,exports){
+Command = require('./command');
+
+Translation = function ( value, target)
+{
+  Command.call( this );
+  this.type = "translation";
+  this.value = value;
+  this.target = target;
+}
+Translation.prototype = Object.create( Command.prototype );
+Translation.prototype.constructor=Translation;
+Translation.prototype.clone = function()
+{
+  return new Translation( this.value.clone(), this.target);
+}
+/*Not sure about this
+Translation.prototype.execute = function(value)
+{
+    this.target.position.add(value);
+}*/
+
+Translation.prototype.undo = function()
+{
+    this.target.position.sub(this.value);
+}
+
+Translation.prototype.redo = function()
+{
+    this.target.position.add(this.value);
+}
+
+module.exports = Translation;
+
+},{"./command":14}],26:[function(require,module,exports){
+Command = require('./command');
+
+//FIXME: HAAACK !
+Union = function ( target, originalGeometry, operands)
+{
+  Command.call( this );
+  this.type = "union";
+  this.target = target;
+  this.original = originalGeometry;
+  this.operands = operands || [];
+
+  this._undoBackup = null;
+}
+Union.prototype = Object.create( Command.prototype );
+Union.prototype.constructor=Union;
+Union.prototype.clone = function()
+{
+  return new Union( this.target, this.original, this.operands);
+}
+
+Union.prototype.undo = function()
+{
+  var target = this.target;
+  this._undoBackup = target.geometry;
+  var pos = target.position.clone();
+
+  delete target.__webglInit;
+  target.geometry = this.original;
+  target.dispatchEvent( { type: 'shapeChanged' } );
+}
+Union.prototype.redo = function()
+{
+  var target = this.target;
+  delete target.__webglInit;
+  target.geometry = this._undoBackup;
+  target.dispatchEvent( { type: 'shapeChanged' } );
+}
+
+module.exports = Union;
+
+},{"./command":14}]},{},[11])
