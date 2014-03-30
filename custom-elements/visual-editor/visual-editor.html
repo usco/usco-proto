@@ -34,6 +34,7 @@
 
 <script src="lib/operations/union.js"></script>
 <script src="lib/operations/subtraction.js"></script>
+<script src="lib/operations/subtraction2.js"></script>
 <script src="lib/operations/intersection.js"></script>
 
 <script src="lib/operations/extrusion.js"></script>
@@ -546,18 +547,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           var result = selections[0].union( operands ); 
         }
 
-        function subtract(selections)
-        {
-          if(selections.length == 0) return;
-          var operands = selections.slice(1);
-          for(var i=0; i<operands.length;i++)
-          {
-            operands[i].parent.remove( operands[i] );
-            //FIXME:should we or should we not delete right hand operands?
-            operands[i] = operands[i].sourceShape;
-          }
-          var result = selections[0].sourceShape.subtract( operands ); 
-        }
         function intersect(selections)
         {
           if(selections.length == 0) return;
@@ -588,9 +577,13 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
               var target = selections[0];
               var oldGeometry = target.geometry.clone();
 
-              result = subtract(selections);
+              //result = subtract(selections);
               operands = this._sourceShapesFromVisuals( selections.slice(1) );
-              operation = new Subtraction(target.sourceShape, oldGeometry, operands ) ;
+              target = target.sourceShape;
+              result = target.subtract( operands );
+              console.log("result of subtraction", result);
+              result= result.renderable;
+              
             break;
             case 'intersect':
               var target = selections[0];
@@ -705,17 +698,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
                 this.selectedObjects=[instance.renderable];
               }
               this.hierarchyRoot.add( instance );
-              
-              
-              
             break;
-            
           }
 
-          {
-            this.fire('newOperation', {msg: operation});
-            return;
-          }
           if(type == 'mirrorX')
           {
           }
@@ -724,6 +709,13 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             this.viewer.addToScene( result );
             var operation = new Extrusion(result, extrudeSettings, shape, result.parent);
             this.fire('newOperation', {msg: operation});
+            this.selectedObjects = [result];//make sure the new item is the selected one
+          }
+          else if (type == 'subtract')
+          {
+            console.log("adding to scene",result);
+            this.hierarchyRoot.add( result.sourceShape );
+            this.viewer.addToScene( result );
             this.selectedObjects = [result];//make sure the new item is the selected one
           }
           else{
