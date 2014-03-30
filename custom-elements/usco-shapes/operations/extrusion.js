@@ -1,3 +1,5 @@
+Command = require('./command');
+
 Extrusion = function (target, value, sourceShape, parentObject)
 {
   Command.call( this );
@@ -23,3 +25,5 @@ Extrusion.prototype.redo = function()
 {
   this.parentObject.add(this.target);
 }
+
+module.exports = Extrusion;

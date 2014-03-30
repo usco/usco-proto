@@ -1,3 +1,5 @@
+Command = require('./command');
+
 Deletion = function (target, parentObject)
 {
   Command.call( this );
@@ -21,3 +23,5 @@ Deletion.prototype.redo = function()
 {
   this.parentObject.remove(this.target);
 }
+
+module.exports = Deletion;

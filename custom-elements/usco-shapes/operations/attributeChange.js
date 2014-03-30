@@ -1,3 +1,5 @@
+Command = require('./command');
+
 AttributeChange = function (target, attrName, oldValue, newValue)
 {
   Command.call( this );
@@ -29,3 +31,5 @@ AttributeChange.prototype.redo = function()
   this.target.properties[this.attrName][2] = this.value;//update( this.newAttributes );
   this.target[this.attrName] = this.value;
 }
+
+module.exports = AttributeChange;

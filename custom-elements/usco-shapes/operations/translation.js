@@ -1,3 +1,5 @@
+Command = require('./command');
+
 Translation = function ( value, target)
 {
   Command.call( this );
@@ -26,3 +28,5 @@ Translation.prototype.redo = function()
 {
     this.target.position.add(this.value);
 }
+
+module.exports = Translation;

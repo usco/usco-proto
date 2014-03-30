@@ -1,3 +1,5 @@
+Command = require('./command');
+
 Rotation = function ( value, target)
 {
   Command.call( this );
@@ -26,3 +28,5 @@ Rotation.prototype.redo = function()
     this.target.rotation.y += this.value.y;
     this.target.rotation.z += this.value.z;
 }
+
+module.exports = Rotation;

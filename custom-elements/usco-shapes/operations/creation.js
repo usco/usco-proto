@@ -1,3 +1,5 @@
+Command = require('./command');
+
 Creation = function (target, parentObject, options)
 {
   Command.call( this );
@@ -36,3 +38,5 @@ Creation.prototype.redo = function()
     this.target.renderable._oldParent.add( this.target.renderable );
   }
 }
+
+module.exports = Creation;

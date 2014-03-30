@@ -1,3 +1,5 @@
+Command = require('./command');
+
 Import = function ( value, target)
 {
   Command.call( this );
@@ -31,3 +33,5 @@ Import.prototype.redo = function()
   //hack
   this.value.renderable.visible = true;
 }
+
+module.exports = Import;

@@ -1,3 +1,5 @@
+Command = require('./command');
+
 Clone = function ( source, target )
 {
   Command.call( this );
@@ -29,3 +31,5 @@ Clone.prototype.redo = function()
   //hack
   this.target.renderable.visible = true;
 }
+
+module.exports = Clone;

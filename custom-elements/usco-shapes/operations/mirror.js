@@ -1,3 +1,5 @@
+Command = require('./command');
+
 Mirror = function ( target, axis)
 {
   Command.call( this );
@@ -21,3 +23,5 @@ Mirror.prototype.redo = function()
 {
     this.target.mirror(this.value);
 }
+
+module.exports = Mirror;

@@ -1,3 +1,5 @@
+Command = require('./command');
+
 Scaling = function ( value, target)
 {
   Command.call( this );
@@ -25,3 +27,5 @@ Scaling.prototype.redo = function()
   this.target.scale.y += this.value.y;
   this.target.scale.z += this.value.z;
 }
+
+module.exports = Scaling;

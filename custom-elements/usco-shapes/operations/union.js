@@ -1,23 +1,24 @@
+Command = require('./command');
+
 //FIXME: HAAACK !
-Intersection = function ( target, originalGeometry, operands)
+Union = function ( target, originalGeometry, operands)
 {
   Command.call( this );
-  this.type = "intersection";
+  this.type = "union";
   this.target = target;
   this.original = originalGeometry;
   this.operands = operands || [];
 
   this._undoBackup = null;
 }
-Intersection.prototype = Object.create( Command.prototype );
-Intersection.prototype.constructor=Intersection;
-Intersection.prototype.clone = function()
+Union.prototype = Object.create( Command.prototype );
+Union.prototype.constructor=Union;
+Union.prototype.clone = function()
 {
-  return new Intersection( this.target, this.original, this.operands);
+  return new Union( this.target, this.original, this.operands);
 }
 
-
-Intersection.prototype.undo = function()
+Union.prototype.undo = function()
 {
   var target = this.target;
   this._undoBackup = target.geometry;
@@ -27,10 +28,12 @@ Intersection.prototype.undo = function()
   target.geometry = this.original;
   target.dispatchEvent( { type: 'shapeChanged' } );
 }
-Intersection.prototype.redo = function()
+Union.prototype.redo = function()
 {
   var target = this.target;
   delete target.__webglInit;
   target.geometry = this._undoBackup;
   target.dispatchEvent( { type: 'shapeChanged' } );
 }
+
+module.exports = Union;

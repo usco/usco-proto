@@ -1,3 +1,5 @@
+Command = require('./command');
+
 //FIXME: HAAACK !
 Subtraction2 = function ( leftOperand, rightOperands, result)
 {
@@ -63,5 +65,6 @@ Subtraction2.prototype.redo = function()
       var op = operands[i].renderable;
       op.parent.remove( op );
   }
-  
 }
+
+module.exports = Subtraction;

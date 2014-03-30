@@ -9,3 +9,5 @@ Command.prototype.clone = function()
 {
   throw new Error("not implemented");
 }
+
+module.exports = Command;
