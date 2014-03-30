@@ -1,4 +1,58 @@
-function collapseOperations(operations)
+function _isValidVector( vector )
+{
+  if(vector instanceof(THREE.Vector3)) //elimination of zero vectors
+  {
+    if(vector.equals(new THREE.Vector3()))
+    {
+      return false;
+    }
+    return true;
+  }
+
+  if(vector instanceof(THREE.Vector2)) //elimination of zero vectors
+  {
+    if(vector.equals(new THREE.Vector2()))
+    {
+      return false;
+    }
+    return true;
+  }
+}
+
+function toTitleCase(str)
+{
+    return str.replace(/\w\S*/g, function(txt){return txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase();});
+}
+
+function uncapitalizeFirstLetter( str )
+{
+  return str.substr(0, 1).toLowerCase() + str.substr(1);
+}
+
+
+////////////
+
+function CodeGenerator()
+{
+  this._lastTarget = null;
+}
+
+CodeGenerator.prototype.generateFromOperations=function(operations)
+{
+  this._lastTarget = null;
+  
+  var collapsedOps = this.collapseOperations( operations );
+  var code = this.generateCodeFromOperationsList( collapsedOps );
+  
+  return code;
+}
+
+/*Collapses a list of operation into an equal but reduced list:
+Multiple translations in a row can be collapsed into a single one
+Multiple rotations in a row can be collapsed into a single one
+Multiple scalings in a row can be collapsed into a single one
+*/
+CodeGenerator.prototype.collapseOperations=function(operations)
 {
   //TODO: add "hardcore/compact mode" that generates matrix operations instead of multiple translate/rotate/scale operations
   var collapsedHistory = [];
@@ -11,14 +65,14 @@ function collapseOperations(operations)
   for( var i=0; i<operations.length;i++)
   {
     var operation = operations[i].clone();
-    console.log("operation.value",operation.value);
+    //console.log("operation.value",operation.value);
     if(prevOperation != null && operation.type == prevOperation.type && operation.target == prevOperation.target && operation.value)
     {
       //console.log("type",operation.type, "value", operation.value.clone().add(prevOperation.value), "target", operation.target);
       //todo use correct operands ("add", "+" etc)
       if(operation.value instanceof(THREE.Vector3) || operation.value instanceof(THREE.Vector2))
       {
-        console.log("updating", prevOperation.value ,"with", operation.value);
+        //console.log("updating", prevOperation.value ,"with", operation.value);
         prevOperation.value.add( operation.value );
       }
       else if (operation.value instanceof(THREE.Euler) )
@@ -42,29 +96,8 @@ function collapseOperations(operations)
   return collapsedHistory;
 }
 
-function _isValidVector( vector )
-{
-  if(vector instanceof(THREE.Vector3)) //elimination of zero vectors
-  {
-    if(vector.equals(new THREE.Vector3()))
-    {
-      return false;
-    }
-    return true;
-  }
 
-  if(vector instanceof(THREE.Vector2)) //elimination of zero vectors
-  {
-    if(vector.equals(new THREE.Vector2()))
-    {
-      return false;
-    }
-    return true;
-  }
-
-}
-
-function getOperationFormatedItemName(operation, attrName)
+CodeGenerator.prototype.getOperationFormatedItemName=function(operation, attrName)
 {
   if(attrName)
   { var attr = operation[attrName];
@@ -74,11 +107,16 @@ function getOperationFormatedItemName(operation, attrName)
     var attr = operation;
   }
   var itemName = attr.name.toLowerCase() || (attr.constructor.name.toLowerCase()  +new String(attr.id));
+  
+  itemName = toTitleCase( itemName );//Capitalize each char after space/tab
+  itemName = itemName.replace(/ /g, '');//remove spaces/tabs
+  itemName = uncapitalizeFirstLetter( itemName );
+  
 
   return itemName;
 }
 
-function generateCodeFromOperation(operation, precision, targetFile, targetScope)
+CodeGenerator.prototype.generateCodeFromOperation=function(operation, precision, targetFile, targetScope)
 {
   var precision = precision || 2;
   var target = operation.target;
@@ -88,9 +126,17 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
   //we apply the operations to the actual object, not its visual representation
   if(target.sourceElement) target = target.sourceElement;
   
-  var targetName = getOperationFormatedItemName(operation, "target"); //(target.constructor.name.toLowerCase() || target.name.toLowerCase()) +new String(target.id);//    this.";//target.name;//@
+  var targetName = this.getOperationFormatedItemName(operation, "target"); //(target.constructor.name.toLowerCase() || target.name.toLowerCase()) +new String(target.id);//    this.";//target.name;//@
   var code = "";
   var lineCap = ";\n";
+  
+  //we are working on a different object, add additional newline
+  if(this._lastTarget != target && this._lastTarget != null)
+  {
+    code += "\n";
+  }
+  this._lastTarget = target;
+  
   //TODO: if translate, rotate etc values are integers, do not display as float, or give the option to do so
   switch(type)
   {
@@ -114,24 +160,24 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
         strValue = strValue.replace(/\"([^"]+)\":/g,"$1:").replace(/\uFFFF/g,"\\\"");
       }
       
-      code += "\nvar "+targetName+" = new "+ type +"("+strValue+")"+lineCap;
+      code += "var "+targetName+" = new "+ type +"("+strValue+")"+lineCap;
       var parentName = "assembly";
-      code += parentName+".add( "+ targetName +" )"+lineCap+"\n";
+      code += parentName+".add( "+ targetName +" )"+lineCap;
     break;
     case "deletion":
       //TODO: how to deal with this ?
     break;
     case "clone":
-      var sourceName = getOperationFormatedItemName(operation, "source");
+      var sourceName = this.getOperationFormatedItemName(operation, "source");
       code += "var " + targetName+"= "+sourceName+".clone()"+lineCap;
     break;
     case "extrusion":
       var type = target.constructor.name || "foo";
-      var sourceShapeName = getOperationFormatedItemName( operation, "sourceShape"  );
+      var sourceShapeName = this.getOperationFormatedItemName( operation, "sourceShape"  );
       var strValue = JSON.stringify(operation.value);
       strValue.replace(/\\"/g,"\uFFFF"); //U+ FFFF
       strValue = strValue.replace(/\"([^"]+)\":/g,"$1:").replace(/\uFFFF/g,"\\\"");
-      code += "var "+targetName+" = "+ sourceShapeName +".extrude("+strValue+")"+lineCap+"\n";
+      code += "var "+targetName+" = "+ sourceShapeName +".extrude("+strValue+")"+lineCap;
     break;
     
     case "rotation":
@@ -142,8 +188,8 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
       if (!("code" in target)){ target.code = ""};
       if(target.name == "Shape2dPointHelper")
       {
-        console.log("we moved a shape2d helper",target.standInFor,target.sourceParent);
-        var sourceParentName =getOperationFormatedItemName( operation, "sourceParent"  );
+        //console.log("we moved a shape2d helper",target.standInFor,target.sourceParent);
+        var sourceParentName =this.getOperationFormatedItemName( operation, "sourceParent"  );
         var id = target.standInFor.index;
         code += sourceParentName+".controlPoints["+ id +"].translate("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+",)"+lineCap;
       }
@@ -163,60 +209,61 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
     break;
     
     case "union":
-      var resultName = getOperationFormatedItemName(operation, "result")
-      var leftOpName = getOperationFormatedItemName(operation, "target")
+      var resultName = this.getOperationFormatedItemName(operation, "result")
+      var leftOpName = this.getOperationFormatedItemName(operation, "target")
       var ops =[];
       for(var i=0;i<operation.operands.length;i++)
       {
         var op = operation.operands[i];
-        var opName = getOperationFormatedItemName(op);
+        var opName = this.getOperationFormatedItemName(op);
         ops.push( opName );
       }
       code += "var " + resultName + "=" + targetName+".union(["+ops.join(",")+"])"+lineCap;
     break;
     case "subtraction":
-      var resultName = getOperationFormatedItemName(operation, "result")
-      var leftOpName = getOperationFormatedItemName(operation, "target")
+      var resultName = this.getOperationFormatedItemName(operation, "result")
+      var leftOpName = this.getOperationFormatedItemName(operation, "target")
       var ops =[];
       for(var i=0;i<operation.operands.length;i++)
       {
         var op = operation.operands[i];
-        var opName = getOperationFormatedItemName(op);
+        var opName = this.getOperationFormatedItemName(op);
         ops.push( opName );
       }
       code += "var " + resultName + "=" + targetName+".subtract(["+ops.join(",")+"])"+lineCap;
     break;
     case "intersection":
-      var resultName = getOperationFormatedItemName(operation, "result")
-      var leftOpName = getOperationFormatedItemName(operation, "target")
+      var resultName = this.getOperationFormatedItemName(operation, "result")
+      var leftOpName = this.getOperationFormatedItemName(operation, "target")
       var ops =[];
       for(var i=0;i<operation.operands.length;i++)
       {
         var op = operation.operands[i];
-        var opName = getOperationFormatedItemName(op);
+        var opName = this.getOperationFormatedItemName(op);
         ops.push( opName );
       }
       code += "var " + resultName + "=" +  targetName+".intersect(["+ops.join(",")+"])"+lineCap;
     break;
   }
+  
   return code;
 }
 
-function generateCodeFromOperations(operations)
+CodeGenerator.prototype.generateCodeFromOperationsList=function(operations)
 {
   var code = "";
   for(var i = 0; i< operations.length;i++)
   {
     var operation = operations[i];
-      code+=generateCodeFromOperation(operation);
+    code += this.generateCodeFromOperation(operation);
   }
   //console.log("code:\n", code);
   return code;
 }
 
+
+
 if(typeof module === "Object")
 {
-  module.exports.generateCodeFromOperations =generateCodeFromOperations;
-  module.exports.generateCodeFromOperation = generateCodeFromOperation;
-  module.exports.collapseOperations = collapseOperations;
+  module.exports.CodeGenerator =CodeGenerator;
 }
