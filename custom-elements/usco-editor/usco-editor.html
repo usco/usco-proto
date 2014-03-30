@@ -29,8 +29,6 @@
 
 <!--code generators and related -->
 <script src="../visual-editor/lib/code-generation/code-generators.js"></script>
-<script src="../visual-editor/lib/code-generation/code-generation-ui.js"></script>
-
 
 <polymer-element name="usco-editor">
 <template>
@@ -155,7 +153,7 @@ Polymer("usco-editor",{
   },
   sourceChanged:function()
   {
-    console.log("source changed", this.source);
+    //console.log("source changed", this.source);
   },
   loginToDB:function()
   {
@@ -165,7 +163,7 @@ Polymer("usco-editor",{
   created:function()
   {
     this.project = {name:"testProject",files:{"foo":"bar"}};
-    console.log("created", this.$);
+    this.codeGenerator = new CodeGenerator();
   },
   ready:function()
   {
@@ -277,16 +275,13 @@ Polymer("usco-editor",{
      console.log("generating code from history");
      //generation scope priority order
      var generationScope = this.visualEditor.selectedObject || this.visualEditor.activeRoot || this.visualEditor.hierarchyRoot;
-     var testSource = updateSelectionCode(generationScope,this.commandManager.undos);
-     //this.source = updateSelectionCode(this.selectedObject,this.commandManager.undos);
+     //var testSource = updateSelectionCode(generationScope,this.commandManager.undos);
+     var testSource = this.codeGenerator.generateFromOperations( this.commandManager.undos );
      this.source = testSource;
   },
   generateFromCode:function()
   {
-    console.log("generating from code",this.altSource);
-    
-    var result = eval(this.altSource)
-    console.log("result", result);
+    //console.log("generating from code",this.altSource);
   },
   reqScreenshot:function()
   {
