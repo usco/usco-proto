@@ -73,7 +73,7 @@ function getOperationFormatedItemName(operation, attrName)
   {
     var attr = operation;
   }
-  var itemName = (attr.constructor.name.toLowerCase() || attr.name.toLowerCase()) +new String(attr.id);
+  var itemName = attr.name.toLowerCase() || (attr.constructor.name.toLowerCase()  +new String(attr.id));
 
   return itemName;
 }
