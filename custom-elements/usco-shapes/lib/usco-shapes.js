@@ -2443,7 +2443,7 @@ Subtraction2.prototype.redo = function()
   }
 }
 
-module.exports = Subtraction;
+module.exports = Subtraction2;
 
 },{"./command":14}],25:[function(require,module,exports){
 Command = require('./command');

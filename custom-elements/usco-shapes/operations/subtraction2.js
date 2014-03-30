@@ -51,8 +51,6 @@ Subtraction2.prototype.redo = function()
   target.geometry = this._undoBackup.clone();//FIXME: seriously ? how many clones do we need ?
   
   target.updateRenderables();*/
-
-
   var leftOpRenderable = this.target.renderable;
   var leftOpRenderableParent = leftOpRenderable.parent;
   leftOpRenderableParent.remove( leftOpRenderable);
@@ -67,4 +65,4 @@ Subtraction2.prototype.redo = function()
   }
 }
 
-module.exports = Subtraction;
+module.exports = Subtraction2;
