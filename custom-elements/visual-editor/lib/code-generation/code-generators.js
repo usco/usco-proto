@@ -64,6 +64,20 @@ function _isValidVector( vector )
 
 }
 
+function getOperationFormatedItemName(operation, attrName)
+{
+  if(attrName)
+  { var attr = operation[attrName];
+  }
+  else
+  {
+    var attr = operation;
+  }
+  var itemName = (attr.constructor.name.toLowerCase() || attr.name.toLowerCase()) +new String(attr.id);
+
+  return itemName;
+}
+
 function generateCodeFromOperation(operation, precision, targetFile, targetScope)
 {
   var precision = precision || 2;
@@ -74,7 +88,7 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
   //we apply the operations to the actual object, not its visual representation
   if(target.sourceElement) target = target.sourceElement;
   
-  var targetName = (target.constructor.name.toLowerCase() || target.name.toLowerCase()) +new String(target.id);//    this.";//target.name;//@
+  var targetName = getOperationFormatedItemName(operation, "target"); //(target.constructor.name.toLowerCase() || target.name.toLowerCase()) +new String(target.id);//    this.";//target.name;//@
   var code = "";
   var lineCap = ";\n";
   //TODO: if translate, rotate etc values are integers, do not display as float, or give the option to do so
@@ -100,7 +114,6 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
         strValue = strValue.replace(/\"([^"]+)\":/g,"$1:").replace(/\uFFFF/g,"\\\"");
       }
       
-      
       code += "\nvar "+targetName+" = new "+ type +"("+strValue+")"+lineCap;
       var parentName = "assembly";
       code += parentName+".add( "+ targetName +" )"+lineCap+"\n";
@@ -109,13 +122,12 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
       //TODO: how to deal with this ?
     break;
     case "clone":
-      var source = operation.source;
-      var sourceName = source.name.toLowerCase()+new String(source.id);
+      var sourceName = getOperationFormatedItemName(operation, "source");
       code += "var " + targetName+"= "+sourceName+".clone()"+lineCap;
     break;
     case "extrusion":
       var type = target.constructor.name || "foo";
-      var sourceShapeName = operation.sourceShape.name.toLowerCase()+new String(operation.sourceShape.id);
+      var sourceShapeName = getOperationFormatedItemName( operation, "sourceShape"  );
       var strValue = JSON.stringify(operation.value);
       strValue.replace(/\\"/g,"\uFFFF"); //U+ FFFF
       strValue = strValue.replace(/\"([^"]+)\":/g,"$1:").replace(/\uFFFF/g,"\\\"");
@@ -131,7 +143,7 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
       if(target.name == "Shape2dPointHelper")
       {
         console.log("we moved a shape2d helper",target.standInFor,target.sourceParent);
-        var sourceParentName = target.sourceParent.name.toLowerCase()+target.sourceParent.id;
+        var sourceParentName =getOperationFormatedItemName( operation, "sourceParent"  );
         var id = target.standInFor.index;
         code += sourceParentName+".controlPoints["+ id +"].translate("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+",)"+lineCap;
       }
@@ -151,38 +163,43 @@ function generateCodeFromOperation(operation, precision, targetFile, targetScope
     break;
     
     case "union":
+      var resultName = getOperationFormatedItemName(operation, "result")
+      var leftOpName = getOperationFormatedItemName(operation, "target")
       var ops =[];
       for(var i=0;i<operation.operands.length;i++)
       {
         var op = operation.operands[i];
-        var opName = op.name.toLowerCase()+new String(op.id);
+        var opName = getOperationFormatedItemName(op);
         ops.push( opName );
       }
-      code += targetName+".union(["+ops.join(",")+"])"+lineCap;
+      code += "var " + resultName + "=" + targetName+".union(["+ops.join(",")+"])"+lineCap;
     break;
     case "subtraction":
+      var resultName = getOperationFormatedItemName(operation, "result")
+      var leftOpName = getOperationFormatedItemName(operation, "target")
       var ops =[];
       for(var i=0;i<operation.operands.length;i++)
       {
         var op = operation.operands[i];
-        var opName = op.name.toLowerCase()+new String(op.id);
+        var opName = getOperationFormatedItemName(op);
         ops.push( opName );
       }
-      code += targetName+".subtract(["+ops.join(",")+"])"+lineCap;
+      code += "var " + resultName + "=" + targetName+".subtract(["+ops.join(",")+"])"+lineCap;
     break;
     case "intersection":
+      var resultName = getOperationFormatedItemName(operation, "result")
+      var leftOpName = getOperationFormatedItemName(operation, "target")
       var ops =[];
       for(var i=0;i<operation.operands.length;i++)
       {
         var op = operation.operands[i];
-        var opName = op.name.toLowerCase()+new String(op.id);
+        var opName = getOperationFormatedItemName(op);
         ops.push( opName );
       }
-      code += targetName+".intersect(["+ops.join(",")+"])"+lineCap;
+      code += "var " + resultName + "=" +  targetName+".intersect(["+ops.join(",")+"])"+lineCap;
     break;
   }
   return code;
-  //target.code = code;
 }
 
 function generateCodeFromOperations(operations)
