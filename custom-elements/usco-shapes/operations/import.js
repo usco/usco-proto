@@ -11,7 +11,7 @@ Import.prototype = Object.create( Command.prototype );
 Import.prototype.constructor=Import;
 Import.prototype.clone = function()
 {
-  return new Import( this.value.clone(), this.target);
+  return new Import( this.value, this.target);
 }
 /*Not sure about this
 Import.prototype.execute = function(value)

@@ -7,7 +7,6 @@ Subtraction2 = function ( leftOperand, rightOperands, result)
   this.type = "subtraction";
   this.target = leftOperand;
   this.result = result ;
-  //this.original = originalGeometry;
   this.operands = rightOperands || [];
 
   this._undoBackup = null;
@@ -17,7 +16,7 @@ Subtraction2.prototype = Object.create( Command.prototype );
 Subtraction2.prototype.constructor=Subtraction2;
 Subtraction2.prototype.clone = function()
 {
-  return new Subtraction2( this.target, this.operands, this.result);
+  return new Subtraction2( this.target, this.operands, this.result );
 }
   
 

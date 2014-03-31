@@ -23,7 +23,9 @@ AttributeChange.prototype.undo = function()
   console.log("undo attrib change", this.value, this.oldValue, this.attrName);
   this.target.properties[this.attrName][2] = this.oldValue;//update( this.oldAttributes );
   this.target[this.attrName] = this.oldValue;
-  //this.target.attributeChanged(this.attrName,
+  
+  //this.target.updateRenderables();
+  //this.target.attributeChanged(this.attrName,this.oldValue, this.value ); 
 }
 
 AttributeChange.prototype.redo = function()
