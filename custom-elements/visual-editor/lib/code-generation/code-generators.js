@@ -171,6 +171,10 @@ CodeGenerator.prototype.generateCodeFromOperation=function(operation, precision,
       var sourceName = this.getOperationFormatedItemName(operation, "source");
       code += "var " + targetName+"= "+sourceName+".clone()"+lineCap;
     break;
+    case "import":
+      var destinationName = this.getOperationFormatedItemName(operation, "value");
+      code += "var " + destinationName+'= import("'+targetName+'")'+lineCap;
+    break;
     case "extrusion":
       var type = target.constructor.name || "foo";
       var sourceShapeName = this.getOperationFormatedItemName( operation, "sourceShape"  );
