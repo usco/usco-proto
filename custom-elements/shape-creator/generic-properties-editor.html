@@ -6,6 +6,42 @@
       value:null,
       description:"",
       locked:false,
+      
+      _oldValue :null,
+      _timeout: null,
+      
+      valueChanged:function(oldValue,newValue)
+      {
+        this._debounceAndSet(oldValue);
+      },
+      //helpers
+      _debounceAndSet:function(oldValue)
+      {
+        //debouncing
+        if(oldValue != null )
+        {  
+          if (this._timeout) {
+					  window.clearTimeout(this._timeout);
+				  }
+				
+				  this._timeoutValue = 100;
+				  if(!(this._oldValue))
+				  {
+				    this._oldValue = oldValue;
+				    this._timeoutValue = 250;
+				  }
+				  var self = this;
+			    this._timeout = window.setTimeout(function() {
+				    self._timeout = null;
+				    
+				    var rOldValue = self._oldValue;
+				    self._oldValue = null;
+				    self._setAttributeValue();
+
+				  },this._timeoutValue);
+        }
+      },
+      
     });
   </script>
 </polymer-element>
@@ -18,10 +54,10 @@
   </template>
   <script>
     Polymer("boolean-editor",{
-      valueChanged:function(oldValue,newValue)
+      _setAttributeValue:function()
       {
-        if(oldValue != null ) this.selection.attributeChanged(this.propName, oldValue, this.value);
-      },
+          this.selection.attributeChanged(this.propName, this._oldValue, this.value);
+      }
     });
   </script>
 </polymer-element>
@@ -39,11 +75,10 @@
   </template>
   <script>
     Polymer("number-editor",{
-      valueChanged:function(oldValue,newValue)
+      _setAttributeValue:function()
       {
-        console.log("value changed", oldValue, newValue);
-        if(oldValue != null ) this.selection.attributeChanged(this.propName, Number(oldValue), Number(this.value));
-      },
+          this.selection.attributeChanged(this.propName, Number(this._oldValue), Number(this.value));
+      }
     });
   </script>
 </polymer-element>
@@ -56,10 +91,10 @@
   </template>
   <script>
     Polymer("text-editor",{
-      valueChanged:function(oldValue,newValue)
+      _setAttributeValue:function()
       {
-        if(oldValue != null ) this.selection.attributeChanged(this.propName, oldValue, this.value );
-      },
+          this.selection.attributeChanged(this.propName, this._oldValue, this.value);
+      }
     });
   </script>
 </polymer-element>
@@ -69,7 +104,8 @@
     <template>
       <style>
       .container{
-        position:absolute;left:20%;bottom:10px;display:block;width:300px
+        position:absolute;left:20%;bottom:10px;display:block;width:300px;
+        background-color: #ff6600;
       }
       .listItem{
         border:1px;border-color:black;display: list-item;
@@ -113,10 +149,9 @@ font-weight: bold;
               <input type="select"></input><button>Add property</button>
             </div>
           </div>
-        </template>
-      </div>
-       <!--
-       <div id="selectionInfo" style="position:absolute;right:10px;bottom:80px;z-index:9">
+          
+          <!--TODO: hide this behind a flag ??-->
+       <div id="selectionInfo">
           x:<input type="number" value="{{selection.sourceShape.position.x}}"></input>
           y:<input type="number" value="{{selection.sourceShape.position.y}}"></input>
           z:<input type="number" value="{{selection.sourceShape.position.z}}"></input>
@@ -133,10 +168,14 @@ font-weight: bold;
           w:<input type="number" value="{{selection.boundingBox.max.x - selection.boundingBox.min.x}}"></input>
           d:<input type="number" value="{{selection.boundingBox.max.y - selection.boundingBox.min.y}}"></input>
           h:<input type="number" value="{{selection.boundingBox.max.z - selection.boundingBox.min.z}}"></input>
-        </div>-->
-        
-        <material-editor selection="{{_selection}}"> </material-editor>
-
+          
+          <material-editor selection="{{selection}}"> </material-editor>
+          <br>
+          <input type="text" _value="{{selection.sourceShape.name}}"></input>
+        </div>
+          
+        </template>
+      </div>
     </template>
     <script>
       Polymer("generic-properties-editor",{
