@@ -1135,6 +1135,9 @@ Part.prototype.generateRenderables=function()
 	this.renderable._rotation._quaternion = this.quaternion;
 	this.renderable._quaternion._euler = this.rotation;
 	
+	this.renderable.recieveShadows = true;
+	this.renderable.castShadows = true;
+	
 	
 	for(var i=0;i<this.connectors.length;i++)
 	{
@@ -1232,7 +1235,7 @@ Part.prototype.Scale=function( amount )
 
 Part.prototype.union=function(objects)
 {
-  this._bsp = new ThreeBSP(this);
+  /*this._bsp = new ThreeBSP(this);
   for(var i=0;i<objects.length;i++)
   {
     var object = objects[i];
@@ -1248,28 +1251,52 @@ Part.prototype.union=function(objects)
     this.geometry.computeCentroids()
     this.geometry.computeFaceNormals();
     this.geometry.computeBoundingSphere();
-  }
-}
-
-Part.prototype.intersect=function(objects)
-{
-  this._bsp = new ThreeBSP(this);
+  }*/
+  var newPart = new Part();
+  newPart.position = this.position.clone();
+  newPart.scale    = this.scale.clone();
+  newPart.rotation = this.rotation.clone();
+  newPart.geometry = this.geometry.clone();
+  
+  newPart._bsp = new ThreeBSP(newPart);
+  var oldGeometry = this.geometry.clone();
+  
   for(var i=0;i<objects.length;i++)
   {
     var object = objects[i];
-    object._bsp = new ThreeBSP(object);
-    this._bsp = new ThreeBSP( this ) ;
-    this._bsp = this._bsp.intersect( object._bsp );
-    //TODO : only generate geometry on final pass ie make use of csg tree or processing tree/ast
-    delete this.__webglInit;
-    this.geometry.dispose();
-    this.geometry = this._bsp.toGeometry();
-    this.geometry.computeVertexNormals()
-    this.geometry.computeBoundingBox()
-    this.geometry.computeCentroids()
-    this.geometry.computeFaceNormals();
-    this.geometry.computeBoundingSphere();
+    // TODO: find a way to do this without regenerating the bsp   
+     object._bsp = new ThreeBSP(object);
+     newPart._bsp = new ThreeBSP( newPart ) ;
+     newPart._bsp = newPart._bsp.union( object._bsp );
+     //TODO : only generate geometry on final pass ie make use of csg tree or processing tree/ast
+     newPart.geometry.dispose();
+     newPart.geometry = newPart._bsp.toGeometry();
+     newPart.geometry.computeVertexNormals()
+     newPart.geometry.computeBoundingBox()
+     newPart.geometry.computeCentroids()
+     newPart.geometry.computeFaceNormals();
+     newPart.geometry.computeBoundingSphere();
+  }  
+  newPart.updateRenderables(); 
+  
+  var operands = objects;
+  //var operation = new Subtraction(newPart, oldGeometry, operands ) ;
+  //var operation = new Subtraction2(this, operands, newPart);
+  var operation = new Union( this, operands, newPart );
+  newPart.operations.push ( operation );
+  
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
+  
+  //remove operands from view
+  this.renderable.parent.remove( this.renderable );
+  for(var i = 0; i < operands.length;i++)
+  {
+      var op = operands[i].renderable;
+      op.parent.remove( op );
   }
+  
+  return newPart;
 }
 
 Part.prototype.subtract=function(objects)
@@ -1309,7 +1336,11 @@ Part.prototype.subtract=function(objects)
   
   return this;*/
   var newPart = new Part();
+  newPart.position = this.position.clone();
+  newPart.scale    = this.scale.clone();
+  newPart.rotation = this.rotation.clone();
   newPart.geometry = this.geometry.clone();
+
   
   newPart._bsp = new ThreeBSP(newPart);
   var oldGeometry = this.geometry.clone();
@@ -1349,8 +1380,74 @@ Part.prototype.subtract=function(objects)
   }
   
   return newPart;
-  
 }
+
+Part.prototype.intersect=function(objects)
+{
+  /*this._bsp = new ThreeBSP(this);
+  for(var i=0;i<objects.length;i++)
+  {
+    var object = objects[i];
+    object._bsp = new ThreeBSP(object);
+    this._bsp = new ThreeBSP( this ) ;
+    this._bsp = this._bsp.intersect( object._bsp );
+    //TODO : only generate geometry on final pass ie make use of csg tree or processing tree/ast
+    delete this.__webglInit;
+    this.geometry.dispose();
+    this.geometry = this._bsp.toGeometry();
+    this.geometry.computeVertexNormals()
+    this.geometry.computeBoundingBox()
+    this.geometry.computeCentroids()
+    this.geometry.computeFaceNormals();
+    this.geometry.computeBoundingSphere();
+  }*/
+  
+  var newPart = new Part();
+  newPart.position = this.position.clone();
+  newPart.scale    = this.scale.clone();
+  newPart.rotation = this.rotation.clone();
+  newPart.geometry = this.geometry.clone();
+  
+  newPart._bsp = new ThreeBSP(newPart);
+  var oldGeometry = this.geometry.clone();
+  
+  for(var i=0;i<objects.length;i++)
+  {
+    var object = objects[i];
+    // TODO: find a way to do this without regenerating the bsp   
+     object._bsp = new ThreeBSP(object);
+     newPart._bsp = new ThreeBSP( newPart ) ;
+     newPart._bsp = newPart._bsp.intersect( object._bsp );
+     //TODO : only generate geometry on final pass ie make use of csg tree or processing tree/ast
+     newPart.geometry.dispose();
+     newPart.geometry = newPart._bsp.toGeometry();
+     newPart.geometry.computeVertexNormals()
+     newPart.geometry.computeBoundingBox()
+     newPart.geometry.computeCentroids()
+     newPart.geometry.computeFaceNormals();
+     newPart.geometry.computeBoundingSphere();
+  }  
+  newPart.updateRenderables(); 
+  
+  var operands = objects;
+  var operation = new Intersection( this, operands, newPart );
+  newPart.operations.push ( operation );
+  
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
+  
+  //remove operands from view
+  this.renderable.parent.remove( this.renderable );
+  for(var i = 0; i < operands.length;i++)
+  {
+      var op = operands[i].renderable;
+      op.parent.remove( op );
+  }
+  
+  return newPart;
+}
+
+
 
 module.exports = Part
 
@@ -2004,7 +2101,9 @@ AttributeChange.prototype.undo = function()
   console.log("undo attrib change", this.value, this.oldValue, this.attrName);
   this.target.properties[this.attrName][2] = this.oldValue;//update( this.oldAttributes );
   this.target[this.attrName] = this.oldValue;
-  //this.target.attributeChanged(this.attrName,
+  
+  this.target.updateRenderables();
+  //this.target.attributeChanged(this.attrName,this.oldValue, this.value ); 
 }
 
 AttributeChange.prototype.redo = function()
@@ -2185,7 +2284,7 @@ Import.prototype = Object.create( Command.prototype );
 Import.prototype.constructor=Import;
 Import.prototype.clone = function()
 {
-  return new Import( this.value.clone(), this.target);
+  return new Import( this.value, this.target);
 }
 /*Not sure about this
 Import.prototype.execute = function(value)
@@ -2214,40 +2313,54 @@ module.exports = Import;
 Command = require('./command');
 
 //FIXME: HAAACK !
-Intersection = function ( target, originalGeometry, operands)
+Intersection = function ( leftOperand, rightOperands, result )
 {
   Command.call( this );
   this.type = "intersection";
-  this.target = target;
-  this.original = originalGeometry;
-  this.operands = operands || [];
-
-  this._undoBackup = null;
+  this.target = leftOperand;
+  this.result = result ;
+  this.operands = rightOperands || [];
 }
 Intersection.prototype = Object.create( Command.prototype );
 Intersection.prototype.constructor=Intersection;
 Intersection.prototype.clone = function()
 {
-  return new Intersection( this.target, this.original, this.operands);
+  return new Intersection( this.target, this.operands, this.result );
 }
-
 
 Intersection.prototype.undo = function()
 {
-  var target = this.target;
-  this._undoBackup = target.geometry;
-  var pos = target.position.clone();
-
-  delete target.__webglInit;
-  target.geometry = this.original;
-  target.dispatchEvent( { type: 'shapeChanged' } );
+  var resRenderable = this.result.renderable;
+  var resRenderableParent = resRenderable.parent;
+  resRenderableParent.remove( resRenderable ) ;
+  
+  //re-add operands to view
+  var leftOpRenderable = this.target.renderable;
+  resRenderableParent.add( leftOpRenderable );
+  
+  var operands = this.operands;
+  for(var i = 0; i < operands.length;i++)
+  {
+      var op = operands[i].renderable;
+      resRenderableParent.add( op );
+  }
 }
+
 Intersection.prototype.redo = function()
 {
-  var target = this.target;
-  delete target.__webglInit;
-  target.geometry = this._undoBackup;
-  target.dispatchEvent( { type: 'shapeChanged' } );
+  var leftOpRenderable = this.target.renderable;
+  var leftOpRenderableParent = leftOpRenderable.parent;
+  leftOpRenderableParent.remove( leftOpRenderable);
+  
+  leftOpRenderableParent.add(this.result.renderable);
+  
+  var operands = this.operands;
+  for(var i = 0; i < operands.length;i++)
+  {
+      var op = operands[i].renderable;
+      op.parent.remove( op );
+  } 
+  //target.dispatchEvent( { type: 'shapeChanged' } );
 }
 
 module.exports = Intersection;
@@ -2383,7 +2496,6 @@ Subtraction2 = function ( leftOperand, rightOperands, result)
   this.type = "subtraction";
   this.target = leftOperand;
   this.result = result ;
-  //this.original = originalGeometry;
   this.operands = rightOperands || [];
 
   this._undoBackup = null;
@@ -2393,7 +2505,7 @@ Subtraction2.prototype = Object.create( Command.prototype );
 Subtraction2.prototype.constructor=Subtraction2;
 Subtraction2.prototype.clone = function()
 {
-  return new Subtraction2( this.target, this.operands, this.result);
+  return new Subtraction2( this.target, this.operands, this.result );
 }
   
 
@@ -2427,8 +2539,6 @@ Subtraction2.prototype.redo = function()
   target.geometry = this._undoBackup.clone();//FIXME: seriously ? how many clones do we need ?
   
   target.updateRenderables();*/
-
-
   var leftOpRenderable = this.target.renderable;
   var leftOpRenderableParent = leftOpRenderable.parent;
   leftOpRenderableParent.remove( leftOpRenderable);
@@ -2482,40 +2592,56 @@ module.exports = Translation;
 },{"./command":14}],26:[function(require,module,exports){
 Command = require('./command');
 
-//FIXME: HAAACK !
-Union = function ( target, originalGeometry, operands)
+//FIXME: HAAACK !, should perhaps be closer to esprima node
+/*target : result
+
+*/
+Union = function ( leftOperand, rightOperands, result )
 {
   Command.call( this );
   this.type = "union";
-  this.target = target;
-  this.original = originalGeometry;
-  this.operands = operands || [];
-
-  this._undoBackup = null;
+  this.target = leftOperand;
+  this.result = result ;
+  this.operands = rightOperands || [];
 }
 Union.prototype = Object.create( Command.prototype );
 Union.prototype.constructor=Union;
 Union.prototype.clone = function()
 {
-  return new Union( this.target, this.original, this.operands);
+  return new Union( this.target, this.operands, this.result );
 }
 
 Union.prototype.undo = function()
 {
-  var target = this.target;
-  this._undoBackup = target.geometry;
-  var pos = target.position.clone();
-
-  delete target.__webglInit;
-  target.geometry = this.original;
-  target.dispatchEvent( { type: 'shapeChanged' } );
+  var resRenderable = this.result.renderable;
+  var resRenderableParent = resRenderable.parent;
+  resRenderableParent.remove( resRenderable ) ;
+  
+  //re-add operands to view
+  var leftOpRenderable = this.target.renderable;
+  resRenderableParent.add( leftOpRenderable );
+  
+  var operands = this.operands;
+  for(var i = 0; i < operands.length;i++)
+  {
+      var op = operands[i].renderable;
+      resRenderableParent.add( op );
+  }
 }
 Union.prototype.redo = function()
 {
-  var target = this.target;
-  delete target.__webglInit;
-  target.geometry = this._undoBackup;
-  target.dispatchEvent( { type: 'shapeChanged' } );
+  var leftOpRenderable = this.target.renderable;
+  var leftOpRenderableParent = leftOpRenderable.parent;
+  leftOpRenderableParent.remove( leftOpRenderable);
+  
+  leftOpRenderableParent.add(this.result.renderable);
+  
+  var operands = this.operands;
+  for(var i = 0; i < operands.length;i++)
+  {
+      var op = operands[i].renderable;
+      op.parent.remove( op );
+  }
 }
 
 module.exports = Union;

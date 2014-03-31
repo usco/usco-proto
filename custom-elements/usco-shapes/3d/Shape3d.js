@@ -78,6 +78,9 @@ Part.prototype.generateRenderables=function()
 	this.renderable._rotation._quaternion = this.quaternion;
 	this.renderable._quaternion._euler = this.rotation;
 	
+	this.renderable.recieveShadows = true;
+	this.renderable.castShadows = true;
+	
 	
 	for(var i=0;i<this.connectors.length;i++)
 	{
@@ -175,7 +178,7 @@ Part.prototype.Scale=function( amount )
 
 Part.prototype.union=function(objects)
 {
-  this._bsp = new ThreeBSP(this);
+  /*this._bsp = new ThreeBSP(this);
   for(var i=0;i<objects.length;i++)
   {
     var object = objects[i];
@@ -191,28 +194,52 @@ Part.prototype.union=function(objects)
     this.geometry.computeCentroids()
     this.geometry.computeFaceNormals();
     this.geometry.computeBoundingSphere();
-  }
-}
-
-Part.prototype.intersect=function(objects)
-{
-  this._bsp = new ThreeBSP(this);
+  }*/
+  var newPart = new Part();
+  newPart.position = this.position.clone();
+  newPart.scale    = this.scale.clone();
+  newPart.rotation = this.rotation.clone();
+  newPart.geometry = this.geometry.clone();
+  
+  newPart._bsp = new ThreeBSP(newPart);
+  var oldGeometry = this.geometry.clone();
+  
   for(var i=0;i<objects.length;i++)
   {
     var object = objects[i];
-    object._bsp = new ThreeBSP(object);
-    this._bsp = new ThreeBSP( this ) ;
-    this._bsp = this._bsp.intersect( object._bsp );
-    //TODO : only generate geometry on final pass ie make use of csg tree or processing tree/ast
-    delete this.__webglInit;
-    this.geometry.dispose();
-    this.geometry = this._bsp.toGeometry();
-    this.geometry.computeVertexNormals()
-    this.geometry.computeBoundingBox()
-    this.geometry.computeCentroids()
-    this.geometry.computeFaceNormals();
-    this.geometry.computeBoundingSphere();
+    // TODO: find a way to do this without regenerating the bsp   
+     object._bsp = new ThreeBSP(object);
+     newPart._bsp = new ThreeBSP( newPart ) ;
+     newPart._bsp = newPart._bsp.union( object._bsp );
+     //TODO : only generate geometry on final pass ie make use of csg tree or processing tree/ast
+     newPart.geometry.dispose();
+     newPart.geometry = newPart._bsp.toGeometry();
+     newPart.geometry.computeVertexNormals()
+     newPart.geometry.computeBoundingBox()
+     newPart.geometry.computeCentroids()
+     newPart.geometry.computeFaceNormals();
+     newPart.geometry.computeBoundingSphere();
+  }  
+  newPart.updateRenderables(); 
+  
+  var operands = objects;
+  //var operation = new Subtraction(newPart, oldGeometry, operands ) ;
+  //var operation = new Subtraction2(this, operands, newPart);
+  var operation = new Union( this, operands, newPart );
+  newPart.operations.push ( operation );
+  
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
+  
+  //remove operands from view
+  this.renderable.parent.remove( this.renderable );
+  for(var i = 0; i < operands.length;i++)
+  {
+      var op = operands[i].renderable;
+      op.parent.remove( op );
   }
+  
+  return newPart;
 }
 
 Part.prototype.subtract=function(objects)
@@ -252,7 +279,11 @@ Part.prototype.subtract=function(objects)
   
   return this;*/
   var newPart = new Part();
+  newPart.position = this.position.clone();
+  newPart.scale    = this.scale.clone();
+  newPart.rotation = this.rotation.clone();
   newPart.geometry = this.geometry.clone();
+
   
   newPart._bsp = new ThreeBSP(newPart);
   var oldGeometry = this.geometry.clone();
@@ -292,7 +323,73 @@ Part.prototype.subtract=function(objects)
   }
   
   return newPart;
-  
 }
+
+Part.prototype.intersect=function(objects)
+{
+  /*this._bsp = new ThreeBSP(this);
+  for(var i=0;i<objects.length;i++)
+  {
+    var object = objects[i];
+    object._bsp = new ThreeBSP(object);
+    this._bsp = new ThreeBSP( this ) ;
+    this._bsp = this._bsp.intersect( object._bsp );
+    //TODO : only generate geometry on final pass ie make use of csg tree or processing tree/ast
+    delete this.__webglInit;
+    this.geometry.dispose();
+    this.geometry = this._bsp.toGeometry();
+    this.geometry.computeVertexNormals()
+    this.geometry.computeBoundingBox()
+    this.geometry.computeCentroids()
+    this.geometry.computeFaceNormals();
+    this.geometry.computeBoundingSphere();
+  }*/
+  
+  var newPart = new Part();
+  newPart.position = this.position.clone();
+  newPart.scale    = this.scale.clone();
+  newPart.rotation = this.rotation.clone();
+  newPart.geometry = this.geometry.clone();
+  
+  newPart._bsp = new ThreeBSP(newPart);
+  var oldGeometry = this.geometry.clone();
+  
+  for(var i=0;i<objects.length;i++)
+  {
+    var object = objects[i];
+    // TODO: find a way to do this without regenerating the bsp   
+     object._bsp = new ThreeBSP(object);
+     newPart._bsp = new ThreeBSP( newPart ) ;
+     newPart._bsp = newPart._bsp.intersect( object._bsp );
+     //TODO : only generate geometry on final pass ie make use of csg tree or processing tree/ast
+     newPart.geometry.dispose();
+     newPart.geometry = newPart._bsp.toGeometry();
+     newPart.geometry.computeVertexNormals()
+     newPart.geometry.computeBoundingBox()
+     newPart.geometry.computeCentroids()
+     newPart.geometry.computeFaceNormals();
+     newPart.geometry.computeBoundingSphere();
+  }  
+  newPart.updateRenderables(); 
+  
+  var operands = objects;
+  var operation = new Intersection( this, operands, newPart );
+  newPart.operations.push ( operation );
+  
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
+  
+  //remove operands from view
+  this.renderable.parent.remove( this.renderable );
+  for(var i = 0; i < operands.length;i++)
+  {
+      var op = operands[i].renderable;
+      op.parent.remove( op );
+  }
+  
+  return newPart;
+}
+
+
 
 module.exports = Part
