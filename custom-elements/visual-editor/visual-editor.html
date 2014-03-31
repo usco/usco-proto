@@ -4,7 +4,6 @@
 
 <link rel="import" href="../../components/usco-polymer-three-js/three-js.html">
 <link rel="import" href="../shape-creator/shape-creator.html">
-<!--<link rel="import" href="../shape-creator/text-editor.html">-->
 <link rel="import" href="../shape-creator/properties-editor.html">
 <link rel="import" href="../shape-creator/generic-properties-editor.html">
 <link rel="import" href="../mesh-exporter/mesh-exporter.html">
@@ -22,7 +21,6 @@
 <link rel="import" href="./sub-elements/fx/test-fx.html">-->
 
 <script src="lib/code-generation/class-creator.js"></script>
-
 <script src="lib/transformControls.js"></script>
 
 <!-- <script src="lib/shapes/THREECSG.js"></script>
@@ -40,7 +38,7 @@
 
 <script src="lib/shapes/BufferGeometryUtils.js"></script> -->
 
-<script src="../usco-shapes/lib/usco-shapes.js">
+<script src="../usco-shapes/lib/usco-shapes.js"></script>
 
 <script src="lib/helpers/parent-child-links-helper.js"></script>
 <script src="lib/helpers/linked-clone-helper.js"></script>
@@ -187,13 +185,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     selectedObjects:null,
     selectedObject:null,//first or single selection
 
-    source:"//testing\n",
-    altSource:"",
-    
     gridSettings:{step:10},
     cursorSettings:{snapToGrid:false,snapTransform:true},
     transformSettings:{translateStep:10, rotateStep:45, scaleStep:0.1},
-    
     
      observe: {
       'gridSettings.step': 'transformSettingsChanged',
@@ -336,9 +330,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           
         if(event.target.object.name == "Shape2dPointHelper")
         {
-          if(this.selectedObjects.length>0 && this.selectedObjects[0].parent.sourceElement)
+          if(this.selectedObjects.length>0 && this.selectedObjects[0].parent.sourceShape)
           {
-            this.selectedObjects[0].parent.sourceElement.update();
+            this.selectedObjects[0].parent.sourceShape.update();
           }
         }
         //FIXME: horrible hack !!! transform is not always a translation!!
@@ -353,9 +347,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         console.log("object transforming",event.target.object.name);
         if(event.target.object.name == "Shape2dPointHelper")
         {
-          if(this.selectedObjects.length>0 && this.selectedObjects[0].parent.sourceElement)
+          if(this.selectedObjects.length>0 && this.selectedObjects[0].parent.sourceShape)
           {
-            this.selectedObjects[0].parent.sourceElement.update();
+            this.selectedObjects[0].parent.sourceShape.update();
           }
         }
         
@@ -521,20 +515,6 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         var type= event.detail.type;
         var selections = this.selectedObjects;
 
-        function union(selections)
-        {
-          if(selections.length == 0) return;
-          var operands = selections.slice(1);
-          var result = selections[0].union( operands ); 
-        }
-
-        function intersect(selections)
-        {
-          if(selections.length == 0) return;
-          var operands = selections.slice(1);
-          var result = selections[0].intersect( operands ); 
-        }
-
         if(type)
         {
           var result = null;
@@ -549,31 +529,26 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
           
             case 'union':
               var target = selections[0];
-              var oldGeometry = target.geometry.clone();
+              operands = this._sourceShapesFromVisuals( selections.slice(1) );
+              target = target.sourceShape;
+              result = target.union( operands );
+              result= result.renderable;
 
-              result = union( selections );
-              operation = new Union(target, oldGeometry, selections.slice(1));
             break;
             case 'subtract':
               var target = selections[0];
-              var oldGeometry = target.geometry.clone();
-
-              //result = subtract(selections);
               operands = this._sourceShapesFromVisuals( selections.slice(1) );
               target = target.sourceShape;
               result = target.subtract( operands );
-              console.log("result of subtraction", result);
               result= result.renderable;
-              
             break;
             case 'intersect':
               var target = selections[0];
-              var oldGeometry = target.geometry.clone();
-
-              result = intersect(selections);
-              operation = new Intersection(target, oldGeometry, selections.slice(1)) ;
+              operands = this._sourceShapesFromVisuals( selections.slice(1) );
+              target = target.sourceShape;
+              result = target.intersect( operands );
+              result= result.renderable;
             break;
-
             //specials
             case 'mirrorX':
               var mesh = selections[0].parent.parent;
@@ -604,7 +579,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             break;
             
             case 'extrude':
-              var shape = selections[0].sourceElement
+              var shape = selections[0].sourceShape
               var extrudeSettings = {};
               extrudeSettings.bevelEnabled = false;
 				      extrudeSettings.bevelSegments = 2;
@@ -692,7 +667,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             this.fire('newOperation', {msg: operation});
             this.selectedObjects = [result];//make sure the new item is the selected one
           }
-          else if (type == 'subtract')
+          else if (type == 'subtract' || type == 'union' || type == 'intersect')
           {
             console.log("adding to scene",result);
             this.hierarchyRoot.add( result.sourceShape );
@@ -846,8 +821,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         this.contextMenu.mode = 'operations';
         this.contextMenu.target = '';
         
-        if(newSelections && newSelections[0].sourceElement instanceof Shape2d)
+        console.log("blah", selectedObject, selectedObject.sourceShape, (selectedObject.sourceShape instanceof Rectangle));
+        if(newSelections && selectedObject.sourceShape instanceof Shape2d)
         {
+          console.log("fooobar, shape2D");
           this.contextMenu.target = 'shape2d';
         }
       }
@@ -1045,7 +1022,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       {
         var importedPart = new Part();
         importedPart.geometry = geometry;//THREE.BufferGeometryUtils.fromGeometry( geometry ); //
-        importedPart.name = resource.name;
+        //importedPart.name = resource.name;//FIXME: either reformat name, or don't add one, as it contains dots etc
         
         self.hierarchyRoot.add( importedPart );
         self.viewer.addToScene( importedPart.generateRenderables() );
@@ -1056,7 +1033,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       
       function createImported(importedPart, resource)
       {
-        importedPart.name = resource.name;
+        //importedPart.name = resource.name;
         self.hierarchyRoot.add( importedPart );
         self.viewer.addToScene( importedPart.generateRenderables() );
         self.selectedObjects = [importedPart.renderable];
