@@ -97,3 +97,5 @@ ASTNodeIdentificatorCoffee.prototype._isNodeAClassDeclaration = function(node, f
   }
   return false;
 }
+
+module.exports = ASTNodeIdentificatorCoffee;

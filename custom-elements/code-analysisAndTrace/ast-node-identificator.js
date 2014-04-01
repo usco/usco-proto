@@ -1,6 +1,5 @@
 function ASTNodeIdentificator()
 {
-
 }
 
 //NODE Identification methods : TODO: expand on this
@@ -76,3 +75,5 @@ ASTNodeIdentificator.prototype._isNodeAClassDeclaration = function(node, functio
   }
   return false;
 }
+
+module.exports = ASTNodeIdentificator;

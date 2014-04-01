@@ -1,3 +1,13 @@
+var esprima = require("esprima");
+//var estraverse = require("estraverse");
+//var escope = require("escope");
+//var esrefactor = require("esrefactor");
+var esmorph = require("esmorph");
+var falafel = require("falafel");
+
+var ASTNodeIdentificator = require("./ast-node-identificator");
+var ASTNodeIdentificatorCoffee = require("./ast-node-identificator-coffee");
+
 function ASTManipulator(source)
 {
   this.source = source;
@@ -238,3 +248,5 @@ console.log("asignment", node.right.arguments, node);
         if (id === 'beep') return true;
     }
 */
+
+module.exports = ASTManipulator;
