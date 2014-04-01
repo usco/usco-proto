@@ -1,7 +1,7 @@
 var esprima = require("esprima");
-//var estraverse = require("estraverse");
-//var escope = require("escope");
-//var esrefactor = require("esrefactor");
+var estraverse = require("estraverse");
+var escope = require("escope");
+var esrefactor = require("esrefactor");
 var esmorph = require("esmorph");
 var falafel = require("falafel");
 
