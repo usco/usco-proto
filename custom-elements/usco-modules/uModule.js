@@ -1,3 +1,4 @@
+var ASTManipulator = require("../code-analysisAndTrace/ast-manipulator");
 
 
 function UModule(assembly)
@@ -12,7 +13,7 @@ function UModule(assembly)
   
   //language detection
   this.sourceLanguage = "js";
-  this.assembly = assembly || new THREE.Object3D();
+  this.assembly = assembly || {} ;//new THREE.Object3D();//TODO: how to handle this dependency : should be usco PART instance
   
   //for part instance tracing
   this.partInstancesByType = {};
@@ -159,3 +160,5 @@ UModule.prototype.experiment=function()
 {
   this.astUtil.fallafelTest(this.source);
 }
+
+module.exports = UModule;
