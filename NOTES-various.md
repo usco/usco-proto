@@ -26,6 +26,13 @@ and serializers are not writers so we seem to be good)
       * reqShapeOperation(??)
   - various events: newOperation
 
+
+Various/utilities:
+==================
+- three.js utility to convert local coords of an object to local coords of another object:
+  ie : the objects parent changes, its world position DOES NOT
+
+
 SHAPES:
 =======
 -mathematical representation, frep etc:
@@ -93,7 +100,22 @@ rotate, scale)
   * ie if a sphape is a cube subtract sphere , at the top level we only have the result, but we need
   to get "into" that composite
   * perhaps add notion of dedicated classes for that ? ie Substraction (notice uppercase) 
+  
 Multi level editing
 ===================
+2D shapes:
+ - a shape is made of 1..n paths 
+ - a shape can have boolean operations
+ - a shape can be extruded 
+ - currently a shape is made of polygons
+ 
+Important modeling methods to have:
+===================================
+- hull 
+ * 2d 
+ * 3d
+- minkowski
+
+chain hull
    
    
