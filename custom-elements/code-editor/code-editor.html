@@ -24,7 +24,6 @@
     cursorLocationChanged:function()
     {
       this.asyncFire('polymer-signal', {name: "request-highlight-from-code", data:{location:this.cursorLocation}});
-      //this.highlightSelectionsFromCode();
     },
     clearMarkers:function()
     {
