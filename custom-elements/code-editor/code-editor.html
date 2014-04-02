@@ -1,4 +1,5 @@
 <link rel="import" href="../../components/polymer/polymer.html">
+<link rel="import" href="../../components/polymer-signals/polymer-signals.html">
 
 <link rel="import" href="../../components/code-mirror/code-mirror.html">
 
@@ -8,13 +9,36 @@
           code-mirror{position:absolute;top:120px;right:20px;width:400px;height:150px;z-index:9999;}
     </style>
   
-    <code-mirror theme="{{theme}}" mode="{{mode}}" value="{{value}}"> </code-mirror>
+    <code-mirror id="innerEditor" theme="{{theme}}" mode="{{mode}}" value="{{value}}" cursorPos="{{cursorLocation}}"> </code-mirror>
   </template>
   <script>
   Polymer("code-editor",{
     theme:"monokai",
     mode:"javascript",
-    value:""
+    value:"",
+    cursorLocation : null,
+    enteredView:function()
+    {
+      this.innerEditor = this.$.innerEditor;
+    },
+    cursorLocationChanged:function()
+    {
+      this.asyncFire('polymer-signal', {name: "request-highlight-from-code", data:{location:this.cursorLocation}});
+      //this.highlightSelectionsFromCode();
+    },
+    clearMarkers:function()
+    {
+      this.innerEditor.clearMarkers();
+    },
+    addMarker:function(line)
+    {
+      this.innerEditor.addMarker( line );
+    },
+    positionFromIndex:function( index )
+    {
+      return this.innerEditor.mirror.posFromIndex( index );
+    }
+
   });
   </script>
 </polymer-element>  
