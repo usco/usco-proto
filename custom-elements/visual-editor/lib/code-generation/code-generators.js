@@ -161,8 +161,8 @@ CodeGenerator.prototype.generateCodeFromOperation=function(operation, precision,
       }
       
       code += "var "+targetName+" = new "+ type +"("+strValue+")"+lineCap;
-      var parentName = "assembly";
-      code += parentName+".add( "+ targetName +" )"+lineCap;
+      /*var parentName = "assembly";
+      code += parentName+".add( "+ targetName +" )"+lineCap;*/
     break;
     case "deletion":
       //TODO: how to deal with this ?
@@ -186,7 +186,7 @@ CodeGenerator.prototype.generateCodeFromOperation=function(operation, precision,
     
     case "rotation":
       if (!("code" in target)){ target.code = ""};
-      code += targetName+".rotate("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+")"+lineCap;
+      code += targetName+".rotate(["+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+"])"+lineCap;
     break;
     case "translation":
       if (!("code" in target)){ target.code = ""};
@@ -195,16 +195,16 @@ CodeGenerator.prototype.generateCodeFromOperation=function(operation, precision,
         //console.log("we moved a shape2d helper",target.standInFor,target.sourceParent);
         var sourceParentName =this.getOperationFormatedItemName( operation, "sourceParent"  );
         var id = target.standInFor.index;
-        code += sourceParentName+".controlPoints["+ id +"].translate("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+",)"+lineCap;
+        code += sourceParentName+".controlPoints["+ id +"].translate(["+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+",])"+lineCap;
       }
       else if(target.sourceShape)
       {
           var sourceShapeName = target.sourceShape.name.toLowerCase()+target.sourceShape.id;
-          code += sourceShapeName+".translate("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+")"+lineCap;
+          code += sourceShapeName+".translate(["+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+"])"+lineCap;
       }
       else
       {
-      code += targetName+".translate("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+")"+lineCap;
+      code += targetName+".translate(["+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+"])"+lineCap;
       }
     break;
     case "scaling":
@@ -265,6 +265,56 @@ CodeGenerator.prototype.generateCodeFromOperationsList=function(operations)
   return code;
 }
 
+CodeGenerator.prototype.createCustomPartClass=function( className, selections )
+{
+  //TODO: instead of re-evaling everything, should we not just create a new 
+  //class and "inject" the existing instances "into it" ?
+  
+  var className = className || "CustomPart";
+  var selections = selections || [];
+  
+  var subItemsCode = [];
+  for(var i=0;i<selections.length;i++)
+  {
+    var selection = selections[i].sourceShape;
+    var type = selection.constructor.name;//.toLowerCase()
+    subItemsCode = this.generateCodeFromOperationsList( selection.operations );
+    //transformedSelections.push("var foo"+i+" = new "+type+"();");
+    //transformedSelections.push("foo"+i+".position.z =30;");
+    //transformedSelections.push("this.add(foo"+i+");");
+  }
+  
+  var rawClassText=[
+  "function "+className+"(options)",
+  "{" ,
+  " options = options || {};",
+  "  Part.call( this );",
+  "}",
+  className+".prototype = Object.create( Part.prototype );",
+  className+".prototype.constructor = "+className+";",
+  
+  //not sure about "execute", but this is inspired by freecad python API
+  //TODO: this is where all our current selections get added 
+  className+".prototype.generate = function()",
+  "{",
+  subItemsCode,
+   //transformedSelections.join("\n"), 
+  "}",
+  
+  "return "+className+";"
+  ]
+  
+
+  rawClassText = rawClassText.join("\n");
+  console.log("rawClassText:\n\n",rawClassText);
+  
+  args = "";
+  //var newClass = eval( rawClassText );
+  var newClass = new Function(rawClassText)();
+  //console.log("newClass", newClass);
+  console.log("custom class:\n", newClass);
+  return newClass;
+}
 
 
 if(typeof module === "Object")
