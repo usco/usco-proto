@@ -41,7 +41,7 @@
 <link rel="import" href="../material-editor/material-editor.html">
 
 
-<polymer-element name="visual-editor" attributes="autorotate fullscreen axes activeRoot hierarchyRoot" 
+<polymer-element name="visual-editor" attributes="autorotate fullscreen axes activeRoot hierarchyRoot selectedObjects" 
 on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}" on-drop="{{handleDrop}}"
 >
   <template >
@@ -704,7 +704,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     {
       var selections = this.selectedObjects;
       var avgPosition = new THREE.Vector3();
-      console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
+      //console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
       
       if(selections.length>0)
       {
@@ -719,15 +719,12 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       //console.log("avgposFinal", avgPosition);
       //this.groupSelectionHelper.position = avgPosition;
       //console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
-      console.log("avgPosition",avgPosition);
       //this.transformControls.position = avgPosition;
-      
-      
       return avgPosition;
     },
     selectionsAdded:function(addedSelections)
     {
-      console.log("selections added",addedSelections);
+      //console.log("selections added",addedSelections);
       var groupSelectionHelper = this.groupSelectionHelper;
       
      // console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
@@ -1165,7 +1162,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     scopeExit:function()
     {
       if(this.activeRoot.parent) this.activeRoot = this.activeRoot.parent;
-    }
+    },
 
   });
   </script>
