@@ -20,23 +20,8 @@
 
 <link rel="import" href="./sub-elements/fx/test-fx.html">-->
 
-<script src="lib/code-generation/class-creator.js"></script>
 <script src="lib/transformControls.js"></script>
-
-<!-- <script src="lib/shapes/THREECSG.js"></script>
-<script src="lib/shapes/meshWrapper.js"></script>
-
-<script src="lib/shapes/3d/Shape3d.js"></script>
-<script src="lib/shapes/3d/Cube.js"></script>
-<script src="lib/shapes/3d/Sphere.js"></script>
-<script src="lib/shapes/3d/Cylinder.js"></script>
-<script src="lib/shapes/3d/Torus.js"></script>
-<script src="lib/shapes/2d/Shape2d.js"></script>
-<script src="lib/shapes/2d/Rectangle.js"></script>
-<script src="lib/shapes/2d/Circle.js"></script>
-<script src="lib/shapes/2d/Text.js"></script>
-
-<script src="lib/shapes/BufferGeometryUtils.js"></script> -->
+<!--<script src="lib/shapes/BufferGeometryUtils.js"></script> -->
 
 <script src="../usco-shapes/lib/usco-shapes.js"></script>
 
@@ -56,7 +41,7 @@
 <link rel="import" href="../material-editor/material-editor.html">
 
 
-<polymer-element name="visual-editor" attributes="autorotate fullscreen axes activeRoot" 
+<polymer-element name="visual-editor" attributes="autorotate fullscreen axes activeRoot hierarchyRoot" 
 on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragover="{{handleDragOver}}" on-drop="{{handleDrop}}"
 >
   <template >
@@ -176,10 +161,12 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     showDimensions:true,
 
     //TODO move this to a structure
-    hierarchyRoot:new Part(),
+    hierarchyRoot:null,
     //the root of the active editing level
     activeRoot:null,
     
+    
+    visualRoot: null,//thise only stores the root of the visual counterparts
     
     groupSelectionHelper: new THREE.Object3D(),
     selectedObjects:null,
@@ -236,6 +223,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.transformControls.setRotateSnap(radians);
       this.transformControls.setSnap(this.gridSettings.step);
     },
+    hierarchyRootChanged:function()
+    {
+      console.log("hierarchyRoot changed", this.hierarchyRoot);
+    },
     
     created:function()
     {
@@ -244,9 +235,32 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       //TODO: move this where it should be
       if(window.webkitURL) window.URL = window.webkitURL;
       
+      this.hierarchyRoot = new Part();
       this.hierarchyRoot.name="assembly";
       //default active level : root of hierarchy
       this.activeRoot = this.hierarchyRoot;
+      
+      
+     /* var observer = new ObjectObserver(this.hierarchyRoot);
+        observer.open(function(added, removed, changed, getOldValueFn) {
+          // respond to changes to the obj.
+          Object.keys(added).forEach(function(property) {
+            console.log("added");
+            //property; // a property which has been been added to obj
+            //added[property]; // its value
+          });
+          Object.keys(removed).forEach(function(property) {
+            console.log("removed");
+            //property; // a property which has been been removed from obj
+            //getOldValueFn(property); // its old value
+          });
+          Object.keys(changed).forEach(function(property) {
+            console.log("changed");
+            //property; // a property on obj which has changed value.
+            //changed[property]; // its value
+            //getOldValueFn(property); // its old value
+          });
+        });*/
       
     },
     enteredView:function()
@@ -366,9 +380,9 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
             }
             //operation = new Translation(event.value,this.selectedObjects[0].sourceShape);
             
-            op = this.selectedObjects[0].sourceShape.translate( event.value );
+            this.selectedObjects[0].sourceShape.translate( event.value );
+            console.log("translated", event.value);
             //console.log("object translated", this.selectedObjects[0].sourceShape )
-            this.activeRoot.operations.push( op );
             
           break;
           case "scale":
