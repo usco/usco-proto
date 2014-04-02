@@ -38,6 +38,13 @@ function Part()
   this.add( testConnector2 );
   this.connectors.push( testConnector );
   this.connectors.push( testConnector2 );*/
+  
+  //
+  var operation = new Creation(this, this.parent, {});
+  this.operations.push( operation );
+  
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
 }
 Part.prototype = Object.create( THREE.Mesh.prototype );
 Part.prototype.constructor = Part;
@@ -67,7 +74,7 @@ Part.prototype.generateRenderables=function()
   this.renderable = new THREE.Mesh(this.geometry, material);
   this.renderable.sourceShape = this;
   
-  this.renderable.position = this.position;
+  //this.renderable.position = this.position;
   this.renderable.rotation = this.rotation;
   this.renderable.scale    = this.scale;
   this.renderable.matrix   = this.matrix;
@@ -147,9 +154,17 @@ Part.prototype.fromThreeMesh=function(object){}
 
 Part.prototype.translate=function( amount )
 {
+  if(amount instanceof Array)
+  {
+    amount = new THREE.Vector3(amount[0], amount[1], amount[2]);
+  }
   var operation = new Translation( amount, this );
   var event = new CustomEvent('newOperation',{detail: {msg: operation}});
   document.dispatchEvent(event);
+  
+  this.translateX( amount.x );
+  this.translateY( amount.y );
+  this.translateZ( amount.z );
   
   this.operations.push( operation );
   return operation;
@@ -223,20 +238,22 @@ Part.prototype.union=function(objects)
   newPart.updateRenderables(); 
   
   var operands = objects;
-  //var operation = new Subtraction(newPart, oldGeometry, operands ) ;
-  //var operation = new Subtraction2(this, operands, newPart);
   var operation = new Union( this, operands, newPart );
   newPart.operations.push ( operation );
   
   var event = new CustomEvent('newOperation',{detail: {msg: operation}});
   document.dispatchEvent(event);
   
-  //remove operands from view
+  //remove operands from hierarchy & their renderables from view
+  this.parent.remove(this);
   this.renderable.parent.remove( this.renderable );
+  
   for(var i = 0; i < operands.length;i++)
   {
-      var op = operands[i].renderable;
+      var op = operands[i];
+      var rOp = op.renderable;
       op.parent.remove( op );
+      rOp.parent.remove( rOp );
   }
   
   return newPart;
@@ -307,20 +324,24 @@ Part.prototype.subtract=function(objects)
   newPart.updateRenderables(); 
   
   var operands = objects;
-  //var operation = new Subtraction(newPart, oldGeometry, operands ) ;
   var operation = new Subtraction2(this, operands, newPart)
   newPart.operations.push ( operation );
   
-  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
-  document.dispatchEvent(event);
-  
   //remove operands from view
-  this.renderable.parent.remove( this.renderable );
+  if(this.parent) this.parent.remove( this );
+  if(this.renderable) this.renderable.parent.remove( this.renderable );
   for(var i = 0; i < operands.length;i++)
   {
-      var op = operands[i].renderable;
-      op.parent.remove( op );
+      var op = operands[i];
+      if(op.parent) op.parent.remove( op );
+      if(op.renderable)
+      {
+        op.renderable.parent.remove( op.renderable );
+      }
   }
+  
+  var event = new CustomEvent('newOperation',{detail: {msg: operation}});
+  document.dispatchEvent(event);
   
   return newPart;
 }
