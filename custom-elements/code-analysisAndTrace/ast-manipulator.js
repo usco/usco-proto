@@ -194,6 +194,15 @@ ASTManipulator.prototype.fallafelTest = function(source)
       {
           //console.log("var declaration", node);
       }
+      if(node.type == "NewExpression")
+      {
+        var className = node.callee.name;
+        if(!(className in classes))//we have not found this class yet
+        {
+          classes[className] = {range:[-1,-1]};
+        }
+        //addInstTracing( node.parent, functions, classes );
+      }
       if(isInst( node, classes))
       {
         addInstTracing( node, functions, classes );

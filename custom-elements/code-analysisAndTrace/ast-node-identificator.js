@@ -4,6 +4,15 @@ function ASTNodeIdentificator()
 
 //NODE Identification methods : TODO: expand on this
 //TODO : seperate filling data (classes, function, instances) from determining if a node is of a given type
+ASTNodeIdentificator.prototype._isNodeANewInstanceCreation = function(node, classes)
+{
+  if(node.type == 'VariableDeclarator' && node.init && node.init.callee && (node.init.callee.name in classes))
+  {
+    return true;
+  }
+  return false;
+}
+
 ASTNodeIdentificator.prototype._isNodeAVariableDeclaration = function(node, classes)
 {
   if(node.type == 'VariableDeclarator' && node.init && node.init.callee && (node.init.callee.name in classes))
