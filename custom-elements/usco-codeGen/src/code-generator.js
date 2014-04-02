@@ -40,6 +40,7 @@ function CodeGenerator()
 CodeGenerator.prototype.generateFromOperations=function(operations)
 {
   this._lastTarget = null;
+  this._visibleItems = []; //FIXME: kindof a hack: this list should contain leaf items only
   
   var collapsedOps = this.collapseOperations( operations );
   var code = this.generateCodeFromOperationsList( collapsedOps );
@@ -161,8 +162,8 @@ CodeGenerator.prototype.generateCodeFromOperation=function(operation, precision,
       }
       
       code += "var "+targetName+" = new "+ type +"("+strValue+")"+lineCap;
-      /*var parentName = "assembly";
-      code += parentName+".add( "+ targetName +" )"+lineCap;*/
+      var parentName = "assembly";
+      code += parentName+".add( "+ targetName +" )"+lineCap;
     break;
     case "deletion":
       //TODO: how to deal with this ?
