@@ -28,7 +28,9 @@
 <link rel="import" href="../../components/usco-ctm-parser/ctm-parser.html">
 
 <!--code generators and related -->
-<script src="../visual-editor/lib/code-generation/code-generators.js"></script>
+<script src="../usco-codeGen/src/code-generator.js"></script>
+
+<script src="../usco-modules/lib/usco-module.js" ></script>  
 
 <polymer-element name="usco-editor">
 <template>
@@ -94,7 +96,7 @@
     <ctm-parser> </ctm-parser>
   </usco-asset-manager>
   
-  <visual-editor id="visualEditor"> </visual-editor>
+  <visual-editor id="visualEditor" hierarchyRoot="{{currentModule.assembly}}"> </visual-editor>
   
   <div id="codeEditorStuff" style="position:absolute; right:10px;top:300px;z-index:3">
     Code Editor <input type="checkbox"  checked="{{codeEditActive}}"> </input>
@@ -114,7 +116,7 @@
   </div>
   
   <template if="{{codeEditActive}}">
-    <code-editor id="codeEditor" theme="monokai" mode="javascript"  value="{{source}}"> </code-editor>
+    <code-editor id="codeEditor" theme="monokai" mode="javascript"  value="{{currentModule.source}}"> </code-editor>
   </template>
   
   <history-editor id="historyEditor"> </history-editor>
@@ -141,7 +143,6 @@
 Polymer("usco-editor",{
 
   project:null,
-  source:"",
   generateCodeOnTheFly:true,
   
   observe:{
@@ -164,6 +165,10 @@ Polymer("usco-editor",{
   {
     this.project = {name:"testProject",files:{"foo":"bar"}};
     this.codeGenerator = new CodeGenerator();
+    
+    var rootAssembly = new Part();
+    var UModule = require("UModule");
+    this.currentModule = new UModule(rootAssembly);
   },
   ready:function()
   {
@@ -173,7 +178,7 @@ Polymer("usco-editor",{
   {
     console.log("entering view", this.$);
     this.visualEditor   = this.$.visualEditor;
-    //this.codeEditor   = this.$.codeEditor;
+    this.codeEditor     = this.$.codeEditor;
     this.commandManager = this.$.historyEditor;
     this.assetManager   = this.$.assetManager;
     //document.querySelector('usco-asset-manager');
@@ -273,15 +278,39 @@ Polymer("usco-editor",{
   generateCodeFromHistory:function()
   {
      console.log("generating code from history");
+
+
+     
      //generation scope priority order
      var generationScope = this.visualEditor.selectedObject || this.visualEditor.activeRoot || this.visualEditor.hierarchyRoot;
      //var testSource = updateSelectionCode(generationScope,this.commandManager.undos);
      var testSource = this.codeGenerator.generateFromOperations( this.commandManager.undos );
-     this.source = testSource;
+     this.currentModule.source = testSource;
+     
+
   },
   generateFromCode:function()
   {
-    //console.log("generating from code",this.altSource);
+     //deactivate to prevent issues:
+    this.generateCodeOnTheFly = false;  
+    //clear undo/redo history
+    this.commandManager.commandManager.undos = [];
+    this.commandManager.commandManager.redos = [];
+      
+    console.log("generating from code",this.currentModule.source);
+    this.currentModule.compile();
+
+    //erm???
+    var self = this;
+    self.visualEditor.viewer.clearScene();
+    this.currentModule.assembly.traverse(function(object){
+    
+      var renderable = object.generateRenderables();
+      renderable.position = object.position;
+      self.visualEditor.viewer.addToScene( renderable);
+    });
+    
+    this.generateCodeOnTheFly = true;
   },
   reqScreenshot:function()
   {
