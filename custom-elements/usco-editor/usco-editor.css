@@ -1,0 +1,42 @@
+    :host{
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      overflow:hidden;
+      /*font-family: Neue Helvetica, Roboto, Arial;*/
+
+    }
+    visual-editor{
+      width:100%;
+      height:100%;
+
+    }
+    visual-editor three-js
+    {
+       background-color:#ffffff;
+    }
+    
+    #codeGen{
+      position: absolute;
+      right: 10px;
+      top: 20px;
+      z-index: 3;
+    }
+
+    shape-creator{
+      opacity : 0;
+      z-index : 4;
+    }
+    history-editor{
+       z-index:3;
+      display:block;
+      position:absolute;
+      color:black;
+      padding:5px;
+      height:100%;
+      width:200px
+    }
+    #commandsHistory{
+      height:90%;
+      overflow:auto;
+    }

@@ -34,50 +34,8 @@
 
 <polymer-element name="usco-editor">
 <template>
-  <style>
-    :host{
-      position: absolute;
-      top: 0px;
-      left: 0px;
-      overflow:hidden;
-      /*font-family: Neue Helvetica, Roboto, Arial;*/
-
-    }
-    visual-editor{
-      width:100%;
-      height:100%;
-
-    }
-    visual-editor three-js
-    {
-       background-color:#ffffff;
-    }
-    
-    #codeGen{
-      position: absolute;
-      right: 10px;
-      top: 20px;
-      z-index: 3;
-    }
-
-    shape-creator{
-      opacity : 0;
-      z-index : 4;
-    }
-    history-editor{
-       z-index:3;
-      display:block;
-      position:absolute;
-      color:black;
-      padding:5px;
-      height:100%;
-      width:200px
-    }
-    #commandsHistory{
-      height:90%;
-      overflow:auto;
-    }
-  </style>
+  <link rel="stylesheet" type="text/css" href="usco-editor.css">
+  
   <usco-client-deps> </usco-client-deps>
   <usco-asset-manager id="assetManager">
     <xhr-store> </xhr-store>
@@ -96,7 +54,10 @@
     <ctm-parser> </ctm-parser>
   </usco-asset-manager>
   
-  <visual-editor id="visualEditor" hierarchyRoot="{{currentModule.assembly}}"> </visual-editor>
+  <!--pub sub messages handling-->
+  <polymer-signals on-polymer-signal-request-highlight-from-code="{{highlightSelectionsFromCode}}"></polymer-signals>
+  
+  <visual-editor id="visualEditor" hierarchyRoot="{{currentModule.assembly}}" selectedObjects="{{selectedObjects}}"> </visual-editor>
   
   <div id="codeEditorStuff" style="position:absolute; right:10px;top:300px;z-index:3">
     Code Editor <input type="checkbox"  checked="{{codeEditActive}}"> </input>
@@ -129,20 +90,24 @@
     </div>
   </div>
   
-  <div id="modeSwitch" style="position:absolute; right:10px;top:100px;z-index:3">
+  <!--<div id="modeSwitch" style="position:absolute; right:10px;top:100px;z-index:3">
     <select>
       <option> Design </option>
       <option> Build Plate </option>
       <option> Assembly Guide </option>
     </select>
-  </div>
+  </div>-->
 </div>
   
 </template>
 <script>
 Polymer("usco-editor",{
 
+  codeEditActive:true,
+
   project:null,
+  selectedObjects:null,
+  
   generateCodeOnTheFly:true,
   
   observe:{
@@ -182,7 +147,6 @@ Polymer("usco-editor",{
     this.commandManager = this.$.historyEditor;
     this.assetManager   = this.$.assetManager;
     //document.querySelector('usco-asset-manager');
-    
     //if we recieve a "newOperation" event, add it to history  
     var self = this;
     document.addEventListener('newOperation', function(e) {
@@ -203,12 +167,10 @@ Polymer("usco-editor",{
     
     //handle history/commands/operations manager events
     this.addEventListener('commands-undone', function(e) {
-      //console.log("something is undone!!!", e);
       if(self.generateCodeOnTheFly) self.generateCodeFromHistory();
     })
     
     this.addEventListener('commands-redone', function(e) {
-      //console.log("something is redone!!!", e);
       if(self.generateCodeOnTheFly) self.generateCodeFromHistory();
     })
     
@@ -278,16 +240,11 @@ Polymer("usco-editor",{
   generateCodeFromHistory:function()
   {
      console.log("generating code from history");
-
-
-     
      //generation scope priority order
      var generationScope = this.visualEditor.selectedObject || this.visualEditor.activeRoot || this.visualEditor.hierarchyRoot;
      //var testSource = updateSelectionCode(generationScope,this.commandManager.undos);
      var testSource = this.codeGenerator.generateFromOperations( this.commandManager.undos );
      this.currentModule.source = testSource;
-     
-
   },
   generateFromCode:function()
   {
@@ -297,9 +254,7 @@ Polymer("usco-editor",{
     this.commandManager.commandManager.undos = [];
     this.commandManager.commandManager.redos = [];
       
-    console.log("generating from code",this.currentModule.source);
     this.currentModule.compile();
-
     //erm???
     var self = this;
     self.visualEditor.viewer.clearScene();
@@ -346,7 +301,149 @@ Polymer("usco-editor",{
     
     var assembly = loader.parse(reloadedAssembly)
     //@scene.add @assembly*/
-  }
+  },
+  
+  selectedObjectsChanged:function()
+  {
+    this.highlightCodeFromSelections();
+  },
+  
+  highlightCodeFromSelections:function()
+  {
+    this.codeEditor.clearMarkers();
+    var mesh = this.selectedObjects[0];
+    if(!(mesh)) return;
+    mesh = mesh.sourceShape;
+    if(!(mesh && mesh.__meta)) { return;};
+
+    //this would highlight the class of the current selected object (from 3d view)
+    try{
+      var pos = this.codeEditor.positionFromIndex(mesh.__meta.range[0]);
+      console.log("current mesh CLASS code position",pos)
+      this.codeEditor.addMarker(pos.line);
+    }catch(error){}
+    
+    //this would highlight the declaration point of the instance of the selected object (from 3d view)
+    try{
+      var pos2 = this.codeEditor.positionFromIndex(mesh.__meta.instancesData[0].range[0]);
+      console.log("current mesh INSTANCE code position",pos2)
+      this.codeEditor.addMarker(pos2.line);
+    }catch(error){}
+
+    //display the current selected mesh's source
+    try{
+    var startCode = mesh.__meta.range[0];
+    var endCode = mesh.__meta.range[1];
+    }catch(error){}
+    //this.selectedMeshSource = this.currentModule.source.substring(startCode,endCode);
+  },
+  highlightSelectionsFromCode:function(e, detail, sender)
+  {
+    var cursorLocation = detail.location;
+      //TODO: for coffeescript we need to re-map coordinates of code
+      //cursor location (0 based index, in coffeescript) to js
+
+      //TODO: add selection behaviour when cursor is WITHIN the definition of an object
+      // should it both select the surounding function/class and the items within that scope ?
+
+      this.visualEditor.selectedObjects = [];
+
+      var esrefactor = require("esrefactor");
+      var context = new esrefactor.Context();
+      if(!(this.currentModule.source) || this.currentModule.source ==="" || !(this.currentModule.astUtil.ast) ) return;
+      context.setCode(this.currentModule.astUtil.ast);
+     
+      //////////////////////////////////////////////////////
+      if(context)
+      {
+        var id = context.identify(cursorLocation);
+        this.codeEditor.clearMarkers();
+        if( !(id && id.declaration)) { return;}
+
+        //console.log("selection info (from ast)",id)
+        //console.log("declaration", id.declaration); 
+        var pos = this.codeEditor.positionFromIndex(id.declaration.range[0]);
+        this.codeEditor.addMarker(pos.line);
+
+        //now select the instances in 3D view
+        this.visualEditor.selectedObject = null;
+        this.visualEditor.selectedObjects = [];
+
+        this.selectAllInstancesFromCode( id );
+        this.selectSpecificInstanceFromCode( id );
+      }
+    },
+    selectAllInstancesFromCode:function( contextId )
+    {
+      var type = contextId.declaration.name;
+      //select all instances in 3d view of the currently selected class
+      if(type in this.currentModule.partInstancesByType)
+      {
+        var selectedMesh = this.selectedMesh;
+        //selectedMesh = this.currentModule.partInstancesByType[type].instances[0];
+
+        for(var i=0; i< this.currentModule.partInstancesByType[type].instances.length;i++)
+        {
+          var newSelection = this.currentModule.partInstancesByType[type].instances[i];
+          if(!(newSelection instanceof THREE.Object3D)) continue;
+          //this.currentSelections.push(newSelection);
+          this.visualEditor.selectedObjects.push(newSelection.renderable);
+          //apply visual styling
+          //this.addSelectionEffect(null, newSelection, 0xff0000, 1.02)
+        }
+      }
+    },
+    selectSpecificInstanceFromCode:function(contextId)
+    {
+      //select a specific instance
+      //TODO: refactor : perhaps just using the variable id + scope would be better
+      var instanceSelect = contextId.declaration.range;
+      if(!(instanceSelect)) return;
+      console.log("instanceSelect",instanceSelect,this.currentModule.codeLocToinstances);
+
+      for (var key in this.currentModule.codeLocToinstances) 
+      {
+         var range = key.replace(" ","").split(",");
+         var start = parseInt(range[0]);
+         var end = parseInt(range[1]);
+         
+        //this.currentModule.codeLocToinstances['471, 475']=toto;
+        if(!(start == instanceSelect[0] && end == instanceSelect[1])) continue
+
+        var newSelection = this.currentModule.codeLocToinstances[key];
+        if(!(newSelection instanceof THREE.Object3D)) continue;
+        this.visualEditor.selectedObjects.push(newSelection.renderable);
+        //apply visual styling
+        //this.addSelectionEffect(null, newSelection, 0x00ff00, 1.1)
+      }
+    },
+    //Helpers
+    addSelectionEffect:function(oldSelection, newSelection, color, scale)
+    {
+      var selectionColor = color || 0xfffccc;
+      var scale = scale || 1.02;
+      //remove from old selection
+      if(oldSelection != null && oldSelection.outline)
+      {
+        oldSelection.remove(oldSelection.outline);
+        oldSelection.cage = null;
+        oldSelection.outline = null;
+      }
+      //add to new selection
+      if(newSelection != null)
+      {
+          var outlineMaterial = new THREE.MeshBasicMaterial({
+            color: selectionColor,//0xffc200,
+            side: THREE.BackSide
+          });
+          outline = new THREE.Mesh(newSelection.geometry, outlineMaterial);
+          outline.name = "selectOutline";
+          outline.scale.multiplyScalar( scale );
+          newSelection.outline = outline;
+          newSelection.add(outline);
+      }
+    },
+  
 
 });
 </script>
