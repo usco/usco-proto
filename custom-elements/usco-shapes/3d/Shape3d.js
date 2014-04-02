@@ -8,7 +8,7 @@ function Part()
   THREE.Mesh.call(this, undefined, material);
 
   //holds object meta data ("reflexion", links between code and visual etc
-  this.__meta = null;
+  this.__meta = {};
   //this holds all the history of operations for the given shape
   this.operations = [];
   //not so sure, a hash of editable properties: TODO: how to handle this vs simple input params
