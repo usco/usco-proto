@@ -2,8 +2,9 @@
 /*
   Made of one main arrow, and two lines perpendicular to the main arrow, at both its ends
 */
-SizeArrowHelper = function(mainLength, sideLength, position, direction, color, text, textSize)
+SizeArrowHelper = function(mainLength, sideLength, position, direction, color, text, textSize, opacity, sideLengthExtra)
 {
+  //Todo : auto adjust arrows : if not enough space, arrows shoud be outside
   THREE.Object3D.call( this );
   this.up = new THREE.Vector3(0,0,1);
   //this.start = start;
@@ -12,37 +13,37 @@ SizeArrowHelper = function(mainLength, sideLength, position, direction, color, t
   var position = position || new THREE.Vector3();
   var direction = direction || new THREE.Vector3();
   this.mainLength = mainLength || 10;
-  this.sideLength = sideLength || 2;
+  this.sideLength = sideLength || 3;
   this.color = color || "#000000" ;
   this.text = text || this.mainLength;
-  var textSize = textSize || 12;
+  var textSize = textSize || 10;
+  var sideLengthExtra = sideLengthExtra || 2;
 
   //direction, origin, length, color, headLength, headRadius, headColor
-  //var direction = this.start.clone().sub(this.end).normalize();
-  //console.log("direction",direction);
-
-  var mainArrowLeft = new THREE.ArrowHelper2(new THREE.Vector3(1,0,0),new THREE.Vector3(0,0,0),mainLength/2-3 , this.color);
-  var mainArrowRight = new THREE.ArrowHelper2(new THREE.Vector3(-1,0,0),new THREE.Vector3(0,0,0),mainLength/2-3, this.color);
+  var mainArrowLeft = new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(0,sideLength,0),mainLength/2 , this.color,4, 2);
+  var mainArrowRight = new THREE.ArrowHelper(new THREE.Vector3(-1,0,0),new THREE.Vector3(0,sideLength,0),mainLength/2, this.color,4, 2);
+  mainArrowLeft.scale.z =0.1;
+  mainArrowRight.scale.z=0.1;
   this.add( mainArrowLeft );
   this.add( mainArrowRight );
 
   var sideLineGeometry = new THREE.Geometry();
   sideLineGeometry.vertices.push( new THREE.Vector3( 0, 0, 0 ) );
-  sideLineGeometry.vertices.push( new THREE.Vector3( 0, sideLength, 0 ) );
+  sideLineGeometry.vertices.push( new THREE.Vector3( 0, sideLength+sideLengthExtra , 0 ) );
   
-  var leftSideLine = new THREE.Line( sideLineGeometry, new THREE.LineBasicMaterial( { color: 0x000000,depthTest:false,depthWrite:false,renderDepth : 1e20 } ) );
+  var leftSideLine = new THREE.Line( sideLineGeometry, new THREE.LineBasicMaterial( { color: 0x000000,depthTest:false,depthWrite:false,renderDepth : 1e20, opacity:0.4, transparent:true } ) );
   leftSideLine.position.x = -this.mainLength / 2;
 
-  var rightSideLine = new THREE.Line( sideLineGeometry, new THREE.LineBasicMaterial( { color: 0x000000,depthTest:false,depthWrite:false,renderDepth : 1e20 } ) );
+  var rightSideLine = leftSideLine.clone();
   rightSideLine.position.x = this.mainLength / 2;
   
   //draw dimention / text
+  //var labelPosition = new THREE.Vector3(0,
   this.label = new THREE.TextDrawHelper().drawText(this.text,textSize);
-  this.label.position.y = -2;
+  this.label.position.y = sideLength+5;
 
   this.add( rightSideLine );
   this.add( leftSideLine );
-
   this.add( this.label );
 
   this.position = position; 
@@ -52,8 +53,19 @@ SizeArrowHelper = function(mainLength, sideLength, position, direction, color, t
 
   leftSideLine.renderDepth = 1e20;
   rightSideLine.renderDepth = 1e20;
-  mainArrowLeft.renderDepth = 1e20;
+  
+
   mainArrowRight.renderDepth = 1e20;
+  mainArrowRight.cone.material.depthTest=false;
+  mainArrowRight.cone.material.depthWrite=false;
+  mainArrowRight.line.material.depthTest=false;
+  mainArrowRight.line.material.depthWrite=false;
+  
+  mainArrowLeft.renderDepth = 1e20;
+  mainArrowLeft.cone.material.depthTest=false;
+  mainArrowLeft.cone.material.depthWrite=false;
+  mainArrowLeft.line.material.depthTest=false;
+  mainArrowLeft.line.material.depthWrite=false;
 }
 
 SizeArrowHelper.prototype = Object.create( THREE.Object3D.prototype );
@@ -141,9 +153,9 @@ ObjectDimensionsHelper = function (options) {
   var delta = this.computeMiddlePoint(mesh);
   cage.position = delta
   
-  var widthArrowPos = new THREE.Vector3(delta.x+this.length/2+10,delta.y,delta.z-this.height/2); 
-  var lengthArrowPos = new THREE.Vector3( delta.x, delta.y+this.width/2+10, delta.z-this.height/2)
-  var heightArrowPos = new THREE.Vector3( delta.x-this.length/2-5,delta.y-this.width/2-5,delta.z)
+  var widthArrowPos = new THREE.Vector3(delta.x+this.length/2,delta.y,delta.z-this.height/2); 
+  var lengthArrowPos = new THREE.Vector3( delta.x, delta.y+this.width/2, delta.z-this.height/2)
+  var heightArrowPos = new THREE.Vector3( delta.x-this.length/2,delta.y+this.width/2,delta.z)
 
   //console.log("width", this.width, "length", this.length, "height", this.height,"delta",delta, "widthArrowPos", widthArrowPos)
 
@@ -169,11 +181,10 @@ ObjectDimensionsHelper = function (options) {
   var bla = new THREE.Mesh(baseCubeGeom,new THREE.MeshBasicMaterial({wireframe:true,color:0xff0000}))
   bla.position = new THREE.Vector3(delta.x,delta.y,delta.z);
   //this.add( bla )
-  
 
   var sideLength =10;
-  var widthArrow = new SizeArrowHelper(this.width,sideLength,widthArrowPos,new THREE.Vector3(0,0,1));
-  var lengthArrow = new SizeArrowHelper(this.length,-sideLength,lengthArrowPos,new THREE.Vector3(1,0,0));
+  var widthArrow = new SizeArrowHelper(this.width,sideLength,widthArrowPos,new THREE.Vector3(0,0,-1));
+  var lengthArrow = new SizeArrowHelper(this.length,sideLength,lengthArrowPos,new THREE.Vector3(1,0,0));
   var heightArrow = new SizeArrowHelper(this.height,sideLength,heightArrowPos,new THREE.Vector3(0,1,0));
         
   this.add( widthArrow );
