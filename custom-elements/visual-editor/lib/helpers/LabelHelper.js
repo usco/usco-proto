@@ -5,11 +5,12 @@ LabelHelper = function (options) {
 
   var options = options || {};
   this.text = options.text || "";
-  this.color = options.color || "rgba(255, 255, 255, 0.55)";
+  this.color = options.color || "rgba(0, 0, 0, 1)";
   this.fontFace = options.fontFace || "Jura"; 
   this.fontWeight = options.fontWeight || "normal bolder";
   this.fontSize = options.fontSize || 13;
-  this.background = options.background || false;
+  this.background = options.background || true;
+  this.bgColor = options.bgColor || "rgba(255, 255, 255, 1)";
   
   this._resolutionMultiplier = 8;
   this._alphaTest = 0.1;
@@ -29,7 +30,10 @@ LabelHelper.prototype.generateTextFromCanvas = function()
   var fontWeight = this.fontWeight;
   var fontSize = this.fontSize;
   var text = this.text;
+  var color = this.color;
   var background = this.background;
+  var bgColor = this.bgColor;
+  var borderThickness = 0;
   
   //for background drawing
   var bgRect = function(ctx, x, y, w, h, r) {
@@ -59,16 +63,17 @@ LabelHelper.prototype.generateTextFromCanvas = function()
   this.width = metrics.width/4;
   
   if (background) {
-    var textWidth = metrics.width;
-    context.fillStyle = "rgba(255, 255, 255, 0.55)";
-    context.strokeStyle = "rgba(255,255,255,0.55)";
-    rect(context, canvas.width / 2 - fontSize, canvas.height / 2 - fontSize, textWidth + borderThickness, fontSize * 1.4 + borderThickness, 6);
+    var upscaledFontSize = fontSize * resMult;
+    var textWidth = context.measureText(text).width*resMult;
+    context.fillStyle = bgColor;
+    context.strokeStyle = bgColor;
+    bgRect(context, canvas.width / 2 - upscaledFontSize, canvas.height / 2 - upscaledFontSize, textWidth + borderThickness, upscaledFontSize * 1.4 + borderThickness, 0);
   }
   
-  context.fillStyle = this.textColor;
+  context.fillStyle = color;
   context.fillText(text, canvas.width / 2, canvas.height / 1.3);
   context.lineWidth = 3;
-  context.strokeStyle = this.textColor;
+  context.strokeStyle = color;
   context.strokeText(text, canvas.width / 2, canvas.height / 1.3);
   
   texture = new THREE.Texture(canvas);
