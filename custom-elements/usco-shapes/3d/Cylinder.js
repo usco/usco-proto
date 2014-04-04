@@ -12,10 +12,10 @@ function Cylinder(options)
   this.geometry = new THREE.CylinderGeometry( this.r2, this.r, this.h ,this.$fn );
   this.geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
   
-  this.properties["r"] = ["bottom radius", "Radius of the bottom of cylinder", 10]
-  this.properties["r2"] =["top radius", "Radius of the top of the cylinder", 10]//optional min max?
-  this.properties["h"] =["height", "Height of the cylinder", 10]//optional min max?
-  this.properties["$fn"] = ["resolution", "resolution of the cylinder (polygonal)",shapeDefaultMaxResolution]
+  this.properties["r"] = ["bottom radius", "Radius of the bottom of cylinder", this.r]
+  this.properties["r2"] =["top radius", "Radius of the top of the cylinder", this.r2]//optional min max?
+  this.properties["h"] =["height", "Height of the cylinder", this.h]//optional min max?
+  this.properties["$fn"] = ["resolution", "resolution of the cylinder (polygonal)",this.$fn]
 }
 Cylinder.prototype = Object.create( Part.prototype );
 Cylinder.prototype.constructor = Cylinder;

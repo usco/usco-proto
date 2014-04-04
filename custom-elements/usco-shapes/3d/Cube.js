@@ -10,11 +10,10 @@ function Cube(options)
 
   Part.call( this );
   this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
-  //this._bsp = new ThreeBSP(this);
   
-  this.properties["w"] = ["width", "Width of the cuboid", 20]//optional min max?
-  this.properties["h"] = ["height", "height of the cuboid",20,0.0000001,100,0.1]
-  this.properties["d"] = ["depth", "depth of the cuboid",20]
+  this.properties["w"] = ["width", "Width of the cuboid", this.w]//optional min max?
+  this.properties["h"] = ["height", "height of the cuboid",this.h,0.0000001,100,0.1]
+  this.properties["d"] = ["depth", "depth of the cuboid",this.d]
   //TODO: how to provide a preset list of acceptable values (to use with select etc)
   //TODO: add ability to provide range functions, select functions etc (generator functions for the previous
   //params

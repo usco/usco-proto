@@ -283,11 +283,10 @@ function Cube(options)
 
   Part.call( this );
   this.geometry = new THREE.CubeGeometry( this.w, this.d, this.h );
-  //this._bsp = new ThreeBSP(this);
   
-  this.properties["w"] = ["width", "Width of the cuboid", 20]//optional min max?
-  this.properties["h"] = ["height", "height of the cuboid",20,0.0000001,100,0.1]
-  this.properties["d"] = ["depth", "depth of the cuboid",20]
+  this.properties["w"] = ["width", "Width of the cuboid", this.w]//optional min max?
+  this.properties["h"] = ["height", "height of the cuboid",this.h,0.0000001,100,0.1]
+  this.properties["d"] = ["depth", "depth of the cuboid",this.d]
   //TODO: how to provide a preset list of acceptable values (to use with select etc)
   //TODO: add ability to provide range functions, select functions etc (generator functions for the previous
   //params
@@ -330,10 +329,10 @@ function Cylinder(options)
   this.geometry = new THREE.CylinderGeometry( this.r2, this.r, this.h ,this.$fn );
   this.geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
   
-  this.properties["r"] = ["bottom radius", "Radius of the bottom of cylinder", 10]
-  this.properties["r2"] =["top radius", "Radius of the top of the cylinder", 10]//optional min max?
-  this.properties["h"] =["height", "Height of the cylinder", 10]//optional min max?
-  this.properties["$fn"] = ["resolution", "resolution of the cylinder (polygonal)",shapeDefaultMaxResolution]
+  this.properties["r"] = ["bottom radius", "Radius of the bottom of cylinder", this.r]
+  this.properties["r2"] =["top radius", "Radius of the top of the cylinder", this.r2]//optional min max?
+  this.properties["h"] =["height", "Height of the cylinder", this.h]//optional min max?
+  this.properties["$fn"] = ["resolution", "resolution of the cylinder (polygonal)",this.$fn]
 }
 Cylinder.prototype = Object.create( Part.prototype );
 Cylinder.prototype.constructor = Cylinder;
@@ -354,6 +353,7 @@ module.exports = Cylinder;
 
 },{"./Shape3d":7}],7:[function(require,module,exports){
 ThreeBSP = require("./THREECSG");
+Connector = require("../connector");
 
 shapeDefaultMaxResolution = 30;
 
@@ -395,7 +395,8 @@ function Part()
   this.connectors.push( testConnector2 );*/
   
   //
-  var operation = new Creation(this, this.parent, {});
+  var operation = new Creation(this, this.parent, {});//This does not feel quite right
+  //in the case of code, the variable an instance is assigned to is only known outside of it etc
   this.operations.push( operation );
   
   var event = new CustomEvent('newOperation',{detail: {msg: operation}});
@@ -431,7 +432,7 @@ Part.prototype.generateRenderables=function()
   
   //this.renderable.position = this.position;
   this.renderable.rotation = this.rotation;
-  this.renderable.scale    = this.scale;
+  //this.renderable.scale    = this.scale;
   this.renderable.matrix   = this.matrix;
   this.renderable.matrixWorld   = this.matrixWorld;
   this.renderable._rotation = this._rotation ;
@@ -539,6 +540,15 @@ Part.prototype.rotate=function( amount )
 //FIXME: THREE.Object3D already has a "scale" property...
 Part.prototype.Scale=function( amount )
 {
+  if(amount instanceof Array)
+  {
+    amount = new THREE.Vector3(amount[0], amount[1], amount[2]);
+  }
+
+  this.scale.x = amount.x;
+  this.scale.y = amount.y;
+  this.scale.z = amount.z;
+
   var operation = new Scaling( amount, this);
   this.operations.push( operation );
   var event = new CustomEvent('newOperation',{detail: {msg: operation}});
@@ -770,7 +780,7 @@ Part.prototype.intersect=function(objects)
 
 module.exports = Part
 
-},{"./THREECSG":9}],8:[function(require,module,exports){
+},{"../connector":12,"./THREECSG":9}],8:[function(require,module,exports){
 Part = require("./Shape3d");
 
 function Sphere(options)
@@ -1394,7 +1404,79 @@ Rectangle = require("./2d/Rectangle");
 Circle = require("./2d/Circle");
 Text = require("./2d/Text");
 
-},{"./2d/Circle":1,"./2d/Rectangle":2,"./2d/Shape2d":3,"./2d/Text":4,"./3d/Cube":5,"./3d/Cylinder":6,"./3d/Shape3d":7,"./3d/Sphere":8,"./3d/Torus":10,"./operations/operations":21}],12:[function(require,module,exports){
+},{"./2d/Circle":1,"./2d/Rectangle":2,"./2d/Shape2d":3,"./2d/Text":4,"./3d/Cube":5,"./3d/Cylinder":6,"./3d/Shape3d":7,"./3d/Sphere":8,"./3d/Torus":10,"./operations/operations":22}],12:[function(require,module,exports){
+
+function Connector()
+{
+    THREE.Object3D.call( this );
+    //needs position, orientation (up vector)
+}
+
+
+Connector.prototype = Object.create( THREE.Object3D.prototype );
+Connector.prototype.constructor = Connector;
+
+Connector.prototype.attachTo = function(connector)
+{
+  
+}
+
+Connector.prototype.detachFrom = function(connector)
+{
+  
+}
+
+Connector.prototype.generateRenderables=function()
+{
+  //this.visualHelper =  new THREE.Mesh( new THREE.CylinderGeometry( 10, 10, 20 ), new MeshBasicMaterial({color:0xff0000} );
+  var color = 0xFF0000;
+  var to = this.up.clone().multiplyScalar(30);
+
+  var lineGeometry = new THREE.Geometry();
+  var vertArray = lineGeometry.vertices;
+  vertArray.push( this.position.clone(),to) ;
+  lineGeometry.computeLineDistances();
+
+  var lineMaterial = new THREE.LineDashedMaterial( { color: color, dashSize: 2, gapSize: 1, linewidth:2 } );
+  var line = new THREE.Line( lineGeometry, lineMaterial );
+  line.name = "connectorArrowHelper";
+
+  var arrowHeadMaterial = new THREE.MeshBasicMaterial({color:color});
+  var arrowHead = new THREE.Mesh(new THREE.CylinderGeometry(0, 0.5, 3, 5, 5, false), arrowHeadMaterial);
+  arrowHead.position = to;
+  arrowHead.lookAt( to.clone().multiplyScalar(10) );
+  arrowHead.rotateX(Math.PI/2);
+  line.add( arrowHead );
+  
+  //var baseIndicator = new THREE.Mesh(new THREE.CubeGeometry(baseSize,baseSize,baseSize),new THREE.MeshBasicMaterial({color:color,wireframe:true}) );
+  
+  var baseRadius  = 5,
+    segments = 64,
+    material = new THREE.LineBasicMaterial( { color: 0x000000 , depthTest:false,linewidth:2} ),
+    geometry = new THREE.CircleGeometry( baseRadius, segments );
+
+  //geometry.vertices.shift();
+  var baseIndicator = new THREE.Line( geometry, material )
+  baseIndicator.position.copy( this.position );
+  line.add( baseIndicator) ;
+
+  lineMaterial.depthWrite=true;
+  lineMaterial.depthTest=false;
+  arrowHeadMaterial.depthWrite=true;
+  arrowHeadMaterial.depthTest=false;
+  
+  arrowHead.renderDepth = 1e20;
+  line.renderDepth = 1e20;
+  baseIndicator.renderDepth = 1e20;
+
+  this.renderable = line ;
+  return this.renderable;
+}
+
+module.exports = Connector;
+
+
+},{}],13:[function(require,module,exports){
 Command = require('./command');
 
 AttributeChange = function (target, attrName, oldValue, newValue)
@@ -1433,7 +1515,7 @@ AttributeChange.prototype.redo = function()
 
 module.exports = AttributeChange;
 
-},{"./command":14}],13:[function(require,module,exports){
+},{"./command":15}],14:[function(require,module,exports){
 Command = require('./command');
 
 Clone = function ( source, target )
@@ -1470,7 +1552,7 @@ Clone.prototype.redo = function()
 
 module.exports = Clone;
 
-},{"./command":14}],14:[function(require,module,exports){
+},{"./command":15}],15:[function(require,module,exports){
 //operation "class"
 Command = function ( type, value, target)
 {
@@ -1485,7 +1567,7 @@ Command.prototype.clone = function()
 
 module.exports = Command;
 
-},{}],15:[function(require,module,exports){
+},{}],16:[function(require,module,exports){
 Command = require('./command');
 
 Creation = function (target, parentObject, options)
@@ -1529,7 +1611,7 @@ Creation.prototype.redo = function()
 
 module.exports = Creation;
 
-},{"./command":14}],16:[function(require,module,exports){
+},{"./command":15}],17:[function(require,module,exports){
 Command = require('./command');
 
 Deletion = function (target, parentObject)
@@ -1558,7 +1640,7 @@ Deletion.prototype.redo = function()
 
 module.exports = Deletion;
 
-},{"./command":14}],17:[function(require,module,exports){
+},{"./command":15}],18:[function(require,module,exports){
 Command = require('./command');
 
 Extrusion = function (target, value, sourceShape, parentObject)
@@ -1589,7 +1671,7 @@ Extrusion.prototype.redo = function()
 
 module.exports = Extrusion;
 
-},{"./command":14}],18:[function(require,module,exports){
+},{"./command":15}],19:[function(require,module,exports){
 Command = require('./command');
 
 Import = function ( value, target)
@@ -1628,7 +1710,7 @@ Import.prototype.redo = function()
 
 module.exports = Import;
 
-},{"./command":14}],19:[function(require,module,exports){
+},{"./command":15}],20:[function(require,module,exports){
 Command = require('./command');
 
 //FIXME: HAAACK !
@@ -1684,7 +1766,7 @@ Intersection.prototype.redo = function()
 
 module.exports = Intersection;
 
-},{"./command":14}],20:[function(require,module,exports){
+},{"./command":15}],21:[function(require,module,exports){
 Command = require('./command');
 
 Mirror = function ( target, axis)
@@ -1713,7 +1795,7 @@ Mirror.prototype.redo = function()
 
 module.exports = Mirror;
 
-},{"./command":14}],21:[function(require,module,exports){
+},{"./command":15}],22:[function(require,module,exports){
 
 Command = require('./command');
 
@@ -1738,7 +1820,7 @@ Intersection = require('./intersection');
 
 
 
-},{"./attributeChange":12,"./clone":13,"./command":14,"./creation":15,"./deletion":16,"./extrusion":17,"./import":18,"./intersection":19,"./mirror":20,"./rotation":22,"./scaling":23,"./subtraction2":24,"./translation":25,"./union":26}],22:[function(require,module,exports){
+},{"./attributeChange":13,"./clone":14,"./command":15,"./creation":16,"./deletion":17,"./extrusion":18,"./import":19,"./intersection":20,"./mirror":21,"./rotation":23,"./scaling":24,"./subtraction2":25,"./translation":26,"./union":27}],23:[function(require,module,exports){
 Command = require('./command');
 
 Rotation = function ( value, target)
@@ -1772,7 +1854,7 @@ Rotation.prototype.redo = function()
 
 module.exports = Rotation;
 
-},{"./command":14}],23:[function(require,module,exports){
+},{"./command":15}],24:[function(require,module,exports){
 Command = require('./command');
 
 Scaling = function ( value, target)
@@ -1805,7 +1887,7 @@ Scaling.prototype.redo = function()
 
 module.exports = Scaling;
 
-},{"./command":14}],24:[function(require,module,exports){
+},{"./command":15}],25:[function(require,module,exports){
 Command = require('./command');
 
 //FIXME: HAAACK !
@@ -1874,7 +1956,7 @@ Subtraction2.prototype.redo = function()
 
 module.exports = Subtraction2;
 
-},{"./command":14}],25:[function(require,module,exports){
+},{"./command":15}],26:[function(require,module,exports){
 Command = require('./command');
 
 Translation = function ( value, target)
@@ -1908,7 +1990,7 @@ Translation.prototype.redo = function()
 
 module.exports = Translation;
 
-},{"./command":14}],26:[function(require,module,exports){
+},{"./command":15}],27:[function(require,module,exports){
 Command = require('./command');
 
 //FIXME: HAAACK !, should perhaps be closer to esprima node
@@ -1965,4 +2047,4 @@ Union.prototype.redo = function()
 
 module.exports = Union;
 
-},{"./command":14}]},{},[11])
+},{"./command":15}]},{},[11])

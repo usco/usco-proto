@@ -66,3 +66,5 @@ Connector.prototype.generateRenderables=function()
   return this.renderable;
 }
 
+module.exports = Connector;
+

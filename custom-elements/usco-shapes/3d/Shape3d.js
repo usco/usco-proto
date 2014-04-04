@@ -1,4 +1,5 @@
 ThreeBSP = require("./THREECSG");
+Connector = require("../connector");
 
 shapeDefaultMaxResolution = 30;
 
@@ -40,7 +41,8 @@ function Part()
   this.connectors.push( testConnector2 );*/
   
   //
-  var operation = new Creation(this, this.parent, {});
+  var operation = new Creation(this, this.parent, {});//This does not feel quite right
+  //in the case of code, the variable an instance is assigned to is only known outside of it etc
   this.operations.push( operation );
   
   var event = new CustomEvent('newOperation',{detail: {msg: operation}});
@@ -76,7 +78,7 @@ Part.prototype.generateRenderables=function()
   
   //this.renderable.position = this.position;
   this.renderable.rotation = this.rotation;
-  this.renderable.scale    = this.scale;
+  //this.renderable.scale    = this.scale;
   this.renderable.matrix   = this.matrix;
   this.renderable.matrixWorld   = this.matrixWorld;
   this.renderable._rotation = this._rotation ;
@@ -184,6 +186,15 @@ Part.prototype.rotate=function( amount )
 //FIXME: THREE.Object3D already has a "scale" property...
 Part.prototype.Scale=function( amount )
 {
+  if(amount instanceof Array)
+  {
+    amount = new THREE.Vector3(amount[0], amount[1], amount[2]);
+  }
+
+  this.scale.x = amount.x;
+  this.scale.y = amount.y;
+  this.scale.z = amount.z;
+
   var operation = new Scaling( amount, this);
   this.operations.push( operation );
   var event = new CustomEvent('newOperation',{detail: {msg: operation}});
