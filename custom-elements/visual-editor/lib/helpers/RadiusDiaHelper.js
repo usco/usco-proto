@@ -20,7 +20,7 @@ DiameterHelper = function(options)
   var centerCross = new CrossHelper({size:3});
 
   //leader line
-  this.leaderLine = new LeaderLineHelper({text:"∅"+this.text});
+  this.leaderLine = new LeaderLineHelper({text:"∅"+this.text,radius:this.diameter/2});
   
   //draw main circle
   var circleRadius = this.diameter/2;
