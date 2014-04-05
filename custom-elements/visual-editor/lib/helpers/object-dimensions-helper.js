@@ -37,6 +37,9 @@ DistanceArrowHelper.prototype = Object.create( THREE.Object3D.prototype );
 
 /*
   Made of two main arrows, and two lines perpendicular to the main arrow, at both its ends
+  If the VISUAL distance between star & end of the helper is too short to fit text + arrow:
+   * arrows should be on the outside
+   * if text does not fit either, offset it to the side
 */
 SizeArrowHelper = function(options)
 {
@@ -50,10 +53,10 @@ SizeArrowHelper = function(options)
 
   var position = options.position || new THREE.Vector3();
   var direction = this.direction = options.direction || new THREE.Vector3();
-  var mainLength = this.mainLength = options.mainLength || 10;
-  this. color = options.color || "#000000" ;
+  var length = this.length = options.length || 10;
+  this.color = options.color || "#000000" ;
   
-  this.text = options.text || this.mainLength;
+  this.text = options.text || this.length;
   var textSize = options.textSize || 8;
   
   var sideLength = options.sideLength || 3;
@@ -63,14 +66,6 @@ SizeArrowHelper = function(options)
   //var arrowStart = options.arrowStart|| true;
   //var arrowEnd = options.arrowEnd || true;
 
-  //direction, origin, length, color, headLength, headRadius, headColor
-  var mainArrowLeft = new THREE.ArrowHelper(new THREE.Vector3(1,0,0),new THREE.Vector3(0,sideLength,0),mainLength/2 , this.color,4, 2);
-  var mainArrowRight = new THREE.ArrowHelper(new THREE.Vector3(-1,0,0),new THREE.Vector3(0,sideLength,0),mainLength/2, this.color,4, 2);
-  mainArrowLeft.scale.z =0.1;
-  mainArrowRight.scale.z=0.1;
-  this.add( mainArrowLeft );
-  this.add( mainArrowRight );
-
 
   if( drawSideLines )
   {
@@ -79,22 +74,59 @@ SizeArrowHelper = function(options)
     sideLineGeometry.vertices.push( new THREE.Vector3( 0, sideLength+sideLengthExtra , 0 ) );
     
     var leftSideLine = new THREE.Line( sideLineGeometry, new THREE.LineBasicMaterial( { color: 0x000000,depthTest:false,depthWrite:false,renderDepth : 1e20, opacity:0.4, transparent:true } ) );
-    leftSideLine.position.x = -this.mainLength / 2;
+    leftSideLine.position.x = -this.length / 2;
 
     var rightSideLine = leftSideLine.clone();
-    rightSideLine.position.x = this.mainLength / 2;
+    rightSideLine.position.x = this.length / 2;
     
     this.add( rightSideLine );
     this.add( leftSideLine );
   }
     
+  var leftArrowDir = new THREE.Vector3(1,0,0);
+  var rightArrowDir = new THREE.Vector3(-1,0,0);
+  var leftArrowPos = new THREE.Vector3(0,sideLength,0);
+  var rightArrowPos = new THREE.Vector3(0,sideLength,0);
+  var arrowHeadSize = 4;
+  var arrowSize = length/2;
   //draw dimention / text
   //var labelPosition = new THREE.Vector3(0,
   this.label = new LabelHelperPlane({text:this.text,fontSize:this.textSize});
-  this.label.position.y = sideLength+5;
+  this.label.position.y = sideLength;
   this.label.rotation.z = Math.PI;
+  
+  var labelWidth = this.label.width;
+  var length = this.length;
+  var reqWith = labelWidth + 2*arrowHeadSize;
+  console.log("labelWidth",labelWidth, reqWith, length);
+  
+  if(reqWith>length)
+  {
+    arrowSize = Math.max(length/2,6);//we want arrows to be more than just arrowhead in all the cases
+    var arrowXPos = length/2+arrowSize;
+  
+    leftArrowDir = new THREE.Vector3(-1,0,0);
+    rightArrowDir = new THREE.Vector3(1,0,0);
+    leftArrowPos = new THREE.Vector3(arrowXPos,sideLength,0);
+    rightArrowPos = new THREE.Vector3(-arrowXPos,sideLength,0);
+    if(labelWidth>length)//if even the label itself does not fit
+    {
+      this.label.position.y += 5;
+    }
+  }
+  
   this.add( this.label );
-
+  
+  //direction, origin, length, color, headLength, headRadius, headColor
+  var mainArrowLeft = new THREE.ArrowHelper(leftArrowDir,leftArrowPos,arrowSize, this.color,arrowHeadSize, 2);
+  var mainArrowRight = new THREE.ArrowHelper(rightArrowDir,rightArrowPos,arrowSize, this.color,arrowHeadSize, 2);
+  mainArrowLeft.scale.z =0.1;
+  mainArrowRight.scale.z=0.1;
+  this.add( mainArrowLeft );
+  this.add( mainArrowRight );
+  
+  
+  //general attributes
   this.position = position; 
   var angle = new THREE.Vector3(1,0,0).angleTo(direction); //new THREE.Vector3(1,0,0).cross( direction );
   this.setRotationFromAxisAngle(direction,angle);
@@ -231,12 +263,12 @@ ObjectDimensionsHelper = function (options) {
 
   var sideLength =10;
   
-  //mainLength, sideLength, position, direction, color, text, textSize,
-  var widthArrow = new SizeArrowHelper({mainLength:this.width,sideLength:sideLength,position:widthArrowPos,direction:new THREE.Vector3(0,0,-1) });
+  //length, sideLength, position, direction, color, text, textSize,
+  var widthArrow = new SizeArrowHelper({length:this.width,sideLength:sideLength,position:widthArrowPos,direction:new THREE.Vector3(0,0,-1) });
 
-  var lengthArrow = new SizeArrowHelper(  {mainLength:this.length,sideLength:sideLength,position:lengthArrowPos,direction:new THREE.Vector3(1,0,0) });
+  var lengthArrow = new SizeArrowHelper(  {length:this.length,sideLength:sideLength,position:lengthArrowPos,direction:new THREE.Vector3(1,0,0) });
 
-  var heightArrow = new SizeArrowHelper(  {mainLength:this.height,sideLength:sideLength,position:heightArrowPos,direction:new THREE.Vector3(0,1,0) });
+  var heightArrow = new SizeArrowHelper(  {length:this.height,sideLength:sideLength,position:heightArrowPos,direction:new THREE.Vector3(0,1,0) });
         
   this.add( widthArrow );
   this.add( lengthArrow );
