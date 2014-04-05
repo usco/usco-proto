@@ -8,13 +8,14 @@ LeaderLineHelper = function(options)
 
   this.distance = options.distance || 30;
   this.color = options.color || "#000000" ;
-  this.text = options.text || "foo";
+  this.text = options.text !== undefined ? options.text : " ";
   this.fontSize = options.fontSize || 20;
   
-  var angle = options.angle || 45;
-  var radius = options.radius || 0;
+  var angle = options.angle !== undefined ? options.angle : 45;
+  var radius = options.radius !== undefined ? options.radius : 0;
   var angleLength = options.angleLength || 20; 
   var horizLength = options.horizLength || 10;
+  var textBorder = options.textBorder || null;
 
   var material = new THREE.LineBasicMaterial( { color: 0x000000, depthTest:false,depthWrite:false,renderDepth : 1e20});
  
@@ -43,13 +44,26 @@ LeaderLineHelper = function(options)
   var horizLine = new THREE.Line( horizGeom, material );
   
   //draw dimention / text
-  this.label = new LabelHelperPlane({text:this.text,fontSize:this.fontSize});
+  this.label = new LabelHelperPlane({text:this.text,fontSize:this.fontSize,background:false});
   this.label.rotation.z = Math.PI;
-  var labelPosition = horizEndPoint.clone().sub(new THREE.Vector3(this.label.width/2,0,0))
+  var labelSize=this.label.width/2 + 2 //label size, plus some extra
+  var labelPosition = horizEndPoint.clone().sub(new THREE.Vector3(labelSize,0,0))
   this.label.position.add( labelPosition );
  
   var crossHelper = new CrossHelper({size:3});
   this.add( crossHelper );
+  
+  if(textBorder)
+  {
+    if(textBorder == "circle")
+    {
+      var textBorderGeom = new THREE.CircleGeometry( labelSize, 30 );
+      textBorderGeom.vertices.shift();
+      var textBorderOutline = new THREE.Line( textBorderGeom, material ); 
+      textBorderOutline.position.add( labelPosition );
+      this.add( textBorderOutline );
+    }
+  }
  
   this.add( this.angleArrow );
   this.add( horizLine );
