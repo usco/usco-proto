@@ -12,7 +12,7 @@ LeaderLineHelper = function(options)
   this.fontSize = options.fontSize || 20;
   
   var angle = options.angle || 45;
-  var radius = options.radius || 5;
+  var radius = options.radius || 0;
   var angleLength = options.angleLength || 20; 
   var horizLength = options.horizLength || 10;
 
