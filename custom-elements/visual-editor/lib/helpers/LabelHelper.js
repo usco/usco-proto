@@ -1,7 +1,7 @@
 /*Base class*/
 //TODO: correctly map ogl units to fontSize to canvasSize etc
 LabelHelper = function (options) {
-  THREE.Object3D.call( this );
+  BaseHelper.call( this );
 
   var options = options || {};
   this.text = options.text || "";
@@ -21,7 +21,8 @@ LabelHelper = function (options) {
   this.generateTextFromCanvas();
 }
 
-LabelHelper.prototype = Object.create( THREE.Object3D.prototype );
+LabelHelper.prototype = Object.create( BaseHelper.prototype );
+LabelHelper.prototype.constructor = LabelHelper;
 
 LabelHelper.prototype.generateTextFromCanvas = function()
 {
@@ -85,7 +86,6 @@ LabelHelper.prototype.generateTextFromCanvas = function()
   this._texture = texture;
 }
 
-
 /*Perspective 3d helpers*/
 LabelHelper3d = function(options)
 {
@@ -94,6 +94,7 @@ LabelHelper3d = function(options)
 }
 
 LabelHelper3d.prototype = Object.create( LabelHelper.prototype );
+LabelHelper3d.prototype.constructor = LabelHelper3d;
 
 LabelHelper3d.prototype.generate = function() {
   var spriteMaterial = new THREE.SpriteMaterial({
@@ -131,6 +132,7 @@ LabelHelperPlane = function(options)
 }
 
 LabelHelperPlane.prototype = Object.create( LabelHelper.prototype );
+LabelHelperPlane.prototype.constructor = LabelHelperPlane;
 
 LabelHelperPlane.prototype.generate = function() {
   var material = new THREE.MeshBasicMaterial({
