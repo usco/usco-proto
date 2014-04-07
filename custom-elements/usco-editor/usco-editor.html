@@ -61,6 +61,8 @@
   
   <div id="codeEditorStuff" style="position:absolute; right:10px;top:300px;z-index:3">
     Code Editor <input type="checkbox"  checked="{{codeEditActive}}"> </input>
+    Generate code on the fly <input type="checkbox"  checked="{{generateCodeOnTheFly}}"> </input>
+    Recompile code on the fly <input type="checkbox"  checked="{{recompileCodeOnTheFly}}"> </input>
     <!--<button on-click="{{saveFileTest}}"> </button>
     <input type="file" nwdirectory />
     <input type="file" />
@@ -109,13 +111,16 @@ Polymer("usco-editor",{
   selectedObjects:null,
   
   generateCodeOnTheFly:true,
+  recompileCodeOnTheFly:false,
   
   observe:{
-    'project.files["foo"]':'codeChanged'
+    'project.files["foo"]':'codeChanged',
+    'currentModule.source':'codeChanged',
   },
   codeChanged:function()
   {
     console.log("code changed", this.project.files["foo"]);
+    if(this.recompileCodeOnTheFly) this.generateFromCode();
   },
   sourceChanged:function()
   {
@@ -248,6 +253,7 @@ Polymer("usco-editor",{
   },
   generateFromCode:function()
   {
+    console.log("generating visuals from code");
      //deactivate to prevent issues:
     this.generateCodeOnTheFly = false;  
     //clear undo/redo history
@@ -328,7 +334,7 @@ Polymer("usco-editor",{
       var pos2 = this.codeEditor.positionFromIndex(mesh.__meta.instancesData[0].range[0]);
       console.log("current mesh INSTANCE code position",pos2)
       this.codeEditor.addMarker(pos2.line);
-    }catch(error){}
+    }catch(error){console.log("error",error);}
 
     //display the current selected mesh's source
     try{
