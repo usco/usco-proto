@@ -25,13 +25,25 @@
 
 <script src="../usco-shapes/lib/usco-shapes.js"></script>
 
-<script src="lib/helpers/parent-child-links-helper.js"></script>
+<!--<script src="lib/helpers/parent-child-links-helper.js"></script>
 <script src="lib/helpers/linked-clone-helper.js"></script>
-<script src="lib/helpers/computeBounding.js"></script>
+-->
 <script src="lib/helpers/textDraw-helper.js"></script>
-<script src="lib/helpers/object-dimensions-helper.js"></script>
+<script src="lib/helpers/computeBounding.js"></script>
 
-<script src="lib/connectors/connector.js"></script>
+<script src="lib/helpers/ArrowHelper2.js"></script>
+<script src="lib/helpers/BaseHelper.js"></script>
+<script src="lib/helpers/LabelHelper.js"></script>
+<script src="lib/helpers/CrossHelper.js"></script>
+
+<script src="lib/helpers/LeaderLineHelper.js"></script>
+<script src="lib/helpers/DistanceHelper.js"></script>
+<script src="lib/helpers/SizeHelper.js"></script>
+<script src="lib/helpers/CenterHelper.js"></script>
+<script src="lib/helpers/DiameterHelper.js"></script>
+<script src="lib/helpers/AngDimHelper.js"></script>
+<script src="lib/helpers/DimensionsHelper.js"></script>
+
 
 <!--<script src="lib/materials/materialTest.js"></script>-->
 
@@ -39,6 +51,9 @@
 <script src="fonts/fontawesome_regular.typeface_2.js"></script>
 
 <link rel="import" href="../material-editor/material-editor.html">
+
+<link href='http://fonts.googleapis.com/css?family=Jura:400,500,600' rel='stylesheet' type='text/css'>
+
 
 
 <polymer-element name="visual-editor" attributes="autorotate fullscreen axes activeRoot hierarchyRoot selectedObjects" 
@@ -295,6 +310,72 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       this.viewer.addToScene( this.fakeCursor);
       
       this.viewer.addToScene( this.groupSelectionHelper);
+      
+      var testArrow = new THREE.ArrowHelper(new THREE.Vector3(1,0,0), new THREE.Vector3(10,0,0 ) , 40 ,0x000000, 4, 2);
+      //this.viewer.addToScene( testArrow );
+      
+      var testDistArrow = new DistanceHelper();
+      //this.viewer.addToScene( testDistArrow );
+      
+      var testLabel3d = new LabelHelper3d({text:"foo"});
+      //this.viewer.addToScene( testLabel3d );
+      testLabel3d.position.y =30;
+      //testLabel3d.scale.set(0.5,0.5,0.5);
+      
+      var labelHelperPlane = new LabelHelperPlane({text:"foo"});
+      //this.viewer.addToScene( labelHelperPlane );
+      //labelHelperPlane.scale.set(0.5,0.5,0.5);
+      
+      var centerHelper = new CenterHelper({size:5});
+      centerHelper.position.x = 60;
+      this.viewer.addToScene( centerHelper );
+      
+      var centerHelper2 = new CenterHelper({size:5,type:"line"});
+      //centerHelper2.position.y = -40;
+      centerHelper2.position.x = 40;
+      this.viewer.addToScene( centerHelper2 );
+      
+      var sizeHelper = new SizeHelper({length:50,leftArrow:false,rightArrow:true,lineWidth:1});
+      this.viewer.addToScene( sizeHelper );
+      
+      var sizeHelper2 = new SizeHelper({length:50,leftArrow:false,rightArrow:true,lineWidth:3});
+      this.viewer.addToScene( sizeHelper2 );
+      sizeHelper2.position.y = 10;
+      
+      var sizeHelper3 = new SizeHelper({length:50,leftArrow:false,rightArrow:true,lineWidth:5});
+      this.viewer.addToScene( sizeHelper3 );
+      sizeHelper3.position.y = 20;
+      
+      var sizeHelper4 = new SizeHelper({length:50,leftArrow:false,rightArrow:true,lineWidth:10});
+      this.viewer.addToScene( sizeHelper4 );
+      sizeHelper4.position.y = 30;
+      
+      var diaHelper = new DiameterHelper();
+      this.viewer.addToScene( diaHelper ) ;
+      diaHelper.position.x = 40;
+      diaHelper.position.y = -20;
+      
+      var angDimHelper = new AngularDimHelper();
+      this.viewer.addToScene( angDimHelper ) ;
+      angDimHelper.position.x = 50;
+      angDimHelper.position.y = 20;
+
+      var leaderLineHelper = new LeaderLineHelper();
+      leaderLineHelper.position.y = -20;
+      this.viewer.addToScene( leaderLineHelper ) ;
+      
+      for(var u=0,angle=0;u<10;u++,angle+=18)
+      {
+        var leaderLineHelperFoo = new LeaderLineHelper({radius:5,angle:angle,angleLength:30,horizLength:10,text:u,textBorder:"circle"});
+        leaderLineHelperFoo.position.y = -20;
+        leaderLineHelperFoo.position.x = -40;
+        this.viewer.addToScene( leaderLineHelperFoo ) ;
+      
+      }
+      
+      //var sizeArrowHelper = new SizeArrowHelper({length:40, 20, new THREE.Vector3(0,0,0), new THREE.Vector3(0,1,0));
+      //SizeArrowHelper = function(length, sideLength, position, direction, color, text, textSize, opacity, extraLength)      
+      //this.viewer.addToScene( sizeArrowHelper );
       
       /*var points = [new THREE.Vector2(10,10), new THREE.Vector2(100,90) ,new THREE.Vector2(80,10)];
       var shape = new Shape2d();
@@ -757,13 +838,14 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       }
             //this.computeAvgPos();
       //TODO:refactor
-      /*if(this.showDimensions)
+      if(this.showDimensions)
       {
-        var objDims = new ObjectDimensionsHelper({mesh:groupSelectionHelper});
-        groupSelectionHelper.add( objDims );
-        if(!(groupSelectionHelper.helpers)) groupSelectionHelper.helpers = {}
-        groupSelectionHelper.helpers.dims = objDims;
-      }*/
+        var selectedObject = this.selectedObject;
+        var objDims = new ObjectDimensionsHelper({mesh:selectedObject});
+        selectedObject.add( objDims );
+        if(!(selectedObject.helpers)) selectedObject.helpers = {}
+        selectedObject.helpers.dims = objDims;
+      }
       
     },
     selectionsRemoved:function(removedSelections)
@@ -832,10 +914,8 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
         this.contextMenu.mode = 'operations';
         this.contextMenu.target = '';
         
-        console.log("blah", selectedObject, selectedObject.sourceShape, (selectedObject.sourceShape instanceof Rectangle));
         if(newSelections && selectedObject.sourceShape instanceof Shape2d)
         {
-          console.log("fooobar, shape2D");
           this.contextMenu.target = 'shape2d';
         }
       }
