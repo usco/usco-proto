@@ -1,25 +1,65 @@
 <link rel="import" href="../../components/polymer/polymer.html">
 <link rel="import" href="../../components/polymer-signals/polymer-signals.html">
-
 <link rel="import" href="../../components/code-mirror/code-mirror.html">
+<link rel="import" href="../../components/ace/ace-element.html">
+<!--TODO: add conditional import of right editor ??-->
 
-<polymer-element name="code-editor" attributes="theme mode value" >
+<polymer-element name="code-editor" attributes="editor theme mode value cursorLocation themes" >
   <template>
     <style>
-          code-mirror{position:absolute;top:120px;right:20px;width:400px;height:150px;z-index:9999;}
+          @host{
+            position:relative;
+            height: 100%;
+            width: 100%;
+          }
+          /*top:120px;right:20px;width:400px;height:150px;z-index:9999*/
+          code-mirror{position:relative;width:100%;height:100%}
     </style>
   
-    <code-mirror id="innerEditor" theme="{{theme}}" mode="{{mode}}" value="{{value}}" cursorPos="{{cursorLocation}}"> </code-mirror>
+    <template if="{{editor=='ace'}}">
+      <ace-element id="innerEditor" theme="{{theme}}" mode="{{mode}}" value="{{value}}" themes="{{themes}}"> </ace-element>
+    </template>
+    <template if="{{editor=='cm'}}">
+      <code-mirror id="innerEditor" theme="{{theme}}" mode="{{mode}}" value="{{value}}" themes="{{themes}}" cursorPos="{{cursorLocation}}"> </code-mirror>
+    </template>
+    
   </template>
   <script>
   Polymer("code-editor",{
+    editor:"ace",
     theme:"monokai",
+    themes: null,
     mode:"javascript",
-    value:"",
+    value:null,
     cursorLocation : null,
     enteredView:function()
     {
+      this.innerEditor = this.$.innerEditorAce;
+      //this.themes = this.innerEditor.themes; //TODO: switch based on editor type
+    },
+    editorChanged:function()
+    {
       this.innerEditor = this.$.innerEditor;
+      console.log("this.$", this.$)
+      //  this.innerEditor = this.$.innerEditorCm;
+      //console.log("this.innerEditor",this.innerEditor);
+      this.themes = this.innerEditor.themes;
+      //console.log("themes", this.themes);
+    },
+    modeChanged:function()
+    {
+      if(this.mode == "coffeescript")
+      {
+        this.innerEditor.mode = "coffee"
+      }
+    },
+    themesChanged:function()
+    {
+      console.log("themes changed", this.themes);
+    },
+    valueChanged:function()
+    {
+      console.log("valueChanged",this.value);
     },
     cursorLocationChanged:function()
     {

@@ -1,0 +1,20 @@
+<html>
+  <head>
+    <title>code-editor</title>
+    <meta charset="utf-8">
+    <script src="../../components/platform/platform.js"></script>
+    <link rel="import" href="code-editor.html">
+    <link rel="import" href="tabbed-editor.html">
+  </head>
+  <body>
+     <tabbed-code-editor style=""> </tabbed-code-editor>
+     <script>
+      window.addEventListener('polymer-ready', function() {
+        console.log("web components ready");
+        document.body.style.opacity = 1;
+        var source = "";
+        var codeEditor = document.querySelector('code-editor');
+      });
+    </script>  
+  </body>
+</html>

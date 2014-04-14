@@ -1,8 +1,232 @@
-<!--
-  <polymer-ui-tabs selected="0">
-    <span>myProject.coffee*</span>
-    <span>SuperPart.coffee</span>
-  </polymer-ui-tabs>
+<link rel="import" href="../../components/polymer/polymer.html">
+<link rel="import" href="../../components/polymer-ui-tabs/polymer-ui-tabs.html">
+<link rel="import" href="../../components/polymer-ui-animated-pages/polymer-ui-animated-pages.html">
+<link rel="import" href="../../components/polymer-ui-sidebar-menu/polymer-ui-sidebar-menu.html">
+<link rel="import" href="../../components/polymer-ui-scaffold/polymer-ui-scaffold.html">
+ <link rel="import" href="../../components/polymer-ui-menu-item/polymer-ui-menu-item.html">
+    <link rel="import" href="../../components/polymer-ui-submenu-item/polymer-ui-submenu-item.html">
+    
+    <link rel="import" href="../../components/polymer-ui-toolbar/polymer-ui-toolbar.html"
 
-mode="coffee"
--->
+<link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+
+<polymer-element name="tabbed-code-editor">
+  <template>
+    <style>
+        @host{
+          font-family: 'Lato', sans-serif;
+        }
+       polymer-ui-tabs {
+            height:20px;
+            margin: 2px;
+            padding: 2px;
+          }
+          polymer-ui-tabs > * {
+            height:20px;
+            line-height: 20px;
+            background-color: whiteSmoke;
+            margin-right: 3px;
+          }
+          
+          
+          polymer-ui-tabs > .polymer-selected {
+background-color: rgba(195, 250, 55,0.8);
+          color:rgb(69, 78, 82);
+          }
+          
+          polymer-ui-toolbar {
+            height:20px;
+            border-bottom-width: 0px;
+          }
+          
+          .sidebar-menu {
+            overflow: hidden;
+            padding: 0px;
+          }
+          
+          polymer-ui-sidebar-header .sidebar-title {
+            font-size: 15px;
+            font-weight: bold;
+            opacity: 0.8;
+            text-shadow: rgba(0, 0, 0, 0.2) 0px 0px;
+          }
+          
+          polymer-ui-toolbar.polymer-ui-light-theme {
+background-image: none;
+background-color: rgb(195, 250, 55);/*rgb(242, 242, 242);*/
+          }
+          polymer-ui-menu-item.polymer-ui-light-theme.polymer-selected, polymer-ui-menu-item.polymer-ui-light-theme[active] {
+background-color: rgba(195, 250, 55,0.8); /*rgb(85, 153, 255); rgb(195, 250, 55);*/
+border: none; 
+
+          }
+          
+          polymer-ui-sidebar-menu.polymer-ui-light-theme {
+            box-shadow: rgba(0, 0, 0, 0) -8px 0px 8px -4px inset;
+            }
+          
+          polymer-ui-menu-item {
+            padding: 5px 5px;
+            font-size:13px;
+            border-radius: 0px;
+            background-color: rgb(195, 250, 55);
+            border:none;
+            opacity: 0.6;
+            
+          }
+          
+          code-editor {
+          position: absolute;
+          left: 10px;
+          width: 800px;
+height: 320px;
+          }
+          
+          button {
+padding: 2px;
+line-height: 18px;
+height: 18px;
+border: none;
+margin-top:1px;
+          }
+    </style>
+    <header>
+          Code-editor
+    </header>
+    
+    <polymer-ui-scaffold theme="polymer-ui-light-theme" style="display: block; position: relative; height: 400px;">
+      <polymer-ui-sidebar-menu selected="0" label="MyProject" navigation offscreen="basement">
+          <template repeat="{{document, index in documents}}">
+            <polymer-ui-menu-item label="{{document.name}}" on-click="{{foo}}">
+              <button on-tap="{{renameDocument}}">Rename</button>
+              <button on-tap="{{deleteDocument}}">Delete</button>
+            </polymer-ui-menu-item>
+          </template>
+          <input type="text" style="width: 150px;" _value="{{newDocumentName}}"></input> <button on-tap="{{addDocument}}">Add</button>    
+      </polymer-ui-sidebar-menu>
+      
+      <div main>
+        <polymer-ui-tabs selected="{{selectedDocument}}">
+          <template repeat="{{document, index in activeDocuments}}">
+            <span >{{document.name}}
+              <template if="{{document.modified}}">*</template>
+              <button on-click="{{closeDocument}}"> x </button>
+            </span>
+          </template>
+        </polymer-ui-tabs>
+        <polymer-ui-animated-pages selected="{{selectedDocument}}" >
+          <template repeat="{{document in activeDocuments}}">
+            <div>
+              <code-editor editor="{{editor}}" mode="{{language}}" value="{{document.content}}" cursorLocation="{{cursorLocation}}"
+              theme="{{theme}}" themes="{{themes}}"
+              ></code-editor>
+              <polymer-ui-toolbar style="position: absolute;
+width: 800px;
+top: 320px;
+left: 10px;">
+                <polymer-ui-icon-button tool icon="briefcase"></polymer-ui-icon-button>
+                <select value="{{editor}}">
+                  <option value="ace">ace</option>
+                  <option value="cm">cm</option>
+                </select>
+                <select value="{{language}}">
+                  <option value="javascript">js</option>
+                  <option value="coffeescript">coffee</option>
+                  <option value="openscad">scad</option>
+                </select>
+                <select id="themesList" value="{{theme}}">
+                  <option template repeat="{{themes}}">{{}}</option>
+                </select>
+                <polymer-ui-menu-button tool icon="dots" theme="polymer-ui-light-theme" halign="left">
+                </polymer-ui-menu-button>
+
+                <div flex style="font-size: 10px;">Error:</div>
+                <div flex style="font-size: 10px;">Line:0 Column: {{cursorLocation}}</div>
+              </polymer-ui-toolbar>
+             </div>
+          </template>
+        </polymer-ui-animated-pages>
+      </div>
+    </polymer-ui-scaffold>
+  
+  </template>
+  <script>
+    Polymer("tabbed-code-editor",{
+    selectedDocument:0,
+    documents:null,
+    activeDocuments:null,
+    created:function()
+    {
+      this.documents = [
+      {name:"myProject.coffee",content:"foo",modified:false},
+      {name:"part.coffee",content:"class MyPart extend Part",modified:true},
+      {name:"part2.coffee",content:"foobar",modified:false},
+      {name:"part3.coffee",content:"class MyPart extend Part",modified:true}
+      ]
+      this.activeDocuments = [this.documents[0]]
+    },
+    foo:function(event,detail, sender)
+    {
+      var data = sender.templateInstance.model;
+      var document = data.document;
+      var index = data.index;
+      if(this.activeDocuments.indexOf(document)==-1)
+      {
+        this.activeDocuments.push( document );
+        this.selectedDocument = this.activeDocuments.indexOf(document);
+      }
+    },
+    closeDocument:function(event,detail, sender)
+    {
+      var data = sender.templateInstance.model;
+      var document = data.document;
+      var index = data.index;
+      /*this.addEventListener('bla-sub', function(e) {
+      console.log(e.type, e.detail.data); 
+      });*/
+      //check if the document was modified since last save
+      if( document.modified)
+      {
+        alert("Document was modified, are you sure you want to close it ?")
+      }
+      this.activeDocuments.splice(index, 1);
+      //select previous document, if any
+      if (index>0)
+      {
+        this.selectedDocument = index-1;
+      }
+    },
+    deleteDocument:function(event, detail, sender)
+    {
+      var data = sender.templateInstance.model;
+      var document = data.document;
+      var index = data.index;
+      this.documents.splice(index, 1);
+      //TODO: add confirmation dialog
+    },
+    renameDocument:function(event, detail, sender)
+    {
+      console.log("renaming document")
+      //TODO: add confirmation dialog
+    },
+    addDocument:function(event, detail,sender)
+    {
+      console.log("creating new document called", this.newDocumentName);
+      var document = {name:this.newDocumentName,content:"",modified:false};
+      this.documents.push( document );
+      this.activeDocuments.push( document );
+      this.selectedDocument = this.activeDocuments.length-1;
+      this.newDocumentName = "";
+    },
+    languageChanged:function()
+    {
+      console.log("language changed", this.language);
+    },
+    editorChanged:function()
+    {
+      
+    }
+    });
+  </script>
+</polymer-element>
+
