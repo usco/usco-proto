@@ -6,7 +6,7 @@
  <link rel="import" href="../../components/polymer-ui-menu-item/polymer-ui-menu-item.html">
     <link rel="import" href="../../components/polymer-ui-submenu-item/polymer-ui-submenu-item.html">
     
-    <link rel="import" href="../../components/polymer-ui-toolbar/polymer-ui-toolbar.html"
+    <link rel="import" href="../../components/polymer-ui-toolbar/polymer-ui-toolbar.html">
 
 <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
 
@@ -20,6 +20,7 @@
             height:20px;
             margin: 2px;
             padding: 2px;
+            margin-left: 10px;
           }
           polymer-ui-tabs > * {
             height:20px;
@@ -37,6 +38,7 @@ background-color: rgba(195, 250, 55,0.8);
           polymer-ui-toolbar {
             height:20px;
             border-bottom-width: 0px;
+            margin-left: 12px;
           }
           
           .sidebar-menu {
@@ -69,10 +71,17 @@ border: none;
             padding: 5px 5px;
             font-size:13px;
             border-radius: 0px;
-            background-color: rgb(195, 250, 55);
+            /*background-color: rgb(195, 250, 55);*/
             border:none;
             opacity: 0.6;
             
+            
+            -webkit-user-select: none;
+            -moz-user-select: none;
+          }
+          polymer-ui-menu-item:hover {
+          opacity: 0.9;
+          background-color: rgb(195, 250, 55);
           }
           
           code-editor {
@@ -82,6 +91,11 @@ border: none;
 height: 320px;
           }
           
+          ace_search.right {
+border-radius: 0px 0px 0px 0px;
+
+          }
+          
           button {
 padding: 2px;
 line-height: 18px;
@@ -89,17 +103,38 @@ height: 18px;
 border: none;
 margin-top:1px;
           }
+          
+          select{
+            border: none;
+background: rgb(219, 214, 214);
+          }
+          polymer-ui-nav-arrow{
+            opacity:0;
+          }
+          
+          
+          ::-webkit-scrollbar {
+    width: 0.5em;
+}
+
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(100, 100, 100, 0.8);
+}
+
+::-webkit-scrollbar-corner,
+::-webkit-scrollbar-thumb:window-inactive {
+    background: rgba(100, 100, 100, 0.4);
+}
     </style>
-    <header>
-          Code-editor
-    </header>
     
     <polymer-ui-scaffold theme="polymer-ui-light-theme" style="display: block; position: relative; height: 400px;">
       <polymer-ui-sidebar-menu selected="0" label="MyProject" navigation offscreen="basement">
           <template repeat="{{document, index in documents}}">
-            <polymer-ui-menu-item label="{{document.name}}" on-click="{{foo}}">
-              <button on-tap="{{renameDocument}}">Rename</button>
-              <button on-tap="{{deleteDocument}}">Delete</button>
+            <polymer-ui-menu-item label="{{document.name}}" on-click="{{documentSelected}}">
             </polymer-ui-menu-item>
           </template>
           <input type="text" style="width: 150px;" _value="{{newDocumentName}}"></input> <button on-tap="{{addDocument}}">Add</button>    
@@ -123,7 +158,7 @@ margin-top:1px;
               <polymer-ui-toolbar style="position: absolute;
 width: 800px;
 top: 320px;
-left: 10px;">
+left: 10px;margin-left: 0px;">
                 <polymer-ui-icon-button tool icon="briefcase"></polymer-ui-icon-button>
                 <select value="{{editor}}">
                   <option value="ace">ace</option>
@@ -137,6 +172,11 @@ left: 10px;">
                 <select id="themesList" value="{{theme}}">
                   <option template repeat="{{themes}}">{{}}</option>
                 </select>
+                <select id="fontSizes" >
+                </select>
+                <!--TODO:add these to drop up menu-->
+                <input type="checkbox" checked="{{showInvisibles}}"> </input> 
+                
                 <polymer-ui-menu-button tool icon="dots" theme="polymer-ui-light-theme" halign="left">
                 </polymer-ui-menu-button>
 
@@ -165,7 +205,7 @@ left: 10px;">
       ]
       this.activeDocuments = [this.documents[0]]
     },
-    foo:function(event,detail, sender)
+    documentSelected:function(event,detail, sender)
     {
       var data = sender.templateInstance.model;
       var document = data.document;
@@ -173,8 +213,8 @@ left: 10px;">
       if(this.activeDocuments.indexOf(document)==-1)
       {
         this.activeDocuments.push( document );
-        this.selectedDocument = this.activeDocuments.indexOf(document);
       }
+      this.selectedDocument = this.activeDocuments.indexOf(document);
     },
     closeDocument:function(event,detail, sender)
     {

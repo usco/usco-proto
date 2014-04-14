@@ -17,34 +17,51 @@
     </style>
   
     <template if="{{editor=='ace'}}">
-      <ace-element id="innerEditor" theme="{{theme}}" mode="{{mode}}" value="{{value}}" themes="{{themes}}"> </ace-element>
+      <ace-element id="innerEditorAce" theme="{{theme}}" mode="{{mode}}" value="{{value}}" > </ace-element>
     </template>
     <template if="{{editor=='cm'}}">
-      <code-mirror id="innerEditor" theme="{{theme}}" mode="{{mode}}" value="{{value}}" themes="{{themes}}" cursorPos="{{cursorLocation}}"> </code-mirror>
+      <code-mirror id="innerEditorCM" theme="{{theme}}" mode="{{mode}}" value="{{value}}"  cursorPos="{{cursorLocation}}"> </code-mirror>
     </template>
     
   </template>
   <script>
   Polymer("code-editor",{
     editor:"ace",
+    editors:["ace","cm"],
     theme:"monokai",
     themes: null,
     mode:"javascript",
     value:null,
     cursorLocation : null,
+    editorOptions: {},
     enteredView:function()
     {
-      this.innerEditor = this.$.innerEditorAce;
-      //this.themes = this.innerEditor.themes; //TODO: switch based on editor type
+      this.editorChanged();
     },
     editorChanged:function()
     {
-      this.innerEditor = this.$.innerEditor;
-      console.log("this.$", this.$)
-      //  this.innerEditor = this.$.innerEditorCm;
-      //console.log("this.innerEditor",this.innerEditor);
-      this.themes = this.innerEditor.themes;
-      //console.log("themes", this.themes);
+      console.log("editor changed");
+      //workaround for issue https://github.com/Polymer/polymer/issues/387
+      var self = this;
+
+      setTimeout(function () {
+        if(self.editor === "ace")
+        {
+          self.innerEditor = self.shadowRoot.querySelector("#innerEditorAce");
+        }
+        else
+        {
+          self.innerEditor = self.shadowRoot.querySelector("#innerEditorCM");
+          
+        }
+        console.log(self.innerEditor)
+        //console.log("bl",self.shadowRoot.querySelector("#innerEditorAce"),self.shadowRoot.querySelector("#innerEditorCM"));
+        //this.innerEditor = this.$.innerEditor;
+        //  this.innerEditor = this.$.innerEditorCm;
+        //console.log("this.innerEditor",this.innerEditor);
+        self.themes = self.innerEditor.themes;
+        console.log("themes", self.themes);
+       });
     },
     modeChanged:function()
     {
