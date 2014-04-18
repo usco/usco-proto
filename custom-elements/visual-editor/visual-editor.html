@@ -119,7 +119,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     <mesh-exporter selection="{{selectedObject}}" hierarchyRoot="{{hierarchyRoot}}"> </mesh-exporter>
 
     <three-js postProcess fullscreen="{{fullscreen}}" 
-    selectedObjects="{{selectedObjects}}" id="viewer" on-keydown="{{keyUp}}" on-sceneready="{{viewerSceneReady}}">
+    selectedObjects="{{selectedObjects}}" highlightedObject="{{highlightedObject}}" id="viewer" on-keydown="{{keyUp}}" on-sceneready="{{viewerSceneReady}}">
       <!--<drag-drop id="dragDropLayer"> </drag-drop>-->
           <three-stats id="stats" show></three-stats>
           <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
@@ -186,6 +186,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     groupSelectionHelper: new THREE.Object3D(),
     selectedObjects:null,
     selectedObject:null,//first or single selection
+    highlightedObject:null,
 
     gridSettings:{step:10},
     cursorSettings:{snapToGrid:false,snapTransform:true},
@@ -883,6 +884,25 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
       }
       //console.log("this.groupSelectionHelper.position",this.groupSelectionHelper.position);
     },
+    
+    highlightedObjectChanged:function(oldHighlight, newHighLight)
+    {
+      if(oldHighlight)
+      {
+        if(oldHighlight._oldColor)
+        {
+          oldHighlight.material.color = oldHighlight._oldColor;
+        }
+      }
+      if(newHighLight)
+      {
+        newHighLight._oldColor = newHighLight.material.color;
+        newHighLight.material.color = new THREE.Color(0xff3333);
+        newHighLight.material.shininess = 1;//specular = 
+        //newHighLight.material.emissive = 
+      }
+    },
+    
     selectedObjectsChanged:function(oldSelections, newSelections, foo, bar)
     {
       //console.log("old", oldSelections,"new", newSelections, foo, bar);
