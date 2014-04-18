@@ -117,5 +117,42 @@ Important modeling methods to have:
 - minkowski
 
 chain hull
+
+Various representations, one object:
+====================================
+- abstract (in memory instance)
+- code
+- visual
+How to synchronize these?
    
+About operations
+================
+- like russian dolls or a graph?
+- embeded inside objects or not ?
+- ast nodes or not?
+- parallels:
+  * creation : VariableDeclaration (declarator + NewExpression)
+  * deletion : none : it is a kind of no-op: if a shape is delete, it is the same as not being added to a parent container
+  * clone : VariableDeclaration( declator + HIDDEN NewExpression + assignments)
+  
+CLI
+===
+- generating ouput data structures after compiling (ie stl, amf etc) : => ok, easy
+- generating output images after compiling:
+  * requires jsdom, node-three.js , server side rendering
+  * how to handle dom/css labels (css renderer etc)
+  * how to handle polymer elements
+  
+ Code:
+ =====
+  - custom keyword in front of class/ instance whatever definition which tells the compiler NOT
+  to recompile that part ?
+  - how to deal with partial changes?
+  - generate "logic/hierarchy" tree from code withouth compiling to know which Part is used where?
+  (dependencies tracking)
    
+ Other:
+ ======
+ - root nodes/ primitive (applicable in a lot of cases):
+  * base shapes : cube, cylinder etc
+  * imported geometry : stl, obj, ply etc (amf)
