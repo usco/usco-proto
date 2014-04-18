@@ -8,7 +8,7 @@
     "polymer-ui-tabs": "Polymer/polymer-ui-tabs#master",
     "polymer-ui-splitter": "Polymer/polymer-ui-splitter#master",
     "polymer-localstorage": "Polymer/polymer-localstorage#master",
-    "polymer-signals":      "PolymerLabs/polymer-signals#master",
+    "polymer-signals": "PolymerLabs/polymer-signals#master",
     "ace": "Polymer/ace-element#master",
     "code-mirror": "kaosat-dev/code-mirror#master",
     "esprima": "~1.0.4",
@@ -16,31 +16,29 @@
     "esrefactor": "ariya/esrefactor",
     "esmorph": "ariya/esmorph",
     "usco-viewer-base": "usco/usco-viewer-base#master",
-    "usco-command-manager":"usco/usco-command-manager#master",
-    "usco-polymer-three-js":"usco/polymer-three-js#master",
+    "usco-command-manager": "usco/usco-command-manager#master",
+    "usco-polymer-three-js": "usco/polymer-three-js#master",
     "polymer-ui-menu-item": "Polymer/polymer-ui-menu-item#master",
     "polymer-ui-submenu-item": "Polymer/polymer-ui-submenu-item#master",
     "polymer-ui-menu-button": "Polymer/polymer-ui-menu-button#master",
     "polymer-ui-scaffold": "Polymer/polymer-ui-scaffold#master",
-    "polymer-ui-sidebar-menu":"Polymer/polymer-ui-sidebar-menu#master",
-    
-    
-    "usco-client-deps":    "usco/usco-client-deps#master",
-    "usco-asset-manager":  "usco/usco-asset-manager#master",
-    
-    "usco-xhr-store"    :  "usco/usco-xhr-store#master",
-    "usco-desktop-store":  "usco/usco-desktop-store#master",
-    "usco-dropbox-store":  "usco/usco-dropbox-store#master",
-    "usco-fs-store":       "usco/usco-fs-store#master",
-
-    "usco-stl-parser":     "usco/usco-stl-parser#master",
-    "usco-amf-parser":     "usco/usco-amf-parser#master",
-    "usco-obj-parser":     "usco/usco-obj-parser#master",
-    "usco-ply-parser":     "usco/usco-ply-parser#master",
-    "usco-ctm-parser":     "usco/usco-ctm-parser#master",
-
+    "polymer-ui-sidebar-menu": "Polymer/polymer-ui-sidebar-menu#master",
+    "usco-client-deps": "usco/usco-client-deps#master",
+    "usco-asset-manager": "usco/usco-asset-manager#master",
+    "usco-xhr-store": "usco/usco-xhr-store#master",
+    "usco-desktop-store": "usco/usco-desktop-store#master",
+    "usco-dropbox-store": "usco/usco-dropbox-store#master",
+    "usco-fs-store": "usco/usco-fs-store#master",
+    "usco-stl-parser": "usco/usco-stl-parser#master",
+    "usco-amf-parser": "usco/usco-amf-parser#master",
+    "usco-obj-parser": "usco/usco-obj-parser#master",
+    "usco-ply-parser": "usco/usco-ply-parser#master",
+    "usco-ctm-parser": "usco/usco-ctm-parser#master",
     "usco-amf-serializer": "usco/usco-amf-serializer#master",
     "usco-stl-serializer": "usco/usco-stl-serializer#master",
-    "usco-obj-serializer": "usco/usco-obj-serializer#master"
+    "usco-obj-serializer": "usco/usco-obj-serializer#master",
+    "polymer-ui-animated-pages": "https://github.com/PolymerLabs/polymer-ui-animated-pages.git#~0.2.2",
+    "gitgraph.js": "~1.0.0",
+    "polymer-ui-card": "https://github.com/PolymerLabs/polymer-ui-card"
   }
 }

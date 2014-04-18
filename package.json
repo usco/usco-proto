@@ -1,12 +1,20 @@
 {
   "name": "usco-proto",
-  "main": "index.js",
+  "main": "app://usco/index.html",
   "author": "Mark kaosat-dev Moissette",
   "license": "MIT",
   "version": "0.0.22",
   "dependencies": {
     "falafel": "~0.3.1",
-    "source-map": "~0.1.31"
+    "esprima": "",
+    "escodegen": "",
+    "esvalidate": "",
+    "estraverse": "",
+    "escope": "",
+    "esmorph": "",
+    "esrefactor": "",
+    "source-map": "~0.1.31",
+    "ast-types": "^0.3.22"
   },
   "devDependencies": {
     "grunt": "",
@@ -24,8 +32,6 @@
     "grunt-browserify": "",
     "three-js": "git://github.com/usco/three.js.git"
   },
-  
-  "main": "app://usco/index.html",
   "window": {
     "title": "usco-proto",
     "toolbar": true,
