@@ -16,7 +16,7 @@ AngularDimHelper = function(options)
 
   var position = options.position || new THREE.Vector3();
   var direction = this.direction = options.direction || new THREE.Vector3(1,0,0);
-  var angle = this.angle = options.angle || Math.PI/2.25;
+  var angle = this.angle = options.angle || 75;//in degrees , not radians
   this.color = options.color || "#000000" ;
   
   this.text = options.text || this.length;
@@ -33,8 +33,11 @@ AngularDimHelper = function(options)
   //see ANGLE issue on windows platforms
   var labelPos = options.labelPos || "center";
   
-  var angleStart = 0.1;
-  var radius =30;
+  
+  angle = angle*Math.PI/180;
+  
+  var angleStart = 0.3;
+  var radius =20;
   
   var startSideLineOrientation = new THREE.Vector3(1,0,0);
   var arcMidOrientation = new THREE.Vector3(1,0,0);
@@ -85,22 +88,23 @@ AngularDimHelper = function(options)
   var leftArrowPos = new THREE.Vector3().copy(startPos);//0,sideLength,0);
   var rightArrowPos = new THREE.Vector3().copy(endPos); //0,sideLength,0);
   var arrowHeadSize = 4;
-  var arrowSize = length/2;
+  var arrowSize = arrowHeadSize;//length/2;
   
-  vAngle = angle*180/Math.PI;
-  this.text = new String(vAngle.toFixed(2))+"°";
+  //vAngle = angle*180/Math.PI;
+  this.text = new String(angle.toFixed(2))+"°";
   var arcMidPosition = arcMidOrientation.clone().multiplyScalar(radius);
-  
   
   //sin(ang/2) = (arrowHeadSize/2) / radius
   //ang/2 = asin( (arrowHeadSize/2) / radius )
-  var bli = arrowHeadSize/2 / radius;
-  var fooAngle = Math.asin(bli) *2;
+  var cBase = arrowHeadSize/2 / radius;
+  var fooAngle = Math.asin(cBase);
+  //cBase = Math.sin(fooAngle) * radius;
+  var cHeight = Math.cos(fooAngle) * radius;
 
   console.log("angl",fooAngle); 
   
   var blaOrient = new THREE.Vector3(1,0,0);
-  var matrix = new THREE.Matrix4().makeRotationAxis( new THREE.Vector3( 0, 0, 1 ) , fooAngle );
+  var matrix = new THREE.Matrix4().makeRotationAxis( new THREE.Vector3( 0, 0, 1 ) , angleStart + fooAngle*2 );
   blaOrient.applyMatrix4( matrix );
   leftArrowPos = blaOrient.clone().multiplyScalar(radius );
   //var leftADirTest = Math.cos(angle/2)*radius;
