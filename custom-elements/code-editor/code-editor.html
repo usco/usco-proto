@@ -77,6 +77,7 @@
     valueChanged:function()
     {
       console.log("valueChanged",this.value);
+      this.asyncFire("value-changed",{value:this.value});
     },
     cursorLocationChanged:function()
     {
