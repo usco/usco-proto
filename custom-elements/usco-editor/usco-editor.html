@@ -6,7 +6,6 @@
 <link rel="import" href="../visual-editor/visual-editor.html">
 <link rel="import" href="../code-editor/code-editor.html">
 
-
 <link rel="import" href="../../components/usco-command-manager/usco-command-manager.html">
 
 <link rel="import" href="../../components/usco-client-deps/usco-client-deps.html">
@@ -79,7 +78,7 @@
   </div>
   
   <template if="{{codeEditActive}}">
-    <code-editor id="codeEditor" theme="monokai" mode="javascript"  value="{{currentModule.source}}"> </code-editor>
+    <code-editor id="codeEditor" editor="cm" theme="monokai" mode="javascript"  value="{{currentModule.source}}"> </code-editor>
   </template>
   
   <history-editor id="historyEditor"> </history-editor>

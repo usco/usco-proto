@@ -11,6 +11,15 @@
       height:100%;
 
     }
+    code-editor{
+    
+position: absolute;
+height: 200px;
+width: 300px;
+right: 0px;
+top: 100px;
+z-index: 99999;
+    }
     visual-editor three-js
     {
        background-color:#ffffff;
