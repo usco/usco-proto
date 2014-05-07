@@ -13,7 +13,14 @@
         console.log("web components ready");
         document.body.style.opacity = 1;
         var source = "";
-        var codeEditor = document.querySelector('code-editor');
+        var codeEditor = document.querySelector('tabbed-code-editor');
+        
+        codeEditor.documents=codeEditor.documents.concat([
+        {name:"myProject.coffee",content:"foo",modified:false},
+        {name:"part.coffee",content:"class MyPart extend Part",modified:true},
+        {name:"part2.coffee",content:"foobar",modified:false},
+        {name:"part3.coffee",content:"class MyPart extend Part",modified:true}]);
+        
       });
     </script>  
   </body>

@@ -1,0 +1,161 @@
+@host{
+          font-family: 'Lato', sans-serif;
+        }
+       polymer-ui-tabs {
+            height:20px;
+            margin: 2px;
+            padding: 2px;
+            margin-left: 10px;
+          }
+          polymer-ui-tabs > * {
+            height:20px;
+            line-height: 20px;
+            background-color: whiteSmoke;
+            margin-right: 3px;
+          }
+          
+          
+          polymer-ui-tabs > .polymer-selected {
+background-color: rgba(195, 250, 55,0.8);
+          color:rgb(69, 78, 82);
+          }
+          
+          polymer-ui-toolbar {
+            height:20px;
+            border-bottom-width: 0px;
+            margin-left: 12px;
+          }
+          
+          .sidebar-menu {
+            overflow: hidden;
+            padding: 0px;
+          }
+          
+          polymer-ui-sidebar-header .sidebar-title {
+            font-size: 15px;
+            font-weight: bold;
+            opacity: 0.8;
+            text-shadow: rgba(0, 0, 0, 0.2) 0px 0px;
+          }
+          
+          polymer-ui-toolbar.polymer-ui-light-theme {
+background-image: none;
+background-color: rgb(195, 250, 55);/*rgb(242, 242, 242);*/
+          }
+          polymer-ui-menu-item.polymer-ui-light-theme.polymer-selected, polymer-ui-menu-item.polymer-ui-light-theme[active] {
+background-color: rgba(195, 250, 55,0.8); /*rgb(85, 153, 255); rgb(195, 250, 55);*/
+border: none; 
+
+          }
+          
+          polymer-ui-sidebar-menu.polymer-ui-light-theme {
+            box-shadow: rgba(0, 0, 0, 0) -8px 0px 8px -4px inset;
+            }
+          
+          polymer-ui-menu-item {
+            padding: 5px 5px;
+            font-size:13px;
+            border-radius: 0px;
+            /*background-color: rgb(195, 250, 55);*/
+            border:none;
+            opacity: 0.6;
+            
+            
+            -webkit-user-select: none;
+            -moz-user-select: none;
+          }
+          
+          /*todo , integrated font awesome in a better way*/
+          polymer-ui-menu-item .fa{
+            color:black;
+            line-height: 25px;
+float: right;
+            font-size: 1.2em;
+          }
+          
+          polymer-ui-menu-item:hover {
+          opacity: 0.9;
+          background-color: rgb(195, 250, 55);
+          }
+          
+          code-editor {
+          position: absolute;
+          left: 10px;
+          width: 800px;
+height: 320px;
+          }
+          
+          ace_search.right {
+border-radius: 0px 0px 0px 0px;
+
+          }
+          
+          button {
+padding: 2px;
+line-height: 18px;
+height: 18px;
+border: none;
+margin-top:1px;
+          }
+          
+          select{
+            border: none;
+background: rgb(219, 214, 214);
+          }
+          polymer-ui-nav-arrow{
+            opacity:0;
+          }
+          
+          
+          ::-webkit-scrollbar {
+    width: 0.5em;
+}
+
+::-webkit-scrollbar-track {
+    box-shadow: inset 0 0 6px rgba(0, 0, 0, 0.3);
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(100, 100, 100, 0.8);
+}
+
+::-webkit-scrollbar-corner,
+::-webkit-scrollbar-thumb:window-inactive {
+    background: rgba(100, 100, 100, 0.4);
+}
+
+/* font awesome icons stuff*/
+.element {
+    position: relative;
+    
+}
+ 
+/*replace the content value with the 
+corresponding value from the list below*/
+ 
+.element:before {
+    content: "\f067";
+    font-family: FontAwesome;
+    font-style: normal;
+    font-weight: normal;
+    text-decoration: inherit;
+/*--adjust as necessary--*/
+    color: #000;
+    font-size: 18px;
+    padding-right: 0.5em;
+    position: absolute;
+    top: 10px;
+    left: 0;
+}
+
+/* git graph*/
+git-graph{
+position: absolute;
+right: 90px;
+}
+
+/*WORKAROUND*/
+polymer-ui-animated-pages > .polymer-selected {
+visibility: inherit;
+z-index: auto;
+}
