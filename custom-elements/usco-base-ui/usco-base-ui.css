@@ -1,0 +1,69 @@
+    :host{
+      position: absolute;
+      top: 0px;
+      left: 0px;
+      overflow:hidden;
+      
+      font-family: 'Lato', sans-serif;
+      font-size: 13px;
+    }
+    
+    polymer-ui-toolbar {
+            height:20px;
+            border-bottom-width: 0px;
+            margin-left: 12px;
+          }
+          
+          .sidebar-menu {
+            overflow: hidden;
+            padding: 0px;
+          }
+          
+          polymer-ui-sidebar-header .sidebar-title {
+            font-size: 15px;
+            font-weight: bold;
+            opacity: 0.8;
+            text-shadow: rgba(0, 0, 0, 0.2) 0px 0px;
+          }
+          
+          polymer-ui-toolbar.polymer-ui-light-theme {
+background-image: none;
+background-color: rgb(195, 250, 55);/*rgb(242, 242, 242);*/
+          }
+          polymer-ui-menu-item.polymer-ui-light-theme.polymer-selected, polymer-ui-menu-item.polymer-ui-light-theme[active] {
+background-color: rgba(195, 250, 55,0.8); /*rgb(85, 153, 255); rgb(195, 250, 55);*/
+border: none; 
+
+          }
+          
+          polymer-ui-sidebar-menu.polymer-ui-light-theme {
+            box-shadow: rgba(0, 0, 0, 0) -8px 0px 8px -4px inset;
+            }
+          
+          polymer-ui-menu-item {
+            padding: 5px 5px;
+            font-size:13px;
+            border-radius: 0px;
+            /*background-color: rgb(195, 250, 55);*/
+            border:none;
+            opacity: 0.6;
+            
+            
+            -webkit-user-select: none;
+            -moz-user-select: none;
+          }
+          
+          
+          
+          polymer-ui-menu-button #overlaymenu {
+          display: inline-block;
+          position: relative;
+          top: -1px;
+          box-sizing: border-box;
+          background-color: white;
+          border: 1px solid rgba(0, 0, 0, 0.14902);
+          box-shadow: rgba(0, 0, 0, 0.298039) 0px 0px 0px;
+          margin: 7px 0px 0px 7px;
+          background-position: initial initial;
+          background-repeat: initial initial;
+          }

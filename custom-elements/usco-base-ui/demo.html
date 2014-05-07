@@ -1,0 +1,26 @@
+<html>
+  <head>
+    <title>usco-editor</title>
+    <meta charset="utf-8">
+    <script src="../../components/platform/platform.js"></script>
+    <link rel="import" href="usco-base-ui.html">
+      <style>
+        html, body{
+          width:100%;
+          height:100%;
+          overflow:hidden;
+        }
+         usco-base-ui {
+          width:100%;height:100%;
+    }
+      </style>
+  </head>
+  <body theme="polymer-ui-light-theme">
+     <usco-base-ui> </usco-base-ui>
+     <script>
+      window.addEventListener('polymer-ready', function() {
+        console.log("web components ready");
+      });
+    </script>  
+  </body>
+</html>

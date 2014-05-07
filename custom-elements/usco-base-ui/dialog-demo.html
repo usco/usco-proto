@@ -1,0 +1,61 @@
+
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>core-overlay</title>
+		<script src="../../components/platform/platform.js"></script>
+		<link rel="import" href="../../components/core-transition/core-transition-css.html">
+		<link rel="import" href="x-dialog.html">
+		<style>
+			.dialog {
+				box-sizing: border-box;
+				-moz-box-sizing: border-box;
+				font-family: Arial, Helvetica, sans-serif;
+				font-size: 13px;
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				overflow: hidden;
+				background: white;
+				padding:30px 42px;
+				outline: 1px solid rgba(0,0,0,0.2);
+				box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+			}
+
+			#dialog {
+				width: 500px;
+			}
+
+			#confirmation {
+				text-align: center;
+				width: 150px;
+			}
+		</style>
+	</head>
+	<body unresolved>
+		<x-dialog id="dialog" class="dialog">
+			<h2>Dialog</h2>
+			<div>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed fringilla sapien sed enim sollicitudin laoreet. Suspendisse suscipit, metus ac volutpat sodales, libero magna semper lacus, molestie fringilla massa orci ut arcu. Nullam sodales urna sit amet odio vehicula mattis.</div><br><br>
+			<div>Ut aliquam vulputate congue. Vestibulum pretium pretium nulla quis sollicitudin. Praesent lacinia congue erat nec mattis. Fusce commodo lacus est. Duis turpis eros, ultrices sed aliquet non, blandit egestas velit. Integer a augue nec lorem tristique hendrerit. Curabitur imperdiet risus id enim bibendum vestibulum. Integer id magna at arcu faucibus fermentum vel a augue. Sed fringilla venenatis dolor, in blandit magna molestie luctus. Vestibulum dignissim posuere ultrices. Aenean urna nisl, tincidunt vitae iaculis ut, pharetra nec eros.</div><br><br>
+
+			<div>
+				<input placeholder="say something..." autofocus oninput="somethingCheck(this)"></input><br>
+				I agree with this wholeheartedly.
+				<core-overlay id="confirmation" class="dialog" transition="core-transition-top">
+					Thank you.
+				</core-overlay>
+			</div><br><br>
+			<script>
+				function somethingCheck(e) {
+					if (e.value === 'something') {
+						document.getElementById('confirmation').toggle();
+					}
+				}
+			</script>
+			<button overlay-toggle>OK</button>
+		</x-dialog>
+
+		<button onclick="document.getElementById('dialog').toggle();">Toggle Dialog</button>
+
+	</body>
+</html>
+

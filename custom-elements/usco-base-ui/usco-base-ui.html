@@ -1,0 +1,190 @@
+<link rel="import" href="../../components/polymer/polymer.html">
+<link rel="import" href="../../components/polymer-ui-scaffold/polymer-ui-scaffold.html">
+<link rel="import" href="../../components/polymer-ui-menu-button/polymer-ui-menu-button.html">
+<link rel="import" href="../../components/polymer-ui-menu-item/polymer-ui-menu-item.html">
+<link rel="import" href="../../components/polymer-ui-sidebar-menu/polymer-ui-sidebar-menu.html">
+
+
+<link rel="import" href="../../components/polymer-signals/polymer-signals.html">
+
+<link rel="import" href="../usco-editor/usco-editor.html">
+<link rel="import" href="x-dialog.html">
+
+<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+<link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
+
+
+
+<polymer-element name="usco-base-ui">
+<template>
+  <link rel="stylesheet" type="text/css" href="usco-base-ui.css">
+  <!--pub sub messages handling-->
+  <style>
+    .dialog {
+				box-sizing: border-box;
+				-moz-box-sizing: border-box;
+				font-family: Arial, Helvetica, sans-serif;
+				font-size: 13px;
+				-webkit-user-select: none;
+				-moz-user-select: none;
+				overflow: hidden;
+				background: white;
+				padding:30px 42px;
+				outline: 1px solid rgba(0,0,0,0.2);
+				box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+			}
+
+			#dialog {
+				width: 500px;
+			}
+
+			#confirmation {
+				text-align: center;
+				width: 150px;
+				z-index:999;
+			}
+  </style>
+  
+  <polymer-signals></polymer-signals>
+  
+  <core-toolbar>
+    <core-icon-button icon="menu" on-tap="{{menuAction}}"></core-icon-button>
+    <div core-flex>Usco</div>
+    <core-icon-button icon="more" on-tap="{{moreAction}}"></core-icon-button>
+  </core-toolbar>
+  
+  <x-dialog id="dialog" class="dialog">
+			<h2>Help</h2>
+			<div>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed fringilla sapien sed enim sollicitudin laoreet. Suspendisse suscipit, metus ac volutpat sodales, libero magna semper lacus, molestie fringilla massa orci ut arcu. Nullam sodales urna sit amet odio vehicula mattis.</div><br><br>
+			<div>Ut aliquam vulputate congue. Vestibulum pretium pretium nulla quis sollicitudin. Praesent lacinia congue erat nec mattis. Fusce commodo lacus est. Duis turpis eros, ultrices sed aliquet non, blandit egestas velit. Integer a augue nec lorem tristique hendrerit. Curabitur imperdiet risus id enim bibendum vestibulum. Integer id magna at arcu faucibus fermentum vel a augue. Sed fringilla venenatis dolor, in blandit magna molestie luctus. Vestibulum dignissim posuere ultrices. Aenean urna nisl, tincidunt vitae iaculis ut, pharetra nec eros.</div><br><br>
+
+			<div>
+				<input placeholder="say something..." autofocus oninput="somethingCheck(this)"></input><br>
+				I agree with this wholeheartedly.
+				<core-overlay id="confirmation" class="dialog" transition="core-transition-top">
+					Thank you.
+				</core-overlay>
+			</div><br><br>
+			<script>
+				function somethingCheck(e) {
+					if (e.value === 'something') {
+					  console.log("sdmkl");
+						document.getElementById('confirmation').toggle();
+					}
+				}
+			</script>
+			<button overlay-toggle>OK</button>
+		</x-dialog>
+
+  
+  <polymer-ui-scaffold style="display: block; position: relative; height: 100%;width:100%">
+      <polymer-ui-sidebar-menu navigation label="" offscreen="basement">
+        <polymer-ui-menu-item on-tap="{{reqNew}}">New</polymer-ui-menu-item>
+        <polymer-ui-menu-item on-tap="{{reqSave}}">Save</polymer-ui-menu-item>
+        <polymer-ui-menu-item on-tap="{{reqSaveAs}}">Save as </polymer-ui-menu-item>
+        <polymer-ui-menu-item on-tap="{{reqLoad}}">Load </polymer-ui-menu-item>
+        <polymer-ui-menu-item></polymer-ui-menu-item>
+        
+        <polymer-ui-menu-item>Examples </polymer-ui-menu-item>
+        <polymer-ui-menu-item> </polymer-ui-menu-item>
+        <polymer-ui-menu-item>Export </polymer-ui-menu-item>
+      </polymer-ui-sidebar-menu>
+      
+      <div tool flex style="width:100px"></div>
+      
+      <button tool onclick="document.getElementById('dialog').toggle();">Toggle Dialog</button>
+      <polymer-ui-icon-button tool halign="left" on-tap="{{reqCompile}}">
+        <i class="fa fa-bolt"></i>
+      </polymer-ui-icon-button>
+      
+      <polymer-ui-icon-button tool halign="left" on-tap="{{toggleCodeEditor}}">
+        <i class="fa fa-edit"></i>
+      </polymer-ui-icon-button>
+      <polymer-ui-menu-button tool halign="right"  icon="account">
+        <polymer-ui-menu-item on-tap="{{reqDropBoxLogin}}">Dropbox</polymer-ui-menu-item>
+        <polymer-ui-menu-item on-tap="">Github</polymer-ui-menu-item>
+      </polymer-ui-menu-button>
+
+      <div main>
+          <usco-editor style="width:100%;height:100%" codeEditActive="{{isCodeEditorActive}}"> </usco-editor>
+          <button on-click="{{reqScreenshot}}">Screenshot</button>
+      </div>
+
+    </polymer-ui-scaffold>
+  
+</template>
+<script>
+Polymer("usco-base-ui",{
+  project:null,
+  /*FIXME:this should be global to app*/
+  isCodeEditorActive:false,
+  created:function()
+  {
+    this.project = {name:"testProject",files:{"foo":"bar"}};
+  },
+  ready:function()
+  {
+    console.log("ready", this.$);
+  },
+  enteredView:function()
+  {
+    console.log("entering view", this.$);
+    //document.querySelector('usco-asset-manager');
+  },
+  reqScreenshot:function()
+  {
+    console.log("requesting screenshot");
+    this.asyncFire('polymer-signal', {name: "request-screenshot", data:null});
+  },
+  reqNew:function()
+  {
+    console.log("requesting new design");
+    this.asyncFire('polymer-signal', {name: "request-new-design", data:null});
+  },
+  reqSave:function()
+  {
+    console.log("requesting save design");
+    this.asyncFire('polymer-signal', {name: "request-save-design", data:null});
+    /*var exporter = new THREE.ObjectExporter()
+    var exported = exporter.parse(this.assembly)
+    exported = JSON.stringify(exported);*/
+  },
+  reqSaveAs:function()
+  {
+    console.log("requesting save AS design");
+    this.asyncFire('polymer-signal', {name: "request-saveas-design", data:null});
+  },
+  reqLoad:function()
+  {
+    console.log("requesting load design");
+    this.asyncFire('polymer-signal', {name: "request-load-design", data:null});
+    /*var reloadedAssembly = JSON.parse(reloadedAssembly.content);
+    var loader = new THREE.ObjectParser()
+    
+    var assembly = loader.parse(reloadedAssembly)
+    //@scene.add @assembly*/
+  },
+  reqExport:function()
+  {
+    console.log("requesting export");
+    this.asyncFire('polymer-signal', {name: "request-export-design", data:null});
+  },
+  reqDropBoxLogin:function()
+  {
+    console.log("requesting login to dropbox");
+    this.asyncFire('polymer-signal', {name: "request-dropbox-login", data:null});
+  },
+  reqCompile:function()
+  {
+    console.log("requesting compiling design");
+    this.asyncFire('polymer-signal', {name: "request-compile-design", data:null});
+  },
+  toggleCodeEditor:function()
+  {
+    this.isCodeEditorActive = (!this.isCodeEditorActive);
+    console.log("toggling code editor",this.isCodeEditorActive);
+  }
+
+});
+</script>
+</polymer-element>
