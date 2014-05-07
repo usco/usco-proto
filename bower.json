@@ -39,6 +39,8 @@
     "usco-obj-serializer": "usco/usco-obj-serializer#master",
     "polymer-ui-animated-pages": "https://github.com/PolymerLabs/polymer-ui-animated-pages.git#~0.2.2",
     "gitgraph.js": "~1.0.0",
-    "polymer-ui-card": "https://github.com/PolymerLabs/polymer-ui-card"
+    "polymer-ui-card": "https://github.com/PolymerLabs/polymer-ui-card",
+    "core-elements": "Polymer/core-elements#~0.2.3",
+    "core-transition": "Polymer/core-transition#~0.2.3"
   }
 }
