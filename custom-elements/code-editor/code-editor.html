@@ -4,7 +4,7 @@
 <link rel="import" href="../../components/ace/ace-element.html">
 <!--TODO: add conditional import of right editor ??-->
 
-<polymer-element name="code-editor" attributes="editor theme mode value cursorLocation themes" >
+<polymer-element name="code-editor" attributes="editor theme mode value cursorLocation themes showInvisibles" >
   <template>
     <style>
           @host{
@@ -17,7 +17,7 @@
     </style>
   
     <template if="{{editor=='ace'}}">
-      <ace-element id="innerEditorAce" theme="{{theme}}" mode="{{mode}}" value="{{value}}" > </ace-element>
+      <ace-element id="innerEditorAce" theme="{{theme}}" mode="{{mode}}" value="{{value}}" showInvisibles="{{showInvisibles}}"> </ace-element>
     </template>
     <template if="{{editor=='cm'}}">
       <code-mirror id="innerEditorCM" theme="{{theme}}" mode="{{mode}}" value="{{value}}"  cursorPos="{{cursorLocation}}"> </code-mirror>

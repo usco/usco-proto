@@ -198,7 +198,7 @@ right: 90px;
           <template repeat="{{document in activeDocuments}}">
             <div>
               <code-editor editor="{{editor}}" mode="{{language}}" value="{{document.content}}" cursorLocation="{{cursorLocation}}"
-              theme="{{theme}}" themes="{{themes}}" on-value-changed="{{editorValueChanged}}"
+              theme="{{theme}}" themes="{{themes}}" on-value-changed="{{editorValueChanged}}" showInvisibles="{{showInvisibles}}"
               ></code-editor>
               <polymer-ui-toolbar style="position: absolute;
 width: 800px;
