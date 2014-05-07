@@ -39,3 +39,8 @@ EDITING : a LOT more often than exporting a triangulated mesh : we NEED a fast (
   * background worker generating triangulated meshes, so export does not take ages
 
 DIMENTIONS : would need to be able hook into the "dynamic" system : could represent visual , some of the key attributes of a parametric design
+
+SEMANTIC: 
+  - holes, nuts and bolts etc : it would be good to have some minimal semantic elements : we should provide a set of basic
+  nuts & bolts library (see BOLTS library)
+  - a.subtract bolt should add the semantic information of needing (potentially) a hole to fit that bolt hole
