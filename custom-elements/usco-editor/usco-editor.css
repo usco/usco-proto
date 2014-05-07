@@ -11,7 +11,7 @@
       height:100%;
 
     }
-    code-editor{
+    /*code-editor{
     
 position: absolute;
 height: 200px;
@@ -19,7 +19,18 @@ width: 300px;
 right: 0px;
 top: 100px;
 z-index: 99999;
+    }*/
+    
+    tabbed-code-editor{
+      position: absolute;
+right: 00px;
+top: 0px;
+height: 100px;
+width: 400px;
+z-index: 999;
+    
     }
+    
     visual-editor three-js
     {
        background-color:#ffffff;

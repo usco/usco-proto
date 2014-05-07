@@ -4,7 +4,7 @@
 
 
 <link rel="import" href="../visual-editor/visual-editor.html">
-<link rel="import" href="../code-editor/code-editor.html">
+<link rel="import" href="../code-editor/tabbed-editor.html">
 
 <link rel="import" href="../../components/usco-command-manager/usco-command-manager.html">
 
@@ -31,7 +31,7 @@
 
 <script src="../usco-modules/lib/usco-module.js" ></script>  
 
-<polymer-element name="usco-editor">
+<polymer-element name="usco-editor" attributes="codeEditActive">
 <template>
   <link rel="stylesheet" type="text/css" href="usco-editor.css">
   
@@ -70,16 +70,10 @@
   </div>
   
   <div id="saveLoad" style="position:absolute; right:10px;top:5px;z-index:3">
-    <div> 
-      <button on-click="{{reqSave}}"> Save Design</button>
-    </div>
-    <button on-click="{{reqLoad}}"> Load Design</button>
     <button on-click="{{reqScreenshot}}">Screenshot</button>
   </div>
   
-  <template if="{{codeEditActive}}">
-    <code-editor id="codeEditor" editor="cm" theme="monokai" mode="javascript"  value="{{currentModule.source}}"> </code-editor>
-  </template>
+    <tabbed-code-editor id="codeEditor" editor="cm" theme="monokai" mode="javascript"  value="{{currentModule.source}}"> </tabbed-code-editor>
   
   <history-editor id="historyEditor"> </history-editor>
     
@@ -125,6 +119,18 @@ Polymer("usco-editor",{
   {
     //console.log("source changed", this.source);
   },
+  codeEditActiveChanged:function()
+  {
+    var bla = "hidden";
+    if(this.codeEditActive) bla = 'visible';
+    this.codeEditor.style.visibility = bla;
+    if(this.codeEditActive)
+    {
+    
+    //this.codeEditor.documents.push( this.project.files[0]);
+    //this.codeEditor.activeDocuments = this.codeEditor.documents[0]
+    }
+  },
   loginToDB:function()
   {
     var dropbBoxStore = this.assetManager.querySelector("dropbox-store");
@@ -132,7 +138,12 @@ Polymer("usco-editor",{
   },
   created:function()
   {
-    this.project = {name:"testProject",files:{"foo":"bar"}};
+    this.project = {
+      name:"testProject",
+      files:[
+        {name:"part.js",content:"class MyPart extend Part"}
+      ]
+    };
     this.codeGenerator = new CodeGenerator();
     
     var rootAssembly = new Part();
@@ -151,6 +162,9 @@ Polymer("usco-editor",{
     this.commandManager = this.$.historyEditor;
     this.assetManager   = this.$.assetManager;
     //document.querySelector('usco-asset-manager');
+    
+    this.codeEditor.documents.push( this.project.files[0]);
+    
     //if we recieve a "newOperation" event, add it to history  
     var self = this;
     document.addEventListener('newOperation', function(e) {
@@ -160,6 +174,22 @@ Polymer("usco-editor",{
       
       if(self.generateCodeOnTheFly) self.generateCodeFromHistory();
     });
+    
+    //handle all pubsub messages
+    this.addEventListener('polymer-signal-request-dropbox-login', function(e) {
+      this.loginToDB();
+    })
+    this.addEventListener('polymer-signal-request-new-design', function(e) {
+    })
+    this.addEventListener('polymer-signal-request-save-design', function(e) {
+    })
+    this.addEventListener('polymer-signal-request-saveas-design', function(e) {
+    })
+    this.addEventListener('polymer-signal-request-load-design', function(e) {
+    })
+    this.addEventListener('polymer-signal-request-export-design', function(e) {
+      this.exportDesign(fileName,format, data);
+    })
     
     //handle requests( keyboard events fire these in the visual editor)
     this.addEventListener('undoOperation', function(e) {
@@ -195,6 +225,11 @@ Polymer("usco-editor",{
       var fileName = e.detail.fileName || "test";
       var format = e.detail.format;
       var data = e.detail.data;
+      this.exportDesign(fileName,format, data);
+    });
+  },
+  exportDesign:function(fileName,format, data)
+  {
       var fullName = ( fileName.indexOf(".") == -1)? fileName+"."+format : fileName;
       var serializer = self.assetManager.assetManager.serializers[format];//STLSerializer//self.querySelector('stl-serializer');
       
@@ -209,10 +244,7 @@ Polymer("usco-editor",{
         link.download = fullName;
         link.click();
       }
-      
-    });
   },
-  
   loadResource:function(uriOrData)
   {
     var self = this;
@@ -249,6 +281,9 @@ Polymer("usco-editor",{
      //var testSource = updateSelectionCode(generationScope,this.commandManager.undos);
      var testSource = this.codeGenerator.generateFromOperations( this.commandManager.undos );
      this.currentModule.source = testSource;
+     
+     //FIXME:hack
+     this.project.files[0].content = testSource;
   },
   generateFromCode:function()
   {
