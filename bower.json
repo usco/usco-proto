@@ -9,7 +9,7 @@
     "polymer-ui-splitter": "Polymer/polymer-ui-splitter#master",
     "polymer-localstorage": "Polymer/polymer-localstorage#master",
     "polymer-signals": "PolymerLabs/polymer-signals#master",
-    "ace": "Polymer/ace-element#master",
+    "ace": "kaosat-dev/ace-element#master",
     "code-mirror": "kaosat-dev/code-mirror#master",
     "esprima": "~1.0.4",
     "escope": "~1.0.0",
