@@ -1,0 +1,117 @@
+<link rel="import" href="../../components/polymer/polymer.html">
+<link rel="import" href="../../components/core-iconset/core-iconset.html">
+<link rel="import" href="../../components/core-meta/core-meta.html">
+
+<link href="css/font-awesome.css" rel="stylesheet">
+
+<polymer-element name="core-iconset-font" extends="core-meta" attributes="iconSize icons">
+  <template>
+  </template>
+  <script>
+  
+    Polymer('core-iconset-font', {
+      /**
+       * The size of an individual icon. Note that icons must be square.
+       *
+       * @attribute iconSize
+       * @type number
+       * @default 24
+       */
+      iconSize: 24,
+      type: 'iconset',
+      icons:[],
+
+      iconById: function(id) {
+        return this.querySelector('#' + id);
+      },
+
+      cloneIcon: function(id) {
+        var icon = this.iconById(id);
+        if (icon) {
+          var content = icon.cloneNode(true);
+          var svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+          svg.setAttribute('viewBox', '0 0 ' + this.iconSize + ' ' +
+              this.iconSize);
+          // NOTE(dfreedm): work around https://crbug.com/370136
+          svg.style.pointerEvents = 'none';
+          svg.appendChild(content);
+          return svg;
+        }
+      },
+
+      get iconNames() {
+        var icons = this.querySelectorAll('[id]').array();
+        return icons.map(function(n){ return n.id });
+      },
+
+      /**
+       * Applies an icon to the given element. The font icon is added 
+       directly to itself.
+       *
+       * @method applyIcon
+       * @param {Element} element The element to which the icon is
+       * applied.
+       * @param {String|Number} icon The name the icon to apply.
+       */
+      applyIcon: function(element, icon) {
+      console.log("lkmqsdl",icon, this.icons);
+        var root = element.shadowRoot || element;
+        //var offset = this.getOffset(icon, theme);
+        if(element && this.icons.indexOf(icon) > -1){
+          element.className = "fa fa-"+icon
+          element.style.fontSize = this.iconSize + 'px';
+        }
+      }
+    });
+
+  </script>
+
+</polymer-element>
+
+
+ <polymer-element name="icon-demo" attributes="icon">
+    <template>
+      <style>
+        :host {
+          display: inline-block;
+          margin: 2px;
+        }
+      </style>
+      <core-iconset id="meta"></core-iconset>
+      <content></content>
+    </template>
+
+    <script>
+      Polymer('icon-demo', {
+        enteredView:function()
+        {
+          console.log("entered view");
+        },
+        iconChanged: function() {
+          console.log("icon changed",this.icon);
+          if (!this.icon) {
+            return;
+          }
+          var parts = this.icon.split(':');
+          console.log("parts", parts);
+          var icon = parts.pop();
+          
+          // find the iconSet for the name given via the icon property
+          console.log("bla",icon,parts, this.$.meta);
+          var bli = iconSetName = parts.pop()
+          console.log("bli",bli);
+          var iconset = this.$.meta.byId(iconSetName);
+          console.log("iconset",iconset);
+          if (iconset) {
+            // size the element as needed
+            this.style.height = this.style.width = iconset.iconSize + 'px';
+            // use iconset's applyAsBackground method to set the given icon
+            // as the element's background image.
+            iconset.applyIcon(this, icon);
+          }
+        }
+      });
+    </script>
+  </polymer-element>
+
+
