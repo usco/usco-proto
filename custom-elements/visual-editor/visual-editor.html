@@ -121,7 +121,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     <three-js postProcess fullscreen="{{fullscreen}}" 
     selectedObjects="{{selectedObjects}}" highlightedObject="{{highlightedObject}}" id="viewer" on-keydown="{{keyUp}}" on-sceneready="{{viewerSceneReady}}">
       <!--<drag-drop id="dragDropLayer"> </drag-drop>-->
-          <three-stats id="stats" show></three-stats>
+          <!--<three-stats id="stats" show></three-stats>-->
           <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
           <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate="{{autorotate}}"> </three-js-orbitControls>
 
@@ -1263,7 +1263,10 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     {
       if(this.activeRoot.parent) this.activeRoot = this.activeRoot.parent;
     },
-
+    clear:function()
+    {
+      this.viewer.clearScene();
+    }
   });
   </script>
 </polymer-element>
