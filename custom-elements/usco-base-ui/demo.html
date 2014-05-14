@@ -13,9 +13,23 @@
          usco-base-ui {
           width:100%;height:100%;
     }
+    
+          core-theme-aware.usco {
+            background: salmon;
+          }
+          
+          core-theme-aware.usco-dark {
+            background: darkslategray;
+            color:white;
+          }
+          
+          core-theme-aware.usco-light {
+            background: white;
+            color:black;
+          }
       </style>
   </head>
-  <body theme="polymer-ui-light-theme">
+  <body theme="usco-light">
      <usco-base-ui> </usco-base-ui>
      <script>
       window.addEventListener('polymer-ready', function() {

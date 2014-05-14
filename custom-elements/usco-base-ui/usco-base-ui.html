@@ -4,67 +4,49 @@
 <link rel="import" href="../../components/polymer-ui-menu-item/polymer-ui-menu-item.html">
 <link rel="import" href="../../components/polymer-ui-sidebar-menu/polymer-ui-sidebar-menu.html">
 
+<link rel="import" href="../../components/core-icon-button/core-icon-button.html">
+<link rel="import" href="../../components/core-menu-button/core-menu-button.html">
+<link rel="import" href="../../components/core-tooltip/core-tooltip.html">
+<link rel="import" href="../../components/core-item/core-item.html">
 
-<link rel="import" href="../../components/polymer-signals/polymer-signals.html">
+<link rel="import" href="../../components/core-scaffold/core-scaffold.html">
 
 <link rel="import" href="../usco-editor/usco-editor.html">
 <link rel="import" href="x-dialog.html">
+<link rel="import" href="vert-toolbar.html">
 
-<link href="//netdna.bootstrapcdn.com/font-awesome/4.0.3/css/font-awesome.css" rel="stylesheet">
+<link rel="import" href="usco-iconsets.html">
+
 <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
-
-
 
 <polymer-element name="usco-base-ui">
 <template>
   <link rel="stylesheet" type="text/css" href="usco-base-ui.css">
   <!--pub sub messages handling-->
-  <style>
-    .dialog {
-				box-sizing: border-box;
-				-moz-box-sizing: border-box;
-				font-family: Arial, Helvetica, sans-serif;
-				font-size: 13px;
-				-webkit-user-select: none;
-				-moz-user-select: none;
-				overflow: hidden;
-				background: white;
-				padding:30px 42px;
-				outline: 1px solid rgba(0,0,0,0.2);
-				box-shadow: 0 4px 16px rgba(0,0,0,0.2);
-			}
-
-			#dialog {
-				width: 500px;
-			}
-
-			#confirmation {
-				text-align: center;
-				width: 150px;
-				z-index:999;
-			}
-  </style>
-  
   <polymer-signals></polymer-signals>
   
-  <core-toolbar>
-    <core-icon-button icon="menu" on-tap="{{menuAction}}"></core-icon-button>
-    <div core-flex>Usco</div>
-    <core-icon-button icon="more" on-tap="{{moreAction}}"></core-icon-button>
-  </core-toolbar>
-  
-  <x-dialog id="dialog" class="dialog">
+  <x-dialog id="dialog" class="dialog help">
 			<h2>Help</h2>
-			<div>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed fringilla sapien sed enim sollicitudin laoreet. Suspendisse suscipit, metus ac volutpat sodales, libero magna semper lacus, molestie fringilla massa orci ut arcu. Nullam sodales urna sit amet odio vehicula mattis.</div><br><br>
-			<div>Ut aliquam vulputate congue. Vestibulum pretium pretium nulla quis sollicitudin. Praesent lacinia congue erat nec mattis. Fusce commodo lacus est. Duis turpis eros, ultrices sed aliquet non, blandit egestas velit. Integer a augue nec lorem tristique hendrerit. Curabitur imperdiet risus id enim bibendum vestibulum. Integer id magna at arcu faucibus fermentum vel a augue. Sed fringilla venenatis dolor, in blandit magna molestie luctus. Vestibulum dignissim posuere ultrices. Aenean urna nisl, tincidunt vitae iaculis ut, pharetra nec eros.</div><br><br>
-
 			<div>
+        Foo bar at 
+      			  
+			</div><br><br>
+			<h2>Examples</h2>
+			<div>
+        Find examples at 
+      			  
+			</div><br><br>
+			<h2>Controls</h2>
+			<div>
+      			  
+			</div><br><br>
+
+			<!--<div>
 				<input placeholder="say something..." autofocus oninput="somethingCheck(this)"></input><br>
-				I agree with this wholeheartedly.
 				<core-overlay id="confirmation" class="dialog" transition="core-transition-top">
 					Thank you.
 				</core-overlay>
-			</div><br><br>
+			</div><br><br>-->
 			<script>
 				function somethingCheck(e) {
 					if (e.value === 'something') {
@@ -74,43 +56,94 @@
 				}
 			</script>
 			<button overlay-toggle>OK</button>
+			
 		</x-dialog>
 
-  
-  <polymer-ui-scaffold style="display: block; position: relative; height: 100%;width:100%">
-      <polymer-ui-sidebar-menu navigation label="" offscreen="basement">
-        <polymer-ui-menu-item on-tap="{{reqNew}}">New</polymer-ui-menu-item>
-        <polymer-ui-menu-item on-tap="{{reqSave}}">Save</polymer-ui-menu-item>
-        <polymer-ui-menu-item on-tap="{{reqSaveAs}}">Save as </polymer-ui-menu-item>
-        <polymer-ui-menu-item on-tap="{{reqLoad}}">Load </polymer-ui-menu-item>
-        <polymer-ui-menu-item></polymer-ui-menu-item>
+        <core-toolbar style="position:absolute;top:0px;left:0px;z-index:999">
+            <div style="display: inline-block;">Usco</div>
+            
+            <core-icon-button icon="fa-edit:file-o" on-tap="{{reqNew}}"></core-icon-button>
+            
+            <core-menu-button icon="fa-edit:floppy-o">
+              <core-item icon="fa-edit:floppy-o" label="Save" on-tap="{{reqSave}}"></core-item>
+              <core-item icon="fa-edit:floppy-o" label="SaveAs" on-tap="{{reqSaveAs}}"></core-item>
+            </core-menu-button>
+            <core-icon-button icon="fa-app:folder-open-o" active=false disabled=true on-tap="{{reqLoad}}"></core-icon-button>
+
+            <core-tooltip label="export design" position="bottom">
+              <core-menu-button icon="fa-app:upload">
+                <template repeat="{{format in exportFormats}}">
+                  <core-item label="{{format}}" on-tap="{{reqExport}}"></core-item>
+                </template>
+              </core-menu-button>
+            </core-tooltip>
+            
+            <core-tooltip label="import design" position="bottom">
+              <core-menu-button icon="fa-app:download">
+                <template repeat="{{format in importFormats}}">
+                  <core-item label="{{format}}" on-tap="{{reqImport}}"></core-item>
+                </template>
+              </core-menu-button>
+            </core-tooltip>
+            
+            <div style="display: inline-block;width:40px"></div>
+            
+            <core-tooltip label="compile design" position="bottom">
+              <core-icon-button icon="fa-app:{{ {'bolt':!isCompiling, 'refresh':isCompiling}| tokenList }}" animation="{{fa-spin}}" active=false disabled=true on-tap="{{reqCompile}}"></core-icon-button>
+            </core-tooltip>
+            <core-tooltip label="generate code from design" position="bottom">
+              <core-icon-button icon="fa-edit:file-text" on-tap="{{reqGenCode}}"></core-icon-button>
+            </core-tooltip>
+            
+            <core-menu-button icon="fa-app:cog">
+			        <core-item icon="fa-app:search" label="Search"></core-item>
+            </core-menu-button>
+            
+            <core-icon-button icon="fa-app:code" on-tap="{{toggleCodeEditor}}"></core-icon-button>
+            
+            <div style="display: inline-block;width:800px"></div>
+            <core-tooltip label="log in/out (remote storage, optional)" position="left">
+              <core-menu-button icon="fa-app:user" halign="right">
+                <core-item icon="fa-brands:dropbox" label="Dropbox" on-tap="{{reqDropBoxLogin}}"></core-item>
+                <core-item icon="fa-brands:github"  label="Github"></core-item>
+              </core-menu-button>
+            </core-tooltip>
+            
+            <core-tooltip label="fork me on github" position="bottom">
+              <core-icon-button icon="fa-app:code-fork"></core-icon-button>
+            </core-tooltip>
+       </core-toolbar>
         
-        <polymer-ui-menu-item>Examples </polymer-ui-menu-item>
-        <polymer-ui-menu-item> </polymer-ui-menu-item>
-        <polymer-ui-menu-item>Export </polymer-ui-menu-item>
-      </polymer-ui-sidebar-menu>
-      
-      <div tool flex style="width:100px"></div>
-      
-      <button tool onclick="document.getElementById('dialog').toggle();">Toggle Dialog</button>
-      <polymer-ui-icon-button tool halign="left" on-tap="{{reqCompile}}">
-        <i class="fa fa-bolt"></i>
-      </polymer-ui-icon-button>
-      
-      <polymer-ui-icon-button tool halign="left" on-tap="{{toggleCodeEditor}}">
-        <i class="fa fa-edit"></i>
-      </polymer-ui-icon-button>
-      <polymer-ui-menu-button tool halign="right"  icon="account">
-        <polymer-ui-menu-item on-tap="{{reqDropBoxLogin}}">Dropbox</polymer-ui-menu-item>
-        <polymer-ui-menu-item on-tap="">Github</polymer-ui-menu-item>
-      </polymer-ui-menu-button>
-
-      <div main>
-          <usco-editor style="width:100%;height:100%" codeEditActive="{{isCodeEditorActive}}"> </usco-editor>
-          <button on-click="{{reqScreenshot}}">Screenshot</button>
-      </div>
-
-    </polymer-ui-scaffold>
+        <vert-toolbar style="position:absolute;top:50px;right:0px;z-index:999;width:40px">
+          <core-tooltip label="fork design" position="left">
+            <core-item icon="fa-app:code-fork"></core-item>
+          </core-tooltip>
+          <div style="height:30px"></div>
+        
+          <core-tooltip label="autorotate" position="left">
+            <core-item><input type="checkbox"></input></core-item>
+          </core-tooltip>
+          <core-tooltip label="grid settings" position="left">
+            <core-item icon="fa-edit:table"></core-item>
+          </core-tooltip>
+          <core-tooltip label="view settings" position="left">
+            <core-item icon="fa-app:eye"></core-item>
+          </core-tooltip>
+          
+          
+        </vert-toolbar>
+        
+        <core-toolbar style="position:absolute;bottom:0px;right:0px;z-index:999">
+          <core-tooltip label="help" position="left">
+            <core-item icon="fa-app:question-circle" onclick="document.getElementById('dialog').toggle();"></core-item>
+          </core-tooltip>
+        </core-toolbar>
+        
+        <div>
+          <usco-editor style="width:100%;height:90%;position: static;" codeEditActive="{{isCodeEditorActive}}">
+          </usco-editor>
+       </div>
+  
   
 </template>
 <script>
@@ -118,6 +151,13 @@ Polymer("usco-base-ui",{
   project:null,
   /*FIXME:this should be global to app*/
   isCodeEditorActive:false,
+  //FIXME: just a test
+  isCompiling:false,
+  
+  //FIXME:temporary , should query available formats from kernel
+  exportFormats:["stl","amf", "obj"],
+  importFormats:["stl", "amf", "obj", "ply"],
+  
   created:function()
   {
     this.project = {name:"testProject",files:{"foo":"bar"}};
@@ -164,10 +204,12 @@ Polymer("usco-base-ui",{
     var assembly = loader.parse(reloadedAssembly)
     //@scene.add @assembly*/
   },
-  reqExport:function()
+  reqExport:function(e, detail, sender)
   {
-    console.log("requesting export");
-    this.asyncFire('polymer-signal', {name: "request-export-design", data:null});
+    console.log("requesting export",e, detail, sender);
+    var data = sender.templateInstance.model;
+    var format = data.format;
+    this.asyncFire('polymer-signal', {name: "request-export-design", data:{format:format}});
   },
   reqDropBoxLogin:function()
   {
@@ -178,6 +220,11 @@ Polymer("usco-base-ui",{
   {
     console.log("requesting compiling design");
     this.asyncFire('polymer-signal', {name: "request-compile-design", data:null});
+  },
+  reqGenCode:function()
+  {
+    console.log("requesting generate code from design");
+    this.asyncFire('polymer-signal', {name: "request-generate-code", data:null});
   },
   toggleCodeEditor:function()
   {

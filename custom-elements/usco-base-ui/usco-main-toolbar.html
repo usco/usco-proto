@@ -1,0 +1,56 @@
+<core-toolbar>
+    <core-theme-aware> 
+      <div style="display: inline-block;">Usco</div>
+      
+      <core-icon-button icon="fa-edit:file-o" on-tap="{{reqNew}}"></core-icon-button>
+      
+      <core-menu-button icon="fa-edit:floppy-o">
+        <core-item icon="fa-edit:floppy-o" label="Save" on-tap="{{reqSave}}"></core-item>
+        <core-item icon="fa-edit:floppy-o" label="SaveAs" on-tap="{{reqSaveAs}}"></core-item>
+      </core-menu-button>
+      <core-icon-button icon="fa-app:folder-open-o" active=false disabled=true on-tap="{{reqLoad}}"></core-icon-button>
+
+      <core-tooltip label="export design" position="bottom">
+        <core-menu-button icon="fa-app:upload">
+          <template repeat="{{format in exportFormats}}">
+            <core-item label="{{format}}" on-tap="{{reqExport}}"></core-item>
+          </template>
+        </core-menu-button>
+      </core-tooltip>
+      
+      <core-tooltip label="import design" position="bottom">
+        <core-menu-button icon="fa-app:download">
+          <template repeat="{{format in importFormats}}">
+            <core-item label="{{format}}" on-tap="{{reqImport}}"></core-item>
+          </template>
+        </core-menu-button>
+      </core-tooltip>
+      
+      <div style="display: inline-block;width:40px"></div>
+      
+      <core-tooltip label="compile design" position="bottom">
+        <core-icon-button icon="fa-app:{{ {'bolt':!isCompiling, 'refresh':isCompiling}| tokenList }}" animation="{{fa-spin}}" active=false disabled=true on-tap="{{reqCompile}}"></core-icon-button>
+      </core-tooltip>
+      
+      <core-menu-button icon="fa-app:cog">
+        <core-item icon="fa-vid:compress" label="Settings"></core-item>
+			  <core-item icon="fa-vid:eject" label="Dialog"></core-item>
+			  <core-item icon="fa-app:search" label="Search"></core-item>
+      </core-menu-button>
+      
+      <core-icon-button icon="fa-app:code" on-tap="{{toggleCodeEditor}}"></core-icon-button>
+      
+      <div core-flex ></div>
+      <core-tooltip label="log in/out (remote storage, optional)" position="left">
+        <core-menu-button icon="fa-app:user" halign="right">
+          <core-item icon="fa-brands:dropbox" label="Dropbox" on-tap="{{reqDropBoxLogin}}"></core-item>
+          <core-item icon="fa-brands:github"  label="Github"></core-item>
+        </core-menu-button>
+      </core-tooltip>
+      
+      <core-tooltip label="fork me on github" position="bottom">
+        <core-icon-button icon="fa-app:code-fork"></core-icon-button>
+      </core-tooltip>
+
+    </core-theme-aware>
+ </core-toolbar>
