@@ -56,34 +56,40 @@
   <!--pub sub messages handling-->
   <polymer-signals on-polymer-signal-request-highlight-from-code="{{highlightSelectionsFromCode}}"></polymer-signals>
   
+  <!--store the last used design-->
+  <polymer-localstorage name="usco-settings-lastDesign"   value="{{lastDesign}}"></polymer-localstorage>
+  
   <visual-editor id="visualEditor" hierarchyRoot="{{currentModule.assembly}}" selectedObjects="{{selectedObjects}}"> </visual-editor>
   
+  <!--TODO: where does this belong
   <div id="codeEditorStuff" style="position:absolute; right:10px;top:300px;z-index:3">
     Code Editor <input type="checkbox"  checked="{{codeEditActive}}"> </input>
     Generate code on the fly <input type="checkbox"  checked="{{generateCodeOnTheFly}}"> </input>
     Recompile code on the fly <input type="checkbox"  checked="{{recompileCodeOnTheFly}}"> </input>
-    <!--<button on-click="{{saveFileTest}}"> </button>
+    <button on-click="{{loginToDB}}">Login </button>
+  </div>-->
+  
+      <!--<button on-click="{{saveFileTest}}"> </button>
     <input type="file" nwdirectory />
     <input type="file" />
     <input type="file" nwsaveas />-->
-    <button on-click="{{loginToDB}}">Login </button>
-  </div>
   
-  <div id="saveLoad" style="position:absolute; right:10px;top:5px;z-index:3">
+  <!--<div id="saveLoad" style="position:absolute; right:10px;top:5px;z-index:3">
     <button on-click="{{reqScreenshot}}">Screenshot</button>
-  </div>
+  </div>-->
   
     <tabbed-code-editor id="codeEditor" editor="cm" theme="monokai" mode="javascript"  value="{{currentModule.source}}"> </tabbed-code-editor>
   
   <history-editor id="historyEditor"> </history-editor>
     
   <!--various helpers: TODO:refactor-->
+  <!--
   <div id="codeGen" class="codeGen" style="position:absolute; right:10px;top:50px;z-index:3">
     <div>
       <button on-click="{{generateCodeFromHistory}}"> Generate code from history </button> </br>
       <button on-click="{{generateFromCode}}"> Generate shapes from code </button>
     </div>
-  </div>
+  </div>-->
   
   <!--<div id="modeSwitch" style="position:absolute; right:10px;top:100px;z-index:3">
     <select>
@@ -105,6 +111,8 @@ Polymer("usco-editor",{
   
   generateCodeOnTheFly:true,
   recompileCodeOnTheFly:false,
+  
+  lastDesign:"dropbox://foo",
   
   observe:{
     'project.files["foo"]':'codeChanged',
@@ -141,9 +149,12 @@ Polymer("usco-editor",{
     this.project = {
       name:"testProject",
       files:[
-        {name:"part.js",content:"class MyPart extend Part"}
+        {name:"part.js",content:""}
       ]
     };
+    //keep parts cached by params
+    this.partsCache = {};
+    
     this.codeGenerator = new CodeGenerator();
     
     var rootAssembly = new Part();
@@ -163,8 +174,6 @@ Polymer("usco-editor",{
     this.assetManager   = this.$.assetManager;
     //document.querySelector('usco-asset-manager');
     
-    this.codeEditor.documents.push( this.project.files[0]);
-    
     //if we recieve a "newOperation" event, add it to history  
     var self = this;
     document.addEventListener('newOperation', function(e) {
@@ -180,6 +189,7 @@ Polymer("usco-editor",{
       this.loginToDB();
     })
     this.addEventListener('polymer-signal-request-new-design', function(e) {
+      this.clearDesign();
     })
     this.addEventListener('polymer-signal-request-save-design', function(e) {
     })
@@ -188,7 +198,18 @@ Polymer("usco-editor",{
     this.addEventListener('polymer-signal-request-load-design', function(e) {
     })
     this.addEventListener('polymer-signal-request-export-design', function(e) {
+      var fileName = e.detail.fileName || "test";
+      var format = e.detail.format;
+      var data = e.detail.data || this.visualEditor.activeRoot;
       this.exportDesign(fileName,format, data);
+    })
+    
+    this.addEventListener('polymer-signal-request-compile-design', function(e) {
+      this.generateFromCode();
+    })
+    
+    this.addEventListener('polymer-signal-request-generate-code', function(e) {
+      this.generateCodeFromHistory(); 
     })
     
     //handle requests( keyboard events fire these in the visual editor)
@@ -227,11 +248,37 @@ Polymer("usco-editor",{
       var data = e.detail.data;
       this.exportDesign(fileName,format, data);
     });
+    
+    this.clearDesign();
+    this.codeEditor.documents.push( this.project.files[0]);
   },
+  //TODO:move to kernel ??
+  //resets the design
+  clearDesign:function()
+  {
+    this.project = {
+        name:"testProject",
+        files:[
+          {name:"part.js",content:""}
+        ]
+      };
+      
+    //clear visuals 
+    this.visualEditor.clear();
+    //reset hierarchy's root
+    this.visualEditor.activeRoot = this.visualEditor.hierarchyRoot = new Part();
+    
+    //clear undo/redo history
+    this.commandManager.commandManager.undos = [];
+    this.commandManager.commandManager.redos = [];
+  },
+  
+  //TODO:move to kernel
   exportDesign:function(fileName,format, data)
   {
+      console.log("attempting to export to format "+ format + " filename: "+fileName) 
       var fullName = ( fileName.indexOf(".") == -1)? fileName+"."+format : fileName;
-      var serializer = self.assetManager.assetManager.serializers[format];//STLSerializer//self.querySelector('stl-serializer');
+      var serializer = this.assetManager.assetManager.serializers[format];//STLSerializer//self.querySelector('stl-serializer');
       
       if(serializer)
       {
@@ -288,6 +335,9 @@ Polymer("usco-editor",{
   generateFromCode:function()
   {
     console.log("generating visuals from code");
+    //FIXME: do this better
+    this.currentModule.source = this.project.files[0].content;
+    
      //deactivate to prevent issues:
     this.generateCodeOnTheFly = false;  
     //clear undo/redo history
