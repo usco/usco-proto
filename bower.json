@@ -41,6 +41,11 @@
     "gitgraph.js": "~1.0.0",
     "polymer-ui-card": "https://github.com/PolymerLabs/polymer-ui-card",
     "core-elements": "Polymer/core-elements#~0.2.3",
-    "core-transition": "Polymer/core-transition#~0.2.3"
+    "core-transition": "Polymer/core-transition#~0.2.3",
+    "core-icon-button": "Polymer/core-icon-button#~0.2.3",
+    "core-tooltip": "Polymer/core-tooltip#~0.2.3",
+    "core-iconset": "Polymer/core-iconset#~0.2.3",
+    "core-menu-button": "Polymer/core-menu-button",
+    "core-scaffold": "Polymer/core-scaffold"
   }
 }
