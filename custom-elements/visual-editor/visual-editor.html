@@ -1265,7 +1265,7 @@ on-mousewheel="{{onMouseWheel}}" on-DOMMouseScroll="{{onMouseWheel}}" on-dragove
     },
     clear:function()
     {
-      this.viewer.clearScene();
+      if(this.viewer) this.viewer.clearScene();
     }
   });
   </script>
