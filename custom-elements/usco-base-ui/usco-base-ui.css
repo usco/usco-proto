@@ -222,7 +222,7 @@ background-color: rgba(99, 148, 201, 0);
 }
 
 /*FIXME: this does not work, x-dialog is not "theme aware"*/
-core-theme-aware.usco-ligth x-dialog{
+x-dialog.usco-light {
   box-sizing: border-box;
 				-moz-box-sizing: border-box;
 				font-family: Arial, Helvetica, sans-serif;
@@ -230,12 +230,12 @@ core-theme-aware.usco-ligth x-dialog{
 				-webkit-user-select: none;
 				-moz-user-select: none;
 				overflow: hidden;
-				background: rgba(44, 47, 49, 0.690196);
+				background: rgba(44, 47, 49, 0.69);
 				padding:30px 42px;
 				outline: 1px solid rgba(0,0,0,0.2);
 				box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 				width: 500px;
-				color: white;
+				color: red;
 }
 
 x-dialog{
@@ -249,12 +249,20 @@ x-dialog{
 				padding:10px 12px;
 				outline: 1px solid rgba(0,0,0,0.2);
 				box-shadow: 0 4px 16px rgba(0,0,0,0.0);
-				width: 500px;
+				width: 800px;
 				color: white;
+				-webkit-transition: opacity 1.1s ease-in;
 }
 
-x-dialog .help{
 
-  color:red !important;
-  
+design-dashboard.usco-light{
+  z-index: 9999;
+  /*position: absolute;
+  left: 20%;
+  opacity: 20%;
+  background: rgba(44, 47, 49, 0.83)*/
+}
+
+design-dashboard core-toolbar.usco-light{
+  color:white;
 }

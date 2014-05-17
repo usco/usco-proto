@@ -2,7 +2,6 @@
 <polymer-element name="x-dialog" attributes="opened autoCloseDisabled">
 			<template>
 				<style>
-
 					:host {
 						box-sizing: border-box;
 						-moz-box-sizing: border-box;
@@ -17,7 +16,7 @@
 						box-shadow: 0 4px 16px rgba(0,0,0,0.2);
 					}
 				</style>
-				<core-overlay id="overlay" opened="{{opened}}" autoCloseDisabled="{{autoCloseDisabled}}"  transition="core-transition-center"></core-overlay>
+				<core-overlay id="overlay" opened="{{opened}}" autoCloseDisabled="{{autoCloseDisabled}}"  transition="core-transition-fade"></core-overlay>
 				<content></content>
 			</template>
 			<script>

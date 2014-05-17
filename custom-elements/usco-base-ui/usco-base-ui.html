@@ -9,13 +9,18 @@
 <link rel="import" href="../../components/core-tooltip/core-tooltip.html">
 <link rel="import" href="../../components/core-item/core-item.html">
 
+<link rel="import" href="../../components/core-transition/core-transition.html">
 <link rel="import" href="../../components/core-scaffold/core-scaffold.html">
 
+<!-- custom elements -->
+<!--core elements-->
 <link rel="import" href="../usco-editor/usco-editor.html">
-<link rel="import" href="x-dialog.html">
+<link rel="import" href="../design-dashboard/design-dashboard.html">
+<!--ui elements-->
 <link rel="import" href="vert-toolbar.html">
-
+<link rel="import" href="x-dialog.html">
 <link rel="import" href="usco-iconsets.html">
+<!---------------------->
 
 <link href='http://fonts.googleapis.com/css?family=Lato' rel='stylesheet' type='text/css'>
 
@@ -24,6 +29,11 @@
   <link rel="stylesheet" type="text/css" href="usco-base-ui.css">
   <!--pub sub messages handling-->
   <polymer-signals></polymer-signals>
+  
+  <x-dialog id="dashboard" class="dialog">
+    <design-dashboard id="dashboard"> </design-dashboard> 
+  
+  </x-dialog>
   
   <x-dialog id="dialog" class="dialog help">
 			<h2>Help</h2>
@@ -58,6 +68,8 @@
 			<button overlay-toggle>OK</button>
 			
 		</x-dialog>
+		
+		<template if="{{showDashboard}}"> </template>
 
         <core-toolbar style="position:absolute;top:0px;left:0px;z-index:999">
             <div style="display: inline-block;">Usco</div>
@@ -65,7 +77,7 @@
             <core-icon-button icon="fa-edit:file-o" on-tap="{{reqNew}}"></core-icon-button>
             
             <core-menu-button icon="fa-edit:floppy-o">
-              <core-item icon="fa-edit:floppy-o" label="Save" on-tap="{{reqSave}}"></core-item>
+              <core-item icon="fa-edit:floppy-o" label="Save" on-tap="{{reqSave}}" onclick="document.getElementById('dashboard').toggle();"></core-item>
               <core-item icon="fa-edit:floppy-o" label="SaveAs" on-tap="{{reqSaveAs}}"></core-item>
             </core-menu-button>
             <core-icon-button icon="fa-app:folder-open-o" active=false disabled=true on-tap="{{reqLoad}}"></core-icon-button>
@@ -158,6 +170,9 @@ Polymer("usco-base-ui",{
   exportFormats:["stl","amf", "obj"],
   importFormats:["stl", "amf", "obj", "ply"],
   
+  //FIXME:not sure about this
+  showDashboard:true,
+  
   created:function()
   {
     this.project = {name:"testProject",files:{"foo":"bar"}};
@@ -165,6 +180,13 @@ Polymer("usco-base-ui",{
   ready:function()
   {
     console.log("ready", this.$);
+     var dashboard = this.$.dashboard;//document.querySelector('design-dashboard');
+     dashboard.designs.push({name:"foobb",lastEdited:"19/07/2013",path:"/foo/bar",imgPath:"download.jpg"} );
+     dashboard.designs.push({name:"food",lastEdited:"19/07/2014",path:"/foo/bar",imgPath:"download.jpg"} );
+     dashboard.designs.push({name:"fodder",lastEdited:"12/07/2013",path:"/foo/bar",imgPath:"download.jpg"} );
+    dashboard.designs.push({name:"abba",lastEdited:"19/07/2013",path:"/foo/bar",imgPath:"download.jpg"} );
+    dashboard.designs.push({name:"pump",lastEdited:"19/07/2013",path:"/foo/bar",imgPath:"download.jpg"} );
+    dashboard.designs.push({name:"peristaltic_pump",lastEdited:"19/07/2013",path:"/foo/bar",imgPath:"download.jpg"} );
   },
   enteredView:function()
   {
