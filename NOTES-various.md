@@ -1,14 +1,32 @@
-Node webkit (thus desktop) will need a different way of handling file saves/loads
-This should be taken into account in the seperation of concerns ( we already have parser/serialisers 
-and serializers are not writers so we seem to be good)
+variants and features
+=====================
 
 - full ui (standalone) would wrap:
-  kernel
-  visual editor
-  code editor
-  * provide itw own ui elements : menus etc
+  * kernel
+  * visual editor
+  * code editor
+  * params editor
+  * design browser/dashboard
+  
+  This is the default, standard version
+  * provide its own ui elements : menus etc
+  * full feature set
 
-- integrated (viewer) would wrap:
+- embedable version would wrap:
+  * kernel
+  * viewer 
+  * params editor (sliders, ticks etc)
+  (* design browser/dashboard : perhaps a trimmed down version, specific to user's designs?)
+  
+  this version could be used by users to embed/showcase their 
+  designs on their webpage for example. 
+  It would have full view controls (grid, autorotate, camera angles)
+  It would not have full editing capabilities
+  It would not allow you to save/load your designs (need UI to match)
+  It would allow you to fork the design
+  
+  
+ - integrated (viewer) would wrap:
   kernel
   viewer (!!)
  
@@ -25,6 +43,10 @@ and serializers are not writers so we seem to be good)
       
       * reqShapeOperation(??)
   - various events: newOperation
+
+Node webkit (thus desktop) will need a different way of handling file saves/loads
+This should be taken into account in the seperation of concerns ( we already have parser/serialisers 
+and serializers are not writers so we seem to be good)
 
 
 Various/utilities:
