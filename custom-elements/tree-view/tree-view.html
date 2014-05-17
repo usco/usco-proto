@@ -1,0 +1,267 @@
+<link rel="import" href="../../components/polymer/polymer.html">
+
+<link rel="import" href="../../components/core-item/core-item.html">
+<link rel="import" href="../../components/core-icon-button/core-icon-button.html">
+<link rel="import" href="../../components/core-collapse/core-collapse.html">
+<link rel="import" href="../../components/core-selector/core-selector.html">
+<link rel="import" href="../../components/core-selection/core-selection.html">
+
+<link rel="import" href="../usco-base-ui/usco-iconsets.html">
+
+
+<!--TODO:how to add dynamic loading of sub nodes??-->
+
+<polymer-element name="tree-node" attributes="data name isOpen subItems parentItem">
+  <template>
+    <style>
+    .box {
+    }
+    
+    .content {
+      margin-left: 20px;
+    }
+    
+    section {
+      padding: 0px;
+    }
+    core-item{
+      height:24px;
+      display:inline-block;
+    }
+    
+    core-item .item-container > core-icon {
+margin: 0px 4px 0px 4px;
+}
+    
+    core-icon{
+  width:18px !important;
+  height:18px !important;
+  font-size:18px !important;
+}
+    
+    .item{
+      display:inline-block;
+    }
+    .selected {
+    background: #fee;
+  }
+  
+     .leafNode{
+        color:red;
+     }
+     
+     /*.item-container
+     {
+      width:10px;
+     }*/
+    </style>
+    
+    <section style="width: 800px;height:auto;" on-tap="{{itemTapAction}}">
+      <template if="{{!isLeaf}}">
+        <core-item icon="fa-dirs:{{ {'chevron-right':(isOpen), 'chevron-down':!(isOpen)} | tokenList }}" on-tap="{{toggle}}"></core-item>
+      </template>
+      <core-item icon="{{ {'fa-app:folder-o':!isLeaf, 'fa-edit:file':isLeaf} | tokenList}}" label="{{name}}" on-tap="{{itemSelectAction}}" >
+        <button on-tap="{{testRen}}">Rename</button>
+        <button on-tap="{{deleteNode}}">Delete</button>
+        <template if="{{isLeaf}}">
+           <core-item icon="{{ {'fa-app:eye':!isLeaf, 'fa-app:eye':isLeaf} | tokenList}}">
+        </template>
+      </core-item>
+      <core-collapse id="children" fixedSize style="height: auto;">
+        <div class="content">
+          <template repeat="{{child in subItems}}">
+            <tree-node data="{{child}}" name="{{child.name}}" subItems="{{child.children}}" parentItem="{{}}"
+              class="item {{ {'leafNode':child.children.length==0} | tokenList }}">
+            </tree-node>
+          </template>
+        </div>
+      </core-collapse>
+    </section>
+    
+    <core-selection id="selection" multi on-core-select="{{selectAction}}"></core-selection>
+  </template>
+  <script>
+  Polymer("tree-node",{
+    data:null,
+    name:"treeNode",
+    parentItem:null,
+    subItems:[],
+    fullPath:null,
+    isOpen:true,
+    isLeaf:true,
+    isLoaded:false,
+    enteredView:function()
+    {
+      this.isLeaf = (this.subItems.length == 0);
+      
+      for(var i = 0;i<this.subItems.length;i++)
+      {
+        this.subItems[i].parentItem =this;
+      }
+      var parentName = "";
+      if(this.parentItem!=null)
+      { parentName = this.parentItem.name
+        this.fullPath =  this.parentItem.fullPath +"/"+ this.name;
+      }
+      else
+      {
+         this.fullPath =  "/"+ this.name;
+      }
+
+      console.log("isLeaf", this.isLeaf,this.subItems,this.fullPath,this.name, this.data);
+      
+    },
+    isOpenChanged:function(){
+      if(this.isOpen){
+      this.fire("opened",this);}
+      else{
+        this.fire("closed",this);
+      }
+    },
+    nameChanged:function(){
+      if(this.parentItem && this.parentItem.fullPath) this.fullPath =  this.parentItem.fullPath +"/"+ this.name;
+    },
+    //methods
+    toggle:function(){
+      if(!(this.isLoaded))
+      {
+        //this.fire("treenode-loadrequest",{msg:this});
+        var detail = this.fire("treenode-loadrequest",{msg:this});
+        console.log("detail", detail);
+      }
+      else
+      {
+        this.isOpen = !(this.isOpen);
+        this.$.children.toggle();
+        if(!(this.leafNode))
+        {
+          if(this.isOpen)
+          {
+            this.asyncFire("treenode-closed",{msg:this});
+          }else
+          {
+            this.asyncFire("treenode-opened",{msg:this});
+          }
+        }
+       }
+    },
+    
+    itemTapAction: function(e) {
+        if (e.stopPropagation)    e.stopPropagation();
+        if (e.cancelBubble!=null) e.cancelBubble = true;
+    },
+    itemSelectAction:function(e) {
+      this.$.selection.select(this);
+      this.asyncFire("treenode-selected",{msg:this});
+    },
+    selectAction: function(e, detail, sender) {
+       detail.item.classList.toggle('selected', detail.isSelected);
+    },
+    //api
+    renameNode:function(newName)
+    {
+      this.name = newName;
+      this.asyncFire("treenode-renamed",{msg:this});
+    },
+    removeChildNode:function(childNode)
+    {
+      if(childNode)
+      {
+        var index = this.subItems.indexOf(childNode.data);
+        if(index>-1){
+          this.subItems.splice(index, 1);
+          this.asyncFire("treenode-deleted",{msg:childNode});
+         }
+      }
+    },
+    deleteNode:function()
+    {
+      if(this.parentItem)
+      {
+        this.parentItem.removeChildNode( this );
+      }
+    }
+    ,//testing
+    testRen:function()
+    {
+      this.name = "tofodo";
+      this.asyncFire("treenode-renamed",{msg:this});
+    },
+
+  });
+  </script>
+</polymer-element>  
+
+<polymer-element name="tree-view" attributes="multiselect startopened"
+on-treenode-selected="{{treeNodeSelected}}"
+on-treenode-opened="{{treeNodeOpened}}"
+on-treenode-closed="{{treeNodeClosed}}"
+on-treenode-loadRequest="{{onNodeOpenLoader}}"
+
+on-treenode-renamed="{{treeNodeRenamed}}"
+on-treenode-deleted="{{treeNodeDeleted}}"
+ >
+  <template >
+    <style>
+      .item {
+        display: inline-block;
+      }
+   
+   .selected {
+    background: #eee;
+  }
+    </style>
+      <tree-node name="{{treeData.name}}" subItems="{{treeData.children}}" class="item"> </tree-node>
+  </template>
+  <script>
+  Polymer("tree-view",{
+
+    selectedNode:null,  
+    treeData:{
+      name:"root",
+      children:[
+        {name:"foo",children:[{name:"a",children:[]}]},
+        {name:"bar",children:[]},
+        {name:"baz",children:[]}
+        ]
+      },
+    enteredView:function()
+    {
+    },
+    //api
+    onNodeOpenLoader:function(event)
+    {
+      console.log("foo");
+      event.detail.foo = "blah";
+      return "bleh";
+    },
+    //event handlers
+    treeNodeSelected:function(event)
+    {
+      console.log("treenode selected", event.detail.msg.fullPath);
+    },
+    treeNodeOpened:function(event)
+    {
+      console.log("treenode opened", event.detail.msg);
+    },
+    treeNodeClosed:function(event)
+    {
+      console.log("treenode closed", event.detail.msg);
+    },
+    treeNodeRenamed:function(event)
+    {
+      console.log("treenode renamed",event.detail.msg);
+      //console.log("bla", this.treeData);
+    },
+    treeNodeDeleted:function(event)
+    {
+      console.log("treenode deleted",event.detail.msg.fullPath,this.treeData);
+    }
+   
+  });
+  </script>
+</polymer-element>  
+
+
+
+
