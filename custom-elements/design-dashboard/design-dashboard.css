@@ -1,0 +1,50 @@
+:host{display:block;}
+      :host > polymer-ui-toolbar{
+        height:21px;
+      }
+      :host > polymer-ui-toolbar input{
+        border:none;background:#F1F1F1;
+        color:#414141;
+        text-align: center;
+      }
+      :host > polymer-ui-toolbar input:focus {
+        outline: 1px solid #17a9f5;
+      }
+      :host > polymer-ui-toolbar input:hover {
+        -webkit-transition: outline 0.8s ease-in;
+        outline: 1px solid #17a9f5;
+      }
+      :host > section{
+        flex-direction: row;
+        flex-wrap: wrap;
+        width: 100%;
+        display: inline-flex;
+        margin: auto;
+        justify-content: center;
+      }
+      
+      ::-webkit-input-placeholder {
+         color: rgb(23, 169, 245);
+         font-style:italic;
+         font-size:0.9em;
+      }
+
+      :-moz-placeholder { /* Firefox 18- */
+         color: rgb(23, 169, 245); 
+         font-style:italic;
+         font-size:0.9em;
+      }
+
+      ::-moz-placeholder {  /* Firefox 19+ */
+         color: rgb(23, 169, 245);  
+         font-style:italic;
+         font-size:0.9em;
+      }
+
+      :-ms-input-placeholder {  
+         color: rgb(23, 169, 245);  
+         font-style:italic;
+         font-size:0.9em;
+      }
+      
+      

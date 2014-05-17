@@ -5,49 +5,30 @@
 <link rel="import" href="../../components/polymer-ui-toolbar/polymer-ui-toolbar.html">
 <link rel="import" href="../../components/polymer-flex-layout/polymer-flex-layout.html">
 
-<polymer-element name="design-dashboard" >
+<link rel="import" href="../../components/core-theme-aware/core-theme-aware.html">
+
+<polymer-element name="design-dashboard" extends="core-theme-aware">
   <template>
-    <style>
-      :host{display:block;}
-      :host > polymer-ui-toolbar{
-        height:21px;
-      }
-      :host > polymer-ui-toolbar input{
-        border:none;background:#F1F1F1;
-        color:#414141;
-      }
-      :host > polymer-ui-toolbar input:focus {
-        outline: 1px solid #17a9f5;
-      }
-      :host > polymer-ui-toolbar input:hover {
-        -webkit-transition: outline 0.8s ease-in;
-        outline: 1px solid #17a9f5;
-      }
-      :host > section{
-        flex-direction: row;
-        flex-wrap: wrap;
-        width: 100%;
-        display: inline-flex;
-        margin: auto;
-        justify-content: center;
-      }
-    </style>
-    <polymer-ui-toolbar theme="polymer-ui-dark-theme" > 
-      <polymer-ui-icon-button icon="menu"></polymer-ui-icon-button>
+    <link rel="stylesheet" type="text/css" href="design-dashboard.css">
+    <core-toolbar>
+      <core-icon-button icon="fa-app:ellipsis-v"></core-icon-button>
       <div flex style="color:rgb(255, 204, 0)">Designs</div>
-      <polymer-ui-toolbar responsive>
-        <span><input id="searchField" type="text" on-keyup="{{search}}"/> </span>
+      <core-toolbar responsive>
+        <span><input id="searchField" type="text" on-keyup="{{search}}" placeholder="  type here to search" /> </span>
         <span id="results" style="position:absolute;top:40px;left:50%;z-index: 9999999;color:black;background:white">
         <template repeat="{{result in searchResults}}">
           <div style="cursor:pointer" on-tap="{{blah}}">{{result}}</div>
         </template>
         </span>
-        <polymer-ui-icon-button icon="search" on-tap="{{search}}"></polymer-ui-icon-button>
-        <polymer-ui-icon-button icon="trash"></polymer-ui-icon-button>
-  
-      </polymer-ui-toolbar>
-    </polymer-ui-toolbar>
+        <core-icon-button icon="fa-app:search" on-tap="{{search}}"></core-icon-button>
+        <core-icon-button icon="fa-app:trash-o"></core-icon-button>
+      </core-toolbar>
+    </core-toolbar>
     <section >
+      <!--<core-list data="{{filteredDesigns}}" height="150">
+        <template repeat>
+        </template>
+      </core-list>-->
       <template repeat="{{design in filteredDesigns}}">
         <design-card design="{{design}}"> </design-card>
       </template>
@@ -60,6 +41,7 @@
       searchItem: "",
       created:function()
       {
+        this.super();
         this.filteredDesigns = this.designs;
       },
       search:function()
@@ -109,7 +91,7 @@
       text-align:center;
       font-weight:700;
       border: 2px solid #414141;
-      margin: 10px 5px;
+      /*margin: 10px 5px;*/
 
       -webkit-touch-callout: none;
 		  -webkit-user-select: none;
@@ -121,45 +103,78 @@
     }
     :host:hover{
       cursor:pointer;
-      -webkit-transition: border 0.2s ease-in;
+      -webkit-transition: border 0.1s ease-in;
       border: 2px solid #17a9f5;
     }
     :host:hover footer{ 
-          -webkit-transition: color 0.2s ease-in;
-    color :rgb(255, 204, 0);
+          -webkit-transition: color 0.1s ease-in;
+      color :rgb(255, 204, 0);
+      background:rgba(65, 65, 65, 1);
 
     }
     article{
       position:relative;
-            -webkit-transition: opacity 1.9s ease-in;
+      -webkit-transition: opacity 0.1s ease-in;
     }
     footer{
-        background:#414141;
+        background:rgba(65, 65, 65, 0.5);
         color:white;
         height:2em;
         position: absolute;
         top: 115px;
         left: 0px;
         width: 100%;
+        text-align:left;
+        text-indent: 10px;
       }
+    
     section > img{
       width:100%;
       height:100%;
+    }
+    
+    section > three-js{
+      width:100%;
+      height:120px;
     }
 
     </style>
     <article>
       <section id="main">
-        <img src="{{design.imgPath}}">
-        </img>  
+        <img _src="{{design.imgPath}}">
+        </img>
+        <!--
+        <three-js on-sceneready="{{viewerSceneReady}}">
+          <three-js-combinedCamera tracking x="100" y="100" z="200" orientation="top" cameraUp=[0,0,1] ></three-js-combinedCamera>
+          <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10" autoRotate="{{autorotate}}"> </three-js-orbitControls>
+
+          <three-js-scene name="mainScene" active>
+            <three-js-object hierarchyRoot>
+              <three-js-cube> </three-js-cube>
+              <three-js-cube x="-45" color="pink" w="24"> </three-js-cube>
+            </three-js-object>
+
+            <three-js-object helpersRoot>
+              <three-axis-helper show="{{showAxes}}"> </three-axis-helper>
+              <three-js-light kind="dir" color="0xffEEEE" intensity="0.2" castShadow y=50 z=300 > </three-js-light> 
+               <three-js-light kind="ambient" color="0x161515" intensity="0.8"> </three-js-light>
+               <three-js-light kind="hemi" color="0xffffff" secColor="0xffffff" intensity="0.5" y="1200" z="5000"> </three-js-light>
+            </three-js-object>
+          </three-js-scene>
+
+     </three-js>
+        -->
+        
       </section>    
       <footer>
        <div>{{design.name | toUpperCase}}<div>
        <div style="font-size: 10px;"> {{design.lastEdited}}</div>
-        <polymer-ui-menu-button valign="top" halign="right"  style="position:absolute;bottom:0px;right:10px;height:2em;color:black;font-size:12px!important">
-          <polymer-ui-menu-item icon="settings" label="Delete"></polymer-ui-menu-item>
-				  <polymer-ui-menu-item icon="settings" label="Fork"></polymer-ui-menu-item>
-        </polymer-ui-menu-button>
+       <core-toolbar style="position: absolute;
+top: 0px;
+right: 0px;">
+          <core-item icon="fa-app:trash-o"></core-item>
+				  <core-item icon="fa-app:code-fork"></core-item>
+			  </core-toolbar>
       </footer>
     </article>
   </template>
@@ -184,6 +199,10 @@
       tapped:function(event)
       {
         console.log("design tapped");
+      },
+      viewerSceneReady:function()
+      {
+        console.log("viewer scene ready");
       }
     });
   </script>
