@@ -57,7 +57,7 @@
   <polymer-signals on-polymer-signal-request-highlight-from-code="{{highlightSelectionsFromCode}}"></polymer-signals>
   
   <!--store the last used design-->
-  <polymer-localstorage name="usco-settings-lastDesign"   value="{{lastDesign}}"></polymer-localstorage>
+  <polymer-localstorage name="usco-settings-lastDesigns"   value="{{lastDesigns}}"></polymer-localstorage>
   
   <visual-editor id="visualEditor" hierarchyRoot="{{currentModule.assembly}}" selectedObjects="{{selectedObjects}}"> </visual-editor>
   
@@ -112,7 +112,7 @@ Polymer("usco-editor",{
   generateCodeOnTheFly:true,
   recompileCodeOnTheFly:false,
   
-  lastDesign:"dropbox://foo",
+  lastDesigns:["dropbox://foo","fs://home/bar:"],
   
   observe:{
     'project.files["foo"]':'codeChanged',
