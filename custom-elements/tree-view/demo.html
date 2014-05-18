@@ -11,6 +11,23 @@
       window.addEventListener('polymer-ready', function() {
         console.log("web components ready");
         document.body.style.opacity = 1;
+        
+        var treeView = document.querySelector("tree-view");
+        
+        //example of node loader
+        var nodeLoader = function(instance, path, callback, errback)
+        {
+          var pathMap={
+            "/root":[{name:"blah"},{name:"foobar"},{name:"yoghurt",children:[{name:"bob"}]}],
+            "/root/yoghurt":[{name:"yummy"},{name:"I mean really"}]
+          }
+          
+          setTimeout(function(){
+            var data = pathMap[path];
+            callback( data );
+          }, 2000);
+        }
+        treeView.nodeLoader = nodeLoader;
       });
     </script>  
   </body>

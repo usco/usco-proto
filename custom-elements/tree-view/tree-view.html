@@ -61,8 +61,11 @@ margin: 0px 4px 0px 4px;
         <core-item icon="fa-dirs:{{ {'chevron-right':(isOpen), 'chevron-down':!(isOpen)} | tokenList }}" on-tap="{{toggle}}"></core-item>
       </template>
       <core-item icon="{{ {'fa-app:folder-o':!isLeaf, 'fa-edit:file':isLeaf} | tokenList}}" label="{{name}}" on-tap="{{itemSelectAction}}" >
-        <button on-tap="{{testRen}}">Rename</button>
-        <button on-tap="{{deleteNode}}">Delete</button>
+        <core-item icon="fa-app:edit" on-tap="{{testRen}}"></core-item>
+        <core-item icon="fa-app:trash-o" on-tap="{{deleteNode}}"></core-item>
+        
+        <template if="{{!isLoaded && isLoading}}">Loading...</template>
+        
         <template if="{{isLeaf}}">
            <core-item icon="{{ {'fa-app:eye':!isLeaf, 'fa-app:eye':isLeaf} | tokenList}}">
         </template>
@@ -90,6 +93,7 @@ margin: 0px 4px 0px 4px;
     isOpen:true,
     isLeaf:true,
     isLoaded:false,
+    isLoading:false,
     enteredView:function()
     {
       this.isLeaf = (this.subItems.length == 0);
@@ -125,9 +129,8 @@ margin: 0px 4px 0px 4px;
     toggle:function(){
       if(!(this.isLoaded))
       {
-        //this.fire("treenode-loadrequest",{msg:this});
-        var detail = this.fire("treenode-loadrequest",{msg:this});
-        console.log("detail", detail);
+        this.isLoading=true;
+        var event = this.fire("treenode-loadrequest",{inst:this,path:this.fullPath});
       }
       else
       {
@@ -156,6 +159,15 @@ margin: 0px 4px 0px 4px;
     },
     selectAction: function(e, detail, sender) {
        detail.item.classList.toggle('selected', detail.isSelected);
+    },
+    //callback used when dynamically fetching sub items
+    subItemsFetched:function(data)
+    {
+      this.isOpen = !(this.isOpen);
+      this.subItems = data;
+      this.isLoaded = true;
+      this.isLoading = false;
+      this.$.children.toggle();
     },
     //api
     renameNode:function(newName)
@@ -192,7 +204,7 @@ margin: 0px 4px 0px 4px;
   </script>
 </polymer-element>  
 
-<polymer-element name="tree-view" attributes="multiselect startopened"
+<polymer-element name="tree-view" attributes="multiselect startopened dynamic"
 on-treenode-selected="{{treeNodeSelected}}"
 on-treenode-opened="{{treeNodeOpened}}"
 on-treenode-closed="{{treeNodeClosed}}"
@@ -211,12 +223,20 @@ on-treenode-deleted="{{treeNodeDeleted}}"
     background: #eee;
   }
     </style>
+       <!--<template repeat="{{child in subItems}}">
+        <tree-node data="{{child}}" name="{{child.name}}" subItems="{{child.children}}" parentItem="{{}}"
+          class="item {{ {'leafNode':child.children.length==0} | tokenList }}">
+        </tree-node>
+      </template>-->
+      
       <tree-node name="{{treeData.name}}" subItems="{{treeData.children}}" class="item"> </tree-node>
   </template>
   <script>
   Polymer("tree-view",{
 
-    selectedNode:null,  
+    selectedNode:null, 
+    nodeLoader:null, 
+    dynamic:true,//flag to set if sub nodes are fetched dynamically
     treeData:{
       name:"root",
       children:[
@@ -225,17 +245,18 @@ on-treenode-deleted="{{treeNodeDeleted}}"
         {name:"baz",children:[]}
         ]
       },
-    enteredView:function()
-    {
-    },
-    //api
+    //event handlers
     onNodeOpenLoader:function(event)
     {
-      console.log("foo");
-      event.detail.foo = "blah";
-      return "bleh";
+      if(this.dynamic)
+      {
+        var treeNode = event.detail.inst;
+        if(this.nodeLoader)
+        {
+          this.nodeLoader(treeNode,event.detail.path,treeNode.subItemsFetched.bind(treeNode),null);
+        }
+      }
     },
-    //event handlers
     treeNodeSelected:function(event)
     {
       console.log("treenode selected", event.detail.msg.fullPath);
