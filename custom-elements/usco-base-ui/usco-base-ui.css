@@ -266,3 +266,10 @@ design-dashboard.usco-light{
 design-dashboard core-toolbar.usco-light{
   color:white;
 }
+
+/*use this for lateral drop downs
+left: -65px;
+right: -100px;
+top: 1px;
+
+*/
