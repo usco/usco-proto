@@ -14,7 +14,11 @@
     "esmorph": "",
     "esrefactor": "",
     "source-map": "~0.1.31",
-    "ast-types": "^0.3.22"
+    "ast-types": "^0.3.22",
+    "bodec": "0.0.2",
+    "git-sha1": "^0.1.1",
+    "js-git": "git+ssh://git@github.com/creationix/js-git.git",
+    "gen-run": "^0.1.1"
   },
   "devDependencies": {
     "grunt": "",
