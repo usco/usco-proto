@@ -41,6 +41,7 @@ CodeGenerator.prototype.generateFromOperations=function(operations)
 {
   this._lastTarget = null;
   this._visibleItems = []; //FIXME: kindof a hack: this list should contain leaf items only
+  this._codeLength = 0;
   
   var collapsedOps = this.collapseOperations( operations );
   var code = this.generateCodeFromOperationsList( collapsedOps );
@@ -112,9 +113,12 @@ CodeGenerator.prototype.getOperationFormatedItemName=function(operation, attrNam
   itemName = toTitleCase( itemName );//Capitalize each char after space/tab
   itemName = itemName.replace(/ /g, '');//remove spaces/tabs
   itemName = uncapitalizeFirstLetter( itemName );
-  
-
   return itemName;
+}
+
+CodeGenerator.prototype.getCurrentLine=function(code)
+{
+  return code.split("\n").length;
 }
 
 CodeGenerator.prototype.generateCodeFromOperation=function(operation, precision, targetFile, targetScope)
@@ -161,9 +165,22 @@ CodeGenerator.prototype.generateCodeFromOperation=function(operation, precision,
         strValue = strValue.replace(/\"([^"]+)\":/g,"$1:").replace(/\uFFFF/g,"\\\"");
       }
       
+      //experimental
+      var offset = this._codeLength + code.length;
+      target.__meta.instancesData = [];
+      var range = {range:[offset, 0]}
+      
+      console.log("here",range);
+      //target.instancesData[0].range[0] = offset;
       code += "var "+targetName+" = new "+ type +"("+strValue+")"+lineCap;
+      offset = this._codeLength + code.length;
+      range["range"][1] = offset;
+      target.__meta.instancesData.push(range);
+      
       var parentName = "assembly";
       code += parentName+".add( "+ targetName +" )"+lineCap;
+
+      
     break;
     case "deletion":
       //TODO: how to deal with this ?
@@ -174,7 +191,7 @@ CodeGenerator.prototype.generateCodeFromOperation=function(operation, precision,
     break;
     case "import":
       var destinationName = this.getOperationFormatedItemName(operation, "value");
-      code += "var " + destinationName+'= import("'+targetName+'")'+lineCap;
+      code += "var " + destinationName+'= importGeom("'+targetName+'")'+lineCap;
     break;
     case "extrusion":
       var type = target.constructor.name || "foo";
@@ -209,8 +226,7 @@ CodeGenerator.prototype.generateCodeFromOperation=function(operation, precision,
       }
     break;
     case "scaling":
-      if (!("code" in target)){ target.code = ""};
-      code += targetName+".scale("+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+")"+lineCap;
+      code += targetName+".Scale(["+ value.x.toFixed(precision)+","+value.y.toFixed(precision)+","+value.z.toFixed(precision)+"])"+lineCap;
     break;
     
     case "union":
@@ -261,6 +277,7 @@ CodeGenerator.prototype.generateCodeFromOperationsList=function(operations)
   {
     var operation = operations[i];
     code += this.generateCodeFromOperation(operation);
+    this._codeLength += code.length;
   }
   //console.log("code:\n", code);
   return code;
