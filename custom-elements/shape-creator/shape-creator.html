@@ -7,15 +7,16 @@
 
 <link rel="import"  href="../../components/polymer-ui-icon-button/polymer-ui-icon-button.html">
 
+
 <!--TODO: shape creator is a misnommer , should it be "shape chooser" ?-->
 
 <polymer-element name="shape-creator" attributes="enabled" on-tap="{{headerTap}}">
   <template>
     <style>
-      polymer-ui-submenu-item #menu { display:inline-block;margin-top: 2px;}
+      core-item #menu { display:inline-block;margin-top: 2px;}
       polymer-ui-menu-item { font-size:12px; padding: 0px 5px;height: 20px;
 line-height: 20px;}
-      polymer-ui-submenu-item #menu {
+      core-item #menu {
 margin-left: 14px;
       }
 
@@ -39,7 +40,7 @@ box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.1176
     </style>
     <template if="{{enabled}}">
       <section style="" theme="polymer-ui-light-theme">
-        <polymer-ui-submenu-item icon="menu" label="Operations" active >
+        <core-item icon="menu" label="Operations" active >
           <template if="{{mode == 'operations'}}">
             <template repeat="{{opName in operations}}">
               <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
@@ -55,31 +56,31 @@ box-shadow: rgba(0, 0, 0, 0.0980392) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.1176
             </template>
           </template>
           
-        </polymer-ui-submenu-item>
-        <polymer-ui-submenu-item icon="menu" label="Shapes(3d)" active>
+        </core-item>
+        <core-item icon="menu" label="Shapes(3d)" active>
           <template repeat="{{shapeName in shapes3d}}">
               <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
                   <span on-click="{{createDefault}}" class="shape-item-base">{{shapeName}} </span>
                   <span><polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> </span>
               </div>
           </template>
-        </polymer-ui-submenu-item>
-        <polymer-ui-submenu-item icon="menu" label="Shapes(2d)" active>
+        </core-item>
+        <core-item icon="menu" label="Shapes(2d)" active>
           <template repeat="{{shapeName in shapes2d}}">
             <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
               <span on-click="{{createDefault}}" class="shape-item-base">{{shapeName}} </span>
               <span>  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> </span>
             </div>
           </template>
-        </polymer-ui-submenu-item>
-        <polymer-ui-submenu-item icon="menu" label="Generic" active>
+        </core-item>
+        <core-item icon="menu" label="Generic" active>
            <template repeat="{{shapeName in shapesGeneric}}">
             <div class="polymer-ui-light-theme shape-item" style="cursor: pointer;">
               <span on-click="{{createDefault}}" class="shape-item-base">{{shapeName}} </span>
               <span>  <polymer-ui-icon-button icon="settings" on-click="{{createCustom}}"></polymer-ui-icon-button> </span>
             </div>
           </template>
-         </polymer-ui-submenu-item>
+         </core-item>
       </section>
     </template>
 
