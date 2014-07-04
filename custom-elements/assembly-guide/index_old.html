@@ -1,0 +1,196 @@
+<html>
+  <head>
+    <title>usco-assembly-guide-builder example</title>
+      <script src="components/platform/platform.js"></script>
+      <link rel="import" href="components/polymer/polymer.html">
+      <link rel="import" href="usco-assembly-guide-builder/usco-assembly-guide-builder.html">
+
+      <style>
+        usco-assembly-guide-builder{
+          left:0px;top:0px;width:100%;height:100%;background-color:#ffffff;
+        }
+      </style>
+  </head>
+<body>
+  <usco-assembly-guide-builder orientation="diagonal" showShadows postProcess></usco-assembly-guide-builder>
+
+  <script>
+    window.addEventListener('WebComponentsReady', function() {
+	    var uscoEditor = document.querySelector('usco-assembly-guide-builder');
+      //example : adding 3D shapes to viewer''
+      var geometry = new THREE.CubeGeometry( 20, 20, 20 ); 
+      geometry.computeCentroids();
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
+	    var cube = new THREE.Mesh(geometry, material);
+      cube.name = "TestCube";
+      cube.position.set(-100,20,30);
+      //add to scene
+      //uscoEditor.addToScene(cube);
+
+      var geometry = new THREE.SphereGeometry(12, 20,20);
+      geometry.computeCentroids();
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+      var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
+      var sphere = new THREE.Mesh(geometry, material);
+      sphere.name = "testSphere";
+      sphere.position.set(50,0,30);
+
+      sphere.add(cube);
+      uscoEditor.addToScene(sphere);
+
+
+      
+      var toothDepth =2;
+      var segments = 500;
+      var turns = 9;
+      //var lead = 2;
+      var pitch = 1;
+      var outerRadius = 10;
+
+      var height = turns * pitch*2;// * Math.PI*2;
+      //var realHeight = turns * pitch;
+      var bla = height;
+      console.log("height",height,"bla",bla);
+      
+
+      //T between 0 and 1
+      // extrudePath, Helix Curve
+      CustomCurve = THREE.Curve.create(   
+              function() {
+                this.i = 0;
+              },  
+              function(t) {
+		            var t2 = 2 * Math.PI * t * (turns);
+		            var tx = Math.cos(t2) * outerRadius,
+			            ty = Math.sin(t2) * outerRadius,
+			            tz = bla*t;//(height/turns*2 * t)  ;
+
+		            return new THREE.Vector3(tx, ty, tz);
+
+	            } 
+          );
+      extrudePath = new CustomCurve();
+
+      // Tube Geometry
+      var closed = true;
+      var debug = false;
+      var radiusSegments = 3;
+
+      // add tube
+      addTube();      
+
+      function addTube()
+      {
+          tube = new THREE.TubeGeometry(extrudePath, segments, pitch, radiusSegments, closed, debug);
+
+          //closed = true + extrude geometry : good way for threads, as the extruded geometry stays parallel/
+          //non distorted
+          var frames = new THREE.TubeGeometry.FrenetFrames(extrudePath, segments, closed);
+          for ( var i = 0; i < segments+1; i++ )
+          {
+            var tangent = frames.tangents[i],
+                normal = frames.normals[i],
+                binormal = frames.binormals[i];
+          }
+
+          var toothShape = new THREE.Shape();
+          //toothShape.moveTo( 0, 0 );
+          //toothShape.moveTo( 20, 0 );
+          //toothShape.moveTo( 0, 0 );
+          toothShape.moveTo( 0, pitch/2 );
+          toothShape.moveTo( -toothDepth/2, 0 ); //pitch/2
+          toothShape.moveTo( 0, -pitch/2 ); //tooth greatest distant point
+          //toothShape.absarc( 1, 1, 1.5, 0, Math.PI/2, false );
+          
+          var extrusionSettings = {
+            amount: 0, curveSegments: 0,steps:segments, bevelEnabled: false,
+            material: 0, extrudeMaterial: 0, extrudePath:extrudePath, frames: frames
+            };
+
+          tube = new THREE.ExtrudeGeometry( toothShape, extrusionSettings )
+          // Tube Mesh
+          var mat =  new THREE.MeshLambertMaterial({
+                  color: 0xff0000,
+                  shading : THREE.FlatShading
+              });
+          tubeMesh = THREE.SceneUtils.createMultiMaterialObject( tube, [
+             mat]);
+
+
+          var t = new THREE.CylinderGeometry(outerRadius,outerRadius,height,32);
+          var m = new THREE.Mesh(t,mat);
+        
+          tubeMesh.add(m);
+          m.rotateX(Math.PI/2);
+          m.position.z += height/2;
+  
+          uscoEditor.addToScene(tubeMesh);
+      }
+
+      /*      
+      //Assembly related stuff
+
+      //class
+      function AssemblyStep(name, description)
+      {
+
+      } 
+
+      //base class for various assembly methods      
+      function AssemblyMethod(name, target)
+      {
+        this.name = name;
+        this.target = target;
+        this._animations = [];
+      }
+
+      AssemblyMethod.prototype.start = function()
+      {
+        for(var i= 0; i< this._animations.length;i++)
+        {
+           this._animations[i].start();
+        }
+      }
+      
+
+      function PlaceItem()
+
+      function ScrewItem(name, item, turns, distance ,duration)
+      {
+         //for now not based on actual calculations (pitch, lead, nb of starts etc)
+
+        this.duration = duration || 1500;
+        this.turns = turns || 0;
+        this.distance = distance || 0;        
+        var target = this.item;
+
+
+        var curPos = target.position;
+        var curRot = target.rotation;
+        
+        var translation = new TWEEN.Tween( target.position )
+        .to( { x: pos.x, y: pos.y, z:offs }, this.duration )
+        .yoyo(true)
+        .easing( TWEEN.Easing.Exponential.Out);
+
+        var r = turns * Math.PI*2 + curRot.rotation.z;
+        var rotation = new TWEEN.Tween( target.rotation )
+          .to( { z:r}, this.duration )
+          .yoyo(true)
+          .easing( TWEEN.Easing.Exponential.Out);
+
+        this._animations.push( translation );
+        this._animations.push( rotation );
+      
+      }
+      function SlideItem()
+      function PressItem()*/
+    });
+      
+    
+  </script>  
+</body>
+</html>

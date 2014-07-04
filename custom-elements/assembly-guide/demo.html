@@ -1,0 +1,96 @@
+<html>
+  <head>
+    <title>Assembly guide viewer example</title>
+      <script src="../../components/platform/platform.js"></script>
+      <link rel="import" href="../../components/polymer-three-js/three-js.html">
+
+      <style>
+         html, body, three-js, assembly-viewer{
+      margin: 0;
+      position: absolute;
+      height: 100%;
+      width:100%;
+      
+      -webkit-touch-callout: none;
+		-webkit-user-select: none;
+		-khtml-user-select: none;
+		-moz-user-select: none;
+		-ms-user-select: none;
+		user-select: none;
+    }
+     #perspectiveView{
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        left: 0;
+        z-index:1;
+      }
+      </style>
+  </head>
+<body>
+  <!--Experimental-->
+  
+  <polymer-element name="assembly-viewer">
+    <template>
+      <three-js>
+        <three-stats id="stats" show></three-stats>
+        <three-js-webglRenderer id="webglRenderer"></three-js-webglRenderer>
+        <!--<three-js-css3dRenderer id="css3dRenderer"></three-js-css3dRenderer>-->
+        <three-js-combinedCamera id="cam1" pos="[100,50,200]" orientation="diagonal" up=[0,0,1]></three-js-combinedCamera>
+
+        <three-js-scene name="main" active>
+        </three-js-scene>
+        
+        <three-js-scene name="helpers" active>
+          <three-axis-helper> </three-axis-helper>
+        </three-js-scene>
+      
+        <three-js-viewport name="perspective" id="perspectiveView" cameraId="#cam1" left=0 bottom=0 width=0.5 height=1.0 postProcess>
+          <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10"> </three-js-orbitControls>
+          <!--<three-effect-composer ignore=["helpers"]>
+            <vignette-fx> </vignette-fx>
+          </three-effect-composer>-->
+        </three-js-viewport>
+      </three-js>
+    </template>
+    <script>Polymer("assembly-viewer", {
+      addToScene:function(object,sceneName)
+      {
+        this.threeJs = this.$.threeJs;
+        this.threeJs.addToScene(object,sceneName);
+      }
+    });
+    </script>
+  </polymer-element>
+  
+  <assembly-viewer></assembly-viewer>
+
+  <script>
+      window.addEventListener('polymer-ready', function() {
+        console.log("web components ready");
+
+	    var threeViewer = document.querySelector('assembly-viewer');
+      console.log("threeViewer",threeViewer)
+      //example : adding 3D shapes to viewer''
+      /*var geometry = new THREE.CubeGeometry( 50, 50, 50 ); 
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
+	    var cube = new THREE.Mesh(geometry, material);
+      cube.name = "TestCube";
+      cube.position.set(-100,30,30);
+      //add to scene
+
+      var geometry = new THREE.SphereGeometry(12, 20,20);
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+      var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
+      var sphere = new THREE.Mesh(geometry, material);
+      sphere.name = "testSphere";
+      sphere.position.set(50,0,30);
+      cube.add(sphere)*/
+    });
+    
+  </script>  
+</body>
+</html>
