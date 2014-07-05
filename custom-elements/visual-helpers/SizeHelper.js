@@ -16,7 +16,22 @@ SizeHelper = function(options)
 
   var position = options.position || new THREE.Vector3();
   var direction = this.direction = options.direction || new THREE.Vector3(1,0,0);
+  
+  var start = options.start || position;
+  var end = options.end ;
+  if(end && start)
+  {
+    position = start.clone();
+    //position = position.multiplyScalar(0.2);
+    position.x = -40 //-= position.x;
+    options.length = end.clone().sub( start ).length();
+    console.log("start",start,"end", end);
+    direction = this.direction = (start.clone().sub(end)).normalize();
+    console.log("dir", direction);
+  }
+  //TODO: do this better  
   var length = this.length = options.length || 10;
+  
   this.color = options.color || "#000000" ;
   
   this.text = options.text || this.length;
@@ -66,7 +81,7 @@ SizeHelper = function(options)
   var length = this.length;
   var reqWith = labelWidth + 2*arrowHeadSize;
   
-  if(reqWith>length)//if the labe + arrows would not fit
+  if(reqWith>length)//if the label + arrows would not fit
   {
     arrowSize = Math.max(length/2,6);//we want arrows to be more than just arrowhead in all the cases
     var arrowXPos = length/2+arrowSize;
