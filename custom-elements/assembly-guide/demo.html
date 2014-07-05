@@ -5,6 +5,15 @@
       <link rel="import" href="../tween-js/tween-js.html">
       <link rel="import" href="../../components/polymer-three-js/three-js.html">
       <link rel="import" href="../visual-helpers/visual-helpers.html">
+      <link rel="import" href="../usco-base-ui/usco-iconsets.html">
+      
+
+<link rel="import" href="../../components/core-icon-button/core-icon-button.html">
+<link rel="import" href="../../components/core-menu-button/core-menu-button.html">
+<link rel="import" href="../../components/core-tooltip/core-tooltip.html">
+<link rel="import" href="../../components/core-item/core-item.html">
+
+<link rel="import" href="../../components/core-transition/core-transition.html">
 
       <style>
          html, body, three-js, assembly-viewer{
@@ -32,10 +41,98 @@
 <body>
   <!--Experimental-->
   
+  <polymer-element name="assembly-step">
+    <template>
+      <style>
+        :host{
+          display:block;
+          position:absolute;
+          right:10px;
+          z-index:10;
+        }
+        header{
+          font-weight:bold;
+        }
+      </style>
+      <header>Step:{{number}} </header>
+      <div>
+        <b>Instructions:</b> {{text}}
+      </div>
+      <div>
+        Parts:
+        <ul>
+          <template repeat="{{part,partIndex in bom}}">
+            <li>
+              {{partIndex}}: {{part.description}} : {{part.amount}}
+            </li>
+          </template>
+        </ul>
+        Tools:
+        <ul>
+          <template repeat="{{tool,toolIndex in tools}}">
+            <li>
+              {{toolIndex}}: {{tool.name}}
+            </li>
+          </template>
+        </ul>
+      </div>
+      <footer>
+        <core-icon-button icon="fa-vid:{{ {'play':!isPlaying, 'pause':isPlaying} | tokenList }}" 
+          on-tap="{{toggleAnimation}}">
+        </core-icon-button>
+        <core-icon-button icon="fa-vid:{{ {'backward':!isForward, 'forward':isForward} | tokenList }}" 
+          on-tap="{{toggleAnimationDir}}">
+        </core-icon-button>
+        <core-icon-button icon="fa-dirs:chevron-right" on-tap="{{reqNew}}"></core-icon-button>
+        
+      </footer>
+    </template>
+    <script>Polymer("assembly-step", {
+      number:0,
+      text:"do some stuff",
+      bom:[
+        {
+           partNumber:"",
+           description:"bla",
+           url:"",
+           mimetype:"",
+           thumbnailUrl:"",
+           amount:10
+        },
+        {
+           partNumber:"",
+           description:"foo",
+           url:"",
+           mimetype:"",
+           thumbnailUrl:"",
+           amount:3
+        },
+      ],
+      tools:[
+        {name:"screwdriver"},
+        {name:"hammer"},
+      ],
+      isPlaying:false,
+      isForward:true,
+      toggleAnimation:function()
+      {
+        this.isPlaying =! this.isPlaying;
+      },
+      toggleAnimationDir:function()
+      {
+        this.isForward =! this.isForward;
+      }
+    });
+    </script>
+  
+  </polymer-element>
+  
+  
   <polymer-element name="assembly-viewer">
     <template>
+      <assembly-step></assembly-step>
       <three-js id="threeJs">
-        <three-stats id="stats" show></three-stats>
+        <three-stats id="stats" show=false></three-stats>
         <tween-js> </tween-js>
         <three-js-webglRenderer id="webglRenderer"></three-js-webglRenderer>
         <!--<three-js-css3dRenderer id="css3dRenderer"></three-js-css3dRenderer>-->
@@ -82,7 +179,8 @@
       geometry.computeBoundingBox();
 	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
 	    var cube = new THREE.Mesh(geometry, material);
-      cube.name = "TestCube";
+      cube.name = "TargetCube";
+      threeViewer.addToScene( cube );
       //add to scene
       /*var geometry = new THREE.SphereGeometry(12, 20,20);
     	geometry.computeBoundingSphere();
@@ -104,7 +202,8 @@
       var target = bolt;
       threeViewer.addToScene( target );
       
-      //connectors etc    
+      //connectors etc  
+      //TODO: this is both a visual and a logic connector, should be seperate  
       var geometry = new THREE.BoxGeometry( 5, 5, 5 ); 
     	geometry.computeBoundingSphere();
       geometry.computeBoundingBox();
@@ -127,7 +226,7 @@
       
       
       //for now use up vector as reference
-      //target.up = new THREE.Vector3(0,0,1);
+      target.up = new THREE.Vector3(0,0,1);
       target.position.copy( startAnchor );
       
       var dirVect = endAnchor.clone().sub( startAnchor );
@@ -138,6 +237,10 @@
       
       if(playAnims) target.lookAt( endAnchor ) ;
       
+      
+      //visual indications
+      var arrow = new DistanceHelper({start: startAnchor, end:endAnchor});
+      threeViewer.addToScene( arrow );
       //var startToEndHelper = new SizeHelper({start: startAnchor, end:endAnchor,leftArrow:true,rightArrow:false,lineWidth:3, color:0xff0000});
       /*var startToEndHelper = new SizeHelper({length:dirVect.length(),position:startAnchor,leftArrow:true,rightArrow:true,lineWidth:3, color:0xff0000});
       threeViewer.addToScene( startToEndHelper );*/
@@ -181,6 +284,36 @@
             anim.start();
           }
         }
+        
+        //TODO: branching and conditionals
+        
+        //steps:
+        //stop animations
+        //load animation data
+        //load models
+        
+        //Exploring data structures for build instructions
+        //based on tracker.json datastructure from TTN ?
+        instructions = {"instructions":[
+            {
+               "step":1,
+               "text":"do some stuff",
+               "parts": [
+               
+               ],
+               "logic":"screw #0001 into #0004 at [0,2,3]",
+               "images":[
+                  "thumbnails/..."
+               ]
+            },
+            {
+               "step":2,
+               "text":"",
+               "images":[
+                  "thumbnails/..."
+               ]
+            }
+         ]};
     });
   </script>  
 </body>
