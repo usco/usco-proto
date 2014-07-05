@@ -2,7 +2,9 @@
   <head>
     <title>Assembly guide viewer example</title>
       <script src="../../components/platform/platform.js"></script>
+      <link rel="import" href="../tween-js/tween-js.html">
       <link rel="import" href="../../components/polymer-three-js/three-js.html">
+      <link rel="import" href="../visual-helpers/visual-helpers.html">
 
       <style>
          html, body, three-js, assembly-viewer{
@@ -32,13 +34,16 @@
   
   <polymer-element name="assembly-viewer">
     <template>
-      <three-js>
+      <three-js id="threeJs">
         <three-stats id="stats" show></three-stats>
+        <tween-js> </tween-js>
         <three-js-webglRenderer id="webglRenderer"></three-js-webglRenderer>
         <!--<three-js-css3dRenderer id="css3dRenderer"></three-js-css3dRenderer>-->
         <three-js-combinedCamera id="cam1" pos="[100,50,200]" orientation="diagonal" up=[0,0,1]></three-js-combinedCamera>
 
         <three-js-scene name="main" active>
+          <three-js-light pos="[50,30,200]"></three-js-light>
+          <three-js-light kind="spot" pos=[150,350,90] shadow></three-js-light>
         </three-js-scene>
         
         <three-js-scene name="helpers" active>
@@ -72,25 +77,111 @@
 	    var threeViewer = document.querySelector('assembly-viewer');
       console.log("threeViewer",threeViewer)
       //example : adding 3D shapes to viewer''
-      /*var geometry = new THREE.CubeGeometry( 50, 50, 50 ); 
+      var geometry = new THREE.BoxGeometry( 20, 20, 20 ); 
     	geometry.computeBoundingSphere();
       geometry.computeBoundingBox();
 	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
 	    var cube = new THREE.Mesh(geometry, material);
       cube.name = "TestCube";
-      cube.position.set(-100,30,30);
       //add to scene
-
-      var geometry = new THREE.SphereGeometry(12, 20,20);
+      /*var geometry = new THREE.SphereGeometry(12, 20,20);
     	geometry.computeBoundingSphere();
       geometry.computeBoundingBox();
       var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
       var sphere = new THREE.Mesh(geometry, material);
       sphere.name = "testSphere";
       sphere.position.set(50,0,30);
-      cube.add(sphere)*/
+      cube.add(sphere);*/
+      
+      var boltHeight = 30;
+      var geometry = new THREE.CylinderGeometry(9,12, boltHeight,6);
+      geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+      var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
+      var bolt = new THREE.Mesh(geometry, material);
+      
+      var target = bolt;
+      threeViewer.addToScene( target );
+      
+      //connectors etc    
+      var geometry = new THREE.BoxGeometry( 5, 5, 5 ); 
+    	geometry.computeBoundingSphere();
+      geometry.computeBoundingBox();
+	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff0000,wireframe:true} ); 
+	    var tipConnector = new THREE.Mesh(geometry, material);
+	    
+	    target.add( tipConnector );
+	    tipConnector.position.z = boltHeight/2;
+	    
+	    tipConnector.material.depthTest=false;
+      tipConnector.material.depthWrite=false;
+      tipConnector.renderDepth = 1e-20;
+         
+      
+      //build instruction anims tests
+      var playAnims = true;
+      
+      var startAnchor = new THREE.Vector3(-100,30,30);
+      var endAnchor   = new THREE.Vector3(0,0,0);
+      
+      
+      //for now use up vector as reference
+      //target.up = new THREE.Vector3(0,0,1);
+      target.position.copy( startAnchor );
+      
+      var dirVect = endAnchor.clone().sub( startAnchor );
+      var dirVectNorm = dirVect.clone().normalize();
+      
+      var angle = startAnchor.angleTo(endAnchor); //new THREE.Vector3(1,0,0).cross( direction );
+      console.log("dirVect", dirVect, dirVectNorm, angle);
+      
+      if(playAnims) target.lookAt( endAnchor ) ;
+      
+      //var startToEndHelper = new SizeHelper({start: startAnchor, end:endAnchor,leftArrow:true,rightArrow:false,lineWidth:3, color:0xff0000});
+      /*var startToEndHelper = new SizeHelper({length:dirVect.length(),position:startAnchor,leftArrow:true,rightArrow:true,lineWidth:3, color:0xff0000});
+      threeViewer.addToScene( startToEndHelper );*/
+      
+      var duration = 10000;
+      var turns = 6;
+      var distance = 100;        
+      var axis = new THREE.Vector3(1,0,0);
+
+      var curPos = target.position;
+      var curRot = target.rotation;
+      
+      var pos = endAnchor.clone();//new THREE.Vector3(100,20,0);
+      var offs = 100;
+      
+      var curRot = new THREE.Euler();
+      var targetRot = target.rotation.clone();
+        
+      var translation = new TWEEN.Tween( target.position )
+        .to( { x: pos.x, y: pos.y, z:pos.z }, duration )
+        .yoyo(true)
+        .easing( TWEEN.Easing.Exponential.Out)
+        .repeat(Infinity);
+
+        var r = turns * Math.PI//*2 ;// + curRot.rotation.z;
+        var rotation = new TWEEN.Tween( target.rotation )
+          .to( { z:r}, duration )
+          .yoyo(true)
+          .easing( TWEEN.Easing.Exponential.Out)
+          .repeat(Infinity);
+        
+        this._animations = [];
+        this._animations.push( rotation );
+        this._animations.push( translation );
+      
+        if(playAnims)
+        {
+          for(var i=0;i<this._animations.length;i++)
+          {
+            var anim = this._animations[i];
+            anim.start();
+          }
+        }
     });
-    
   </script>  
 </body>
 </html>
