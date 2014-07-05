@@ -1,0 +1,45 @@
+
+<script src="./tween.min.js"></script>
+
+<link rel="import" href="../../components/polymer/polymer.html">
+
+<polymer-element name="tween-js">
+  <script>
+    Polymer('tween-js', {
+      updatable:true,
+      //generic custom element callbacks
+      created: function() {
+      },
+      ready: function() {
+      },
+      enteredView:function()
+      {
+        this.addToParent3();
+      },
+      leftView:function()
+      {
+        this.removeFromParent3();
+      },
+      update:function()
+      {
+          if(window.TWEEN !== undefined) TWEEN.update();
+      },
+      addToParent3: function() {
+        if (this.parentNode.add3 && !this.objectParent) {
+          this.objectParent = this.parentNode;
+          this.parentNode.add3(this);
+          var parentName = this.parentNode.localName;
+          console.log('[%s]: request adding to [%s]', this.localName + (this.id ? '#' + this.id : ''), parentName);
+        }
+      },
+      removeFromParent3: function() {
+        if (this.objectParent) {
+          this.objectParent.remove3(this);
+          this.objectParent = null;
+          console.log('[%s]: REMOVED from threejs-objectParent', this.localName + (this.id ? '#' + this.id : ''));
+        }
+     }
+     });
+  </script>
+</polymer-element>
+
