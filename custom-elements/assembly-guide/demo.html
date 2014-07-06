@@ -158,23 +158,23 @@ core-theme-aware.usco-light core-icon-button.selected {
     <script>Polymer("assembly-step", {
       number:0,
       text:"do some stuff",
-      builds:"fooPart#4",
+      builds:"AssembledCubion#4",
       bom:[
         {
-           partNumber:"",
-           description:"bla",
-           url:"",
-           mimetype:"",
-           thumbnailUrl:"",
-           amount:10
-        },
-        {
-           partNumber:"",
-           description:"foo",
+           partNumber:1,
+           description:"M3 Bolt",
            url:"",
            mimetype:"",
            thumbnailUrl:"",
            amount:3
+        },
+        {
+           partNumber:2,
+           description:"Printed Cube",
+           url:"",
+           mimetype:"",
+           thumbnailUrl:"",
+           amount:1
         },
       ],
       tools:[
@@ -281,7 +281,8 @@ core-theme-aware.usco-light core-icon-button.selected {
           var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
           var bolt = new THREE.Mesh(geometry, material);
           
-          //connectors etc  
+          //connectors 
+          //for bolt  
           //TODO: this is both a visual and a logic connector, should be seperate  
           var connectorSize = 2;
           var geometry = new THREE.BoxGeometry( connectorSize, connectorSize, connectorSize/2 ); 
@@ -314,59 +315,124 @@ core-theme-aware.usco-light core-icon-button.selected {
           return bolt;
         }  
         
-        var target = bolt = makeBolt();
-        threeViewer.addToScene( target );
+        function makeTargetCube()
+        {
+          var connectorSize = 2;
+          var cubeSize = 30;
+          var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize ); 
+        	geometry.computeBoundingSphere();
+          geometry.computeBoundingBox();
+          var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
+          var cube = new THREE.Mesh(geometry, material);
+          cube.name = "TargetCube";
+          
+          
+          var geometry = new THREE.BoxGeometry( connectorSize, connectorSize, connectorSize/2 ); 
+        	geometry.computeBoundingSphere();
+          geometry.computeBoundingBox();
+	        var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff0000,wireframe:true} ); 
+	        var attachConnector = new THREE.Mesh(geometry, material);
+	        
+	        attachConnector.connectorFor = "Bolts"
+	        attachConnector.position.z = -cubeSize/2;
+	        attachConnector.material.depthTest=false;
+          attachConnector.material.depthWrite=false;
+          attachConnector.renderDepth = 1e-20;
+          
+          var attachConnectorTop = attachConnector.clone();
+          attachConnectorTop.position.z  = cubeSize/2;
+          
+          
+          var attachConnectorSide = attachConnector.clone();
+          attachConnectorSide.position.z  = 0;
+          attachConnectorSide.position.x  = cubeSize/2;
+          
+          
+          cube.add( attachConnector );
+          cube.add( attachConnectorTop );
+          cube.add( attachConnectorSide );
+          
+          cube.connectors = [];
+          cube.connectors.push( attachConnector );
+          cube.connectors.push( attachConnectorTop );
+          cube.connectors.push( attachConnectorSide );
+	        
+	        return cube;
+          
+        }
+        
+        var target2 = cube = makeTargetCube();
+        threeViewer.addToScene( target2 );
         
         //build instruction anims tests
         
-        var startAnchor = new THREE.Vector3(-100,30,30);
-        var endAnchor   = new THREE.Vector3(0,0,0);
+        for(var i=0;i<target2.connectors.length;i++)
+        {
+          var subject = bolt = makeBolt();
+          threeViewer.addToScene( subject );
         
-        //for now use up vector as reference
-        target.up = new THREE.Vector3(0,0,1);
-        target.position.copy( startAnchor );
+          var tgtConnector = target2.connectors[i];
+          //usefull
+          var tgtWorldPos = tgtConnector.localToWorld(tgtConnector.position).clone();
+          //place bolts in the right place
+          var offset = 50;
+          var subjectAutoOffset = tgtWorldPos.clone().normalize().multiplyScalar( offset ); //.sub( new THREE.Vector3() );
+          
+          addAnimationForBolt(tgtConnector, subject, subjectAutoOffset, this._animations);
+        }
         
-        var dirVect = endAnchor.clone().sub( startAnchor );
-        var dirVectNorm = dirVect.clone().normalize();
-        
-        var angle = startAnchor.angleTo(endAnchor); //new THREE.Vector3(1,0,0).cross( direction );
-        
-        target.lookAt( endAnchor ) ;
-        //visual indications
-        var arrow = new DistanceHelper({start: startAnchor, end:endAnchor});
-        threeViewer.addToScene( arrow );
-        
-        var duration = 3000;
-        var turns = 6;
-        var distance = 100;        
-        var axis = new THREE.Vector3(1,0,0);
+        function addAnimationForBolt(targetConnector, subject, startAnchor, animations)
+        {
+          
+          //var startAnchor = new THREE.Vector3(0,0,50);//new THREE.Vector3(-100,30,30);
+          var endAnchor   = targetConnector.localToWorld(targetConnector.position).clone(); //target2.connectors[1].localToWorld(target2.connectors[1].position).clone();//new THREE.Vector3(0,0,0);
+          
+          //for now use up vector as reference
+          subject.up = new THREE.Vector3(0,0,1);
+          subject.position.copy( startAnchor );
+          
+          var dirVect = endAnchor.clone().sub( startAnchor );
+          var dirVectNorm = dirVect.clone().normalize();
+          
+          var angle = startAnchor.angleTo(endAnchor); //new THREE.Vector3(1,0,0).cross( direction );
+          
+          subject.lookAt( endAnchor ) ;
+          //visual indications
+          var arrow = new DistanceHelper({start: startAnchor, end:endAnchor});
+          threeViewer.addToScene( arrow );
+          
+          var duration = 3000;
+          var turns = 6;
+          var distance = 100;        
+          var axis = new THREE.Vector3(1,0,0);
 
-        var curPos = target.position;
-        var curRot = target.rotation;
-        
-        var pos = endAnchor.clone();//new THREE.Vector3(100,20,0);
-        var offs = 100;
-        
-        var curRot = new THREE.Euler();
-        var targetRot = target.rotation.clone();
-        
-        var translation = new TWEEN.Tween( target.position )
-          .to( { x: pos.x, y: pos.y, z:pos.z }, duration )
-          //.yoyo(true)
-          //.easing( TWEEN.Easing.Cubic.Out)
-          //.repeat(Infinity);
-
-          var r = turns * Math.PI//*2 ;// + curRot.rotation.z;
-          var rotation = new TWEEN.Tween( target.rotation )
-            .to( { z:r}, duration )
+          var curPos = subject.position;
+          var curRot = subject.rotation;
+          
+          var pos = endAnchor.clone();//new THREE.Vector3(100,20,0);
+          var offs = 100;
+          
+          var curRot = new THREE.Euler();
+          var targetRot = subject.rotation.clone();
+          
+          var translation = new TWEEN.Tween( subject.position )
+            .to( { x: pos.x, y: pos.y, z:pos.z }, duration )
             //.yoyo(true)
             //.easing( TWEEN.Easing.Cubic.Out)
             //.repeat(Infinity);
-            
-          
-          this._animations.push( rotation );
-          this._animations.push( translation );
-        
+
+            var r = turns * Math.PI//*2 ;// + curRot.rotation.z;
+            var rotation = new TWEEN.Tween( subject.rotation )
+              .to( { z:r}, duration )
+              //.yoyo(true)
+              //.easing( TWEEN.Easing.Cubic.Out)
+              //.repeat(Infinity);
+              
+            animations.push( rotation );
+            animations.push( translation );
+            //this._animations.push( rotation );
+            //this._animations.push( translation );
+          }
       }
     });
     </script>
@@ -420,16 +486,10 @@ core-theme-aware.usco-light core-icon-button.selected {
         console.log("web components ready");
 
 	    var threeViewer = document.querySelector('assembly-viewer');
-      console.log("threeViewer",threeViewer)
-      //example : adding 3D shapes to viewer''
-      var geometry = new THREE.BoxGeometry( 30, 30, 30 ); 
-    	geometry.computeBoundingSphere();
-      geometry.computeBoundingBox();
-	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
-	    var cube = new THREE.Mesh(geometry, material);
-      cube.name = "TargetCube";
-      threeViewer.addToScene( cube );
-        //TODO: branching and conditionals
+     
+        //TODO: branching and conditionals ?
+        //TODO: what is the best way to define what goes where ? 
+        /* ie : bolt M3 L 10 into HOle 1 ?
         
         //steps:
         //stop animations
