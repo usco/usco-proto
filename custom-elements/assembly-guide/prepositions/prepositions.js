@@ -3,3 +3,7 @@ function Preposition()
 {
 
 }
+
+function In(){}
+
+function Out(){}

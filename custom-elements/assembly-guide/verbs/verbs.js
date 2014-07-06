@@ -17,7 +17,7 @@ AssemblyMethod.prototype.start = function()
 //Action verbs for assembly methods
 function PlaceItem()
 
-function ScrewItem(name, item, turns, distance ,duration)
+function ScrewItem(name, currentItem, targetItem, turns, distance ,duration)
 {
    //for now not based on actual calculations (pitch, lead, nb of starts etc)
   this.duration = duration || 1500;

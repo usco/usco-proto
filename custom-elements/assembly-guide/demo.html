@@ -53,8 +53,66 @@
         header{
           font-weight:bold;
         }
+        
+        core-icon{
+  width:18px !important;
+  height:18px !important;
+  font-size:18px !important;
+}
+
+core-icon-button {
+  display: inline-block;
+  background-image: none;
+  padding: 3px;
+  margin: 2px;
+width: inherit;
+height: inherit;
+  vertical-align: middle;
+  cursor: pointer;
+  
+  border-top-left-radius: 0px;
+border-top-right-radius: 0px;
+border-bottom-right-radius: 0px;
+border-bottom-left-radius: 0px;
+}
+
+core-icon-button.usco-light:hover{
+            color:rgb(0, 153, 221);
+}
+
+core-item {
+  display: block;
+  height: 30px;
+  cursor: pointer;
+}
+
+core-item .item-container > core-icon {
+  margin: 0px 3px 0px 4px;
+}
+
+core-item.usco-light:hover{
+            color:rgb(0, 153, 221);
+}
+
+core-theme-aware.usco-dark core-icon-button{
+            color:red;
+}
+
+core-theme-aware.usco-light core-icon-button{
+            color:black;
+}
+
+core-theme-aware.usco-light core-icon-button core-icon:hover{
+            color:rgb(0, 153, 221);
+}
+
+core-theme-aware.usco-light core-icon-button.selected {
+  background-color: rgba(71, 167, 255, 1);
+  box-shadow: rgba(0, 0, 0, 0.0470588) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.117647) 0px 0px 0px 1px;
+}
+        
       </style>
-      <header>Step:{{number}} </header>
+      <header><div>Step:{{number}}</div><div> Builds:{{builds}}</div></header>
       <div>
         <b>Instructions:</b> {{text}}
       </div>
@@ -77,19 +135,30 @@
         </ul>
       </div>
       <footer>
-        <core-icon-button icon="fa-vid:{{ {'play':!isPlaying, 'pause':isPlaying} | tokenList }}" 
-          on-tap="{{toggleAnimation}}">
-        </core-icon-button>
-        <core-icon-button icon="fa-vid:{{ {'backward':!isForward, 'forward':isForward} | tokenList }}" 
-          on-tap="{{toggleAnimationDir}}">
-        </core-icon-button>
-        <core-icon-button icon="fa-dirs:chevron-right" on-tap="{{reqNew}}"></core-icon-button>
+        <core-tooltip label="Play/Pause" position="bottom">
+          <core-icon-button icon="fa-vid:{{ {'play':!isPlaying, 'pause':isPlaying} | tokenList }}" 
+            on-tap="{{toggleAnimation}}">
+         </core-icon-button>
+        </core-tooltip>
+        <core-tooltip label="Forward/Backwards" position="bottom">
+          <core-icon-button icon="fa-vid:{{ {'backward':!isForward, 'forward':isForward} | tokenList }}" 
+            on-tap="{{toggleAnimationDir}}">
+          </core-icon-button>
+        </core-tooltip>
+        <core-tooltip label="repeat" position="bottom">
+          <input type="checkbox" checked="{{isRepeating}}"> </input>
+        </core-tooltip>
+        <core-tooltip label="next step" position="bottom">
+          <core-icon-button icon="fa-dirs:chevron-right" on-tap="{{reqNew}}"></core-icon-button>
+        </core-tooltip>
+        
         
       </footer>
     </template>
     <script>Polymer("assembly-step", {
       number:0,
       text:"do some stuff",
+      builds:"fooPart#4",
       bom:[
         {
            partNumber:"",
@@ -112,15 +181,192 @@
         {name:"screwdriver"},
         {name:"hammer"},
       ],
+      actions:[
+        "screw part #1 into part #2",
+      ],
+      autoPlay:true,
       isPlaying:false,
       isForward:true,
+      isRepeating:false,
+      isPlayingChanged:function(oldIsPlaying,isPlaying)
+      { 
+        if(oldIsPlaying)
+        {
+          for(var i=0;i<this._animations.length;i++)
+          {
+            var anim = this._animations[i];
+            anim.stop();
+          }        
+        }
+        else
+        {
+          for(var i=0;i<this._animations.length;i++)
+          {
+            var anim = this._animations[i];
+            anim.start();
+          } 
+        }
+      },
+      isRepeatingChanged:function()
+      {
+        if(this.isRepeating)
+        {
+          for(var i=0;i<this._animations.length;i++)
+          {
+            var anim = this._animations[i];
+            anim.repeat(Infinity);
+          } 
+        }
+        else
+        {
+          for(var i=0;i<this._animations.length;i++)
+          {
+            var anim = this._animations[i];
+            anim.repeat(0);
+          } 
+        }
+      },
       toggleAnimation:function()
       {
         this.isPlaying =! this.isPlaying;
       },
       toggleAnimationDir:function()
       {
+        for(var i=0;i<this._animations.length;i++)
+        {
+          var anim = this._animations[i];
+          anim.stop().yoyo(true).start();
+          //anim.easing( TWEEN.Easing.Back.InOut)
+        }  
         this.isForward =! this.isForward;
+      },
+      created:function()
+      {
+        this._animations = [];
+      },
+      enteredView:function()
+      {
+        var self = this;
+        window.addEventListener('polymer-ready', function() {
+          self.initialize();    
+          if(self.autoPlay)
+          {
+            self.isPlaying = true;
+          }
+        });
+      },
+      reverse:function()//this turns ins into outs , froms into tos etc
+      {
+      
+      },
+      initialize:function()
+      {
+        
+        var threeViewer = document.querySelector('assembly-viewer');
+        
+        function makeBolt()
+        {
+          var boltHeight = 10;
+          var geometry = new THREE.CylinderGeometry(3,3, boltHeight,6);
+          geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
+          
+          var geometryHead = new THREE.CylinderGeometry(5,5, 2,10);
+          geometryHead.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
+          geometryHead.applyMatrix(new THREE.Matrix4().makeTranslation( 0,0, -boltHeight/2 ));
+          
+          geometry.merge( geometryHead );
+          
+        	geometry.computeBoundingSphere();
+          geometry.computeBoundingBox();
+          var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
+          var bolt = new THREE.Mesh(geometry, material);
+          
+          //connectors etc  
+          //TODO: this is both a visual and a logic connector, should be seperate  
+          var connectorSize = 2;
+          var geometry = new THREE.BoxGeometry( connectorSize, connectorSize, connectorSize/2 ); 
+        	geometry.computeBoundingSphere();
+          geometry.computeBoundingBox();
+	        var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff0000,wireframe:true} ); 
+	        var tipConnector = new THREE.Mesh(geometry, material);
+	        
+	        bolt.add( tipConnector );
+	        tipConnector.position.z = boltHeight/2;
+	        
+	        tipConnector.material.depthTest=false;
+          tipConnector.material.depthWrite=false;
+          tipConnector.renderDepth = 1e-20;
+          
+          
+          var geometry = new THREE.BoxGeometry( connectorSize, connectorSize, connectorSize/2 ); 
+        	geometry.computeBoundingSphere();
+          geometry.computeBoundingBox();
+	        var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff0000,wireframe:true} ); 
+	        var endConnector = new THREE.Mesh(geometry, material);
+	        
+	        bolt.add( endConnector );
+	        endConnector.position.z = -boltHeight/2;
+	        
+	        endConnector.material.depthTest=false;
+          endConnector.material.depthWrite=false;
+          endConnector.renderDepth = 1e-20;
+          
+          return bolt;
+        }  
+        
+        var target = bolt = makeBolt();
+        threeViewer.addToScene( target );
+        
+        //build instruction anims tests
+        
+        var startAnchor = new THREE.Vector3(-100,30,30);
+        var endAnchor   = new THREE.Vector3(0,0,0);
+        
+        //for now use up vector as reference
+        target.up = new THREE.Vector3(0,0,1);
+        target.position.copy( startAnchor );
+        
+        var dirVect = endAnchor.clone().sub( startAnchor );
+        var dirVectNorm = dirVect.clone().normalize();
+        
+        var angle = startAnchor.angleTo(endAnchor); //new THREE.Vector3(1,0,0).cross( direction );
+        
+        target.lookAt( endAnchor ) ;
+        //visual indications
+        var arrow = new DistanceHelper({start: startAnchor, end:endAnchor});
+        threeViewer.addToScene( arrow );
+        
+        var duration = 3000;
+        var turns = 6;
+        var distance = 100;        
+        var axis = new THREE.Vector3(1,0,0);
+
+        var curPos = target.position;
+        var curRot = target.rotation;
+        
+        var pos = endAnchor.clone();//new THREE.Vector3(100,20,0);
+        var offs = 100;
+        
+        var curRot = new THREE.Euler();
+        var targetRot = target.rotation.clone();
+        
+        var translation = new TWEEN.Tween( target.position )
+          .to( { x: pos.x, y: pos.y, z:pos.z }, duration )
+          //.yoyo(true)
+          //.easing( TWEEN.Easing.Cubic.Out)
+          //.repeat(Infinity);
+
+          var r = turns * Math.PI//*2 ;// + curRot.rotation.z;
+          var rotation = new TWEEN.Tween( target.rotation )
+            .to( { z:r}, duration )
+            //.yoyo(true)
+            //.easing( TWEEN.Easing.Cubic.Out)
+            //.repeat(Infinity);
+            
+          
+          this._animations.push( rotation );
+          this._animations.push( translation );
+        
       }
     });
     </script>
@@ -156,6 +402,8 @@
       </three-js>
     </template>
     <script>Polymer("assembly-viewer", {
+      currentStep:0,
+    
       addToScene:function(object,sceneName)
       {
         this.threeJs = this.$.threeJs;
@@ -174,123 +422,27 @@
 	    var threeViewer = document.querySelector('assembly-viewer');
       console.log("threeViewer",threeViewer)
       //example : adding 3D shapes to viewer''
-      var geometry = new THREE.BoxGeometry( 20, 20, 20 ); 
+      var geometry = new THREE.BoxGeometry( 30, 30, 30 ); 
     	geometry.computeBoundingSphere();
       geometry.computeBoundingBox();
 	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
 	    var cube = new THREE.Mesh(geometry, material);
       cube.name = "TargetCube";
       threeViewer.addToScene( cube );
-      //add to scene
-      /*var geometry = new THREE.SphereGeometry(12, 20,20);
-    	geometry.computeBoundingSphere();
-      geometry.computeBoundingBox();
-      var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
-      var sphere = new THREE.Mesh(geometry, material);
-      sphere.name = "testSphere";
-      sphere.position.set(50,0,30);
-      cube.add(sphere);*/
-      
-      var boltHeight = 30;
-      var geometry = new THREE.CylinderGeometry(9,12, boltHeight,6);
-      geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
-    	geometry.computeBoundingSphere();
-      geometry.computeBoundingBox();
-      var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
-      var bolt = new THREE.Mesh(geometry, material);
-      
-      var target = bolt;
-      threeViewer.addToScene( target );
-      
-      //connectors etc  
-      //TODO: this is both a visual and a logic connector, should be seperate  
-      var geometry = new THREE.BoxGeometry( 5, 5, 5 ); 
-    	geometry.computeBoundingSphere();
-      geometry.computeBoundingBox();
-	    var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff0000,wireframe:true} ); 
-	    var tipConnector = new THREE.Mesh(geometry, material);
-	    
-	    target.add( tipConnector );
-	    tipConnector.position.z = boltHeight/2;
-	    
-	    tipConnector.material.depthTest=false;
-      tipConnector.material.depthWrite=false;
-      tipConnector.renderDepth = 1e-20;
-         
-      
-      //build instruction anims tests
-      var playAnims = true;
-      
-      var startAnchor = new THREE.Vector3(-100,30,30);
-      var endAnchor   = new THREE.Vector3(0,0,0);
-      
-      
-      //for now use up vector as reference
-      target.up = new THREE.Vector3(0,0,1);
-      target.position.copy( startAnchor );
-      
-      var dirVect = endAnchor.clone().sub( startAnchor );
-      var dirVectNorm = dirVect.clone().normalize();
-      
-      var angle = startAnchor.angleTo(endAnchor); //new THREE.Vector3(1,0,0).cross( direction );
-      console.log("dirVect", dirVect, dirVectNorm, angle);
-      
-      if(playAnims) target.lookAt( endAnchor ) ;
-      
-      
-      //visual indications
-      var arrow = new DistanceHelper({start: startAnchor, end:endAnchor});
-      threeViewer.addToScene( arrow );
-      //var startToEndHelper = new SizeHelper({start: startAnchor, end:endAnchor,leftArrow:true,rightArrow:false,lineWidth:3, color:0xff0000});
-      /*var startToEndHelper = new SizeHelper({length:dirVect.length(),position:startAnchor,leftArrow:true,rightArrow:true,lineWidth:3, color:0xff0000});
-      threeViewer.addToScene( startToEndHelper );*/
-      
-      var duration = 10000;
-      var turns = 6;
-      var distance = 100;        
-      var axis = new THREE.Vector3(1,0,0);
-
-      var curPos = target.position;
-      var curRot = target.rotation;
-      
-      var pos = endAnchor.clone();//new THREE.Vector3(100,20,0);
-      var offs = 100;
-      
-      var curRot = new THREE.Euler();
-      var targetRot = target.rotation.clone();
-        
-      var translation = new TWEEN.Tween( target.position )
-        .to( { x: pos.x, y: pos.y, z:pos.z }, duration )
-        .yoyo(true)
-        .easing( TWEEN.Easing.Exponential.Out)
-        .repeat(Infinity);
-
-        var r = turns * Math.PI//*2 ;// + curRot.rotation.z;
-        var rotation = new TWEEN.Tween( target.rotation )
-          .to( { z:r}, duration )
-          .yoyo(true)
-          .easing( TWEEN.Easing.Exponential.Out)
-          .repeat(Infinity);
-        
-        this._animations = [];
-        this._animations.push( rotation );
-        this._animations.push( translation );
-      
-        if(playAnims)
-        {
-          for(var i=0;i<this._animations.length;i++)
-          {
-            var anim = this._animations[i];
-            anim.start();
-          }
-        }
-        
         //TODO: branching and conditionals
         
         //steps:
         //stop animations
         //load animation data
         //load models
+        
+        
+        /* assembly instructions are a tree, with depth first assembly ("smallest"/leaves first);
+        
+        assembly steps would need to contribute to an existing hierarchy, existing outside of them
+        */
+        
+        
         
         //Exploring data structures for build instructions
         //based on tracker.json datastructure from TTN ?
