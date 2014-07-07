@@ -1406,10 +1406,15 @@ Text = require("./2d/Text");
 
 },{"./2d/Circle":1,"./2d/Rectangle":2,"./2d/Shape2d":3,"./2d/Text":4,"./3d/Cube":5,"./3d/Cylinder":6,"./3d/Shape3d":7,"./3d/Sphere":8,"./3d/Torus":10,"./operations/operations":22}],12:[function(require,module,exports){
 
-function Connector()
+function Connector(options)
 {
     THREE.Object3D.call( this );
     //needs position, orientation (up vector)
+    
+    var options = options || {};
+    
+    this.up = options.up || new THREE.Vector3(0,0,1);
+    this.side = options.side || new THREE.Vector3(1,0,0);
 }
 
 
@@ -1426,18 +1431,24 @@ Connector.prototype.detachFrom = function(connector)
   
 }
 
-Connector.prototype.generateRenderables=function()
+Connector.prototype.generateRenderables=function(options)
 {
-  //this.visualHelper =  new THREE.Mesh( new THREE.CylinderGeometry( 10, 10, 20 ), new MeshBasicMaterial({color:0xff0000} );
-  var color = 0xFF0000;
-  var to = this.up.clone().multiplyScalar(30);
+  var options = options || {};
+  var length = options.length || 10;
+  var color  = options.color || 0xff0000;
+  console.log("option", options);
+
+  var isOutwards = false;
+  var from = this.up.clone().multiplyScalar(length);
+  //this.position.add  
+  var to = this.position.clone().add( this.up.clone().multiplyScalar(length) );
 
   var lineGeometry = new THREE.Geometry();
   var vertArray = lineGeometry.vertices;
-  vertArray.push( this.position.clone(),to) ;
+  vertArray.push( this.position.clone(), to ) ;
   lineGeometry.computeLineDistances();
 
-  var lineMaterial = new THREE.LineDashedMaterial( { color: color, dashSize: 2, gapSize: 1, linewidth:2 } );
+  var lineMaterial = new THREE.LineDashedMaterial( { color: color, dashSize: 2, gapSize: 1, linewidth:1 } );
   var line = new THREE.Line( lineGeometry, lineMaterial );
   line.name = "connectorArrowHelper";
 
@@ -1448,26 +1459,25 @@ Connector.prototype.generateRenderables=function()
   arrowHead.rotateX(Math.PI/2);
   line.add( arrowHead );
   
-  //var baseIndicator = new THREE.Mesh(new THREE.CubeGeometry(baseSize,baseSize,baseSize),new THREE.MeshBasicMaterial({color:color,wireframe:true}) );
-  
   var baseRadius  = 5,
     segments = 64,
-    material = new THREE.LineBasicMaterial( { color: 0x000000 , depthTest:false,linewidth:2} ),
+    material = new THREE.LineBasicMaterial( { color: color,linewidth:2} ),
     geometry = new THREE.CircleGeometry( baseRadius, segments );
 
   //geometry.vertices.shift();
   var baseIndicator = new THREE.Line( geometry, material )
   baseIndicator.position.copy( this.position );
+  baseIndicator.lookAt( to.clone().multiplyScalar(10) );
   line.add( baseIndicator) ;
-
-  lineMaterial.depthWrite=true;
-  lineMaterial.depthTest=false;
-  arrowHeadMaterial.depthWrite=true;
-  arrowHeadMaterial.depthTest=false;
   
-  arrowHead.renderDepth = 1e20;
-  line.renderDepth = 1e20;
-  baseIndicator.renderDepth = 1e20;
+  line.material.depthTest=false;
+  line.material.depthWrite=false;
+  arrowHeadMaterial.depthWrite=false;
+  arrowHeadMaterial.depthTest=false;
+  baseIndicator.material.depthWrite=false;
+  baseIndicator.material.depthTest = false;
+
+  line.renderDepth = arrowHead.renderDepth = baseIndicator.renderDepth = 1e20 ;
 
   this.renderable = line ;
   return this.renderable;
