@@ -1,4 +1,8 @@
-  
+
+<!--temporary-->
+<script src="../usco-shapes/lib/usco-shapes.js"></script>
+
+
 <polymer-element name="assembly-step">
     <template>
       <style>
@@ -249,7 +253,7 @@ core-theme-aware.usco-light core-icon-button.selected {
 	        var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff0000,wireframe:true} ); 
 	        var tipConnector = new THREE.Mesh(geometry, material);
 	        
-	        bolt.add( tipConnector );
+	        //bolt.add( tipConnector );
 	        tipConnector.position.z = boltHeight/2;
 	        
 	        tipConnector.material.depthTest=false;
@@ -263,7 +267,7 @@ core-theme-aware.usco-light core-icon-button.selected {
 	        var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff0000,wireframe:true} ); 
 	        var endConnector = new THREE.Mesh(geometry, material);
 	        
-	        bolt.add( endConnector );
+	        //bolt.add( endConnector );
 	        endConnector.position.z = -boltHeight/2;
 	        
 	        endConnector.material.depthTest=false;
@@ -280,12 +284,12 @@ core-theme-aware.usco-light core-icon-button.selected {
           var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize ); 
         	geometry.computeBoundingSphere();
           geometry.computeBoundingBox();
-          var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
+          var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:false,color: 0x0088ff} ); 
           var cube = new THREE.Mesh(geometry, material);
           cube.name = "TargetCube";
           
           
-          var geometry = new THREE.BoxGeometry( connectorSize, connectorSize, connectorSize/2 ); 
+          /*var geometry = new THREE.BoxGeometry( connectorSize, connectorSize, connectorSize/2 ); 
         	geometry.computeBoundingSphere();
           geometry.computeBoundingBox();
 	        var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff0000,wireframe:true} ); 
@@ -303,25 +307,48 @@ core-theme-aware.usco-light core-icon-button.selected {
           
           var attachConnectorSide = attachConnector.clone();
           attachConnectorSide.position.z  = 0;
-          attachConnectorSide.position.x  = cubeSize/2;
+          attachConnectorSide.position.x  = cubeSize/2;*/
           
           
-          cube.add( attachConnector );
-          cube.add( attachConnectorTop );
-          cube.add( attachConnectorSide );
+          //cube.add( attachConnector );
+          /*cube.add( attachConnectorTop );
+          cube.add( attachConnectorSide );*/
           
-          cube.connectors = [];
-          cube.connectors.push( attachConnector );
+          topConnector = new Connector();
+          bottomConnector = new Connector();
+          sideConnector = new Connector();
+          
+          topConnector.position.z = cubeSize/2;
+          bottomConnector.position.z = -cubeSize/2;
+          bottomConnector.up = new THREE.Vector3(0,0,-1);
+          sideConnector.position.x = -cubeSize/2;
+          sideConnector.up = new THREE.Vector3(-1,0,0);
+          
+          cube.connectors = [topConnector,bottomConnector, sideConnector];
+          /*cube.connectors.push( attachConnector );
           cube.connectors.push( attachConnectorTop );
-          cube.connectors.push( attachConnectorSide );
+          cube.connectors.push( attachConnectorSide );*/
+          
+          /*var c = new Connector();
+          cR = c.generateRenderables();
+          cube.add( cR );*/
+          
+          for(var i =0;i<cube.connectors.length;i++)
+          {
+            cR = cube.connectors[i].generateRenderables({color:0x000001});
+            cube.add( cR );
+          }
 	        
 	        return cube;
-          
         }
+        
+
         
         var target2 = cube = makeTargetCube();
         threeViewer.addToScene( target2 );
         
+        //threeViewer.addToScene( (new Connector().generateRenderables()) );
+        //        threeViewer.addToScene( generateRenderables() );
         //build instruction anims tests
         
         for(var i=0;i<target2.connectors.length;i++)
