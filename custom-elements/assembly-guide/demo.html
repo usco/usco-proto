@@ -6,14 +6,15 @@
       <link rel="import" href="../../components/polymer-three-js/three-js.html">
       <link rel="import" href="../visual-helpers/visual-helpers.html">
       <link rel="import" href="../usco-base-ui/usco-iconsets.html">
-      
 
 <link rel="import" href="../../components/core-icon-button/core-icon-button.html">
 <link rel="import" href="../../components/core-menu-button/core-menu-button.html">
 <link rel="import" href="../../components/core-tooltip/core-tooltip.html">
 <link rel="import" href="../../components/core-item/core-item.html">
-
 <link rel="import" href="../../components/core-transition/core-transition.html">
+
+<link rel="import" href="assembly-viewer.html">
+<link rel="import" href="assembly-step.html">
 
       <style>
          html, body, three-js, assembly-viewer{
@@ -41,443 +42,6 @@
 <body>
   <!--Experimental-->
   
-  <polymer-element name="assembly-step">
-    <template>
-      <style>
-        :host{
-          display:block;
-          position:absolute;
-          right:10px;
-          z-index:10;
-        }
-        header{
-          font-weight:bold;
-        }
-        
-        core-icon{
-  width:18px !important;
-  height:18px !important;
-  font-size:18px !important;
-}
-
-core-icon-button {
-  display: inline-block;
-  background-image: none;
-  padding: 3px;
-  margin: 2px;
-width: inherit;
-height: inherit;
-  vertical-align: middle;
-  cursor: pointer;
-  
-  border-top-left-radius: 0px;
-border-top-right-radius: 0px;
-border-bottom-right-radius: 0px;
-border-bottom-left-radius: 0px;
-}
-
-core-icon-button.usco-light:hover{
-            color:rgb(0, 153, 221);
-}
-
-core-item {
-  display: block;
-  height: 30px;
-  cursor: pointer;
-}
-
-core-item .item-container > core-icon {
-  margin: 0px 3px 0px 4px;
-}
-
-core-item.usco-light:hover{
-            color:rgb(0, 153, 221);
-}
-
-core-theme-aware.usco-dark core-icon-button{
-            color:red;
-}
-
-core-theme-aware.usco-light core-icon-button{
-            color:black;
-}
-
-core-theme-aware.usco-light core-icon-button core-icon:hover{
-            color:rgb(0, 153, 221);
-}
-
-core-theme-aware.usco-light core-icon-button.selected {
-  background-color: rgba(71, 167, 255, 1);
-  box-shadow: rgba(0, 0, 0, 0.0470588) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.117647) 0px 0px 0px 1px;
-}
-        
-      </style>
-      <header><div>Step:{{number}}</div><div> Builds:{{builds}}</div></header>
-      <div>
-        <b>Instructions:</b> {{text}}
-      </div>
-      <div>
-        Parts:
-        <ul>
-          <template repeat="{{part,partIndex in bom}}">
-            <li>
-              {{partIndex}}: {{part.description}} : {{part.amount}}
-            </li>
-          </template>
-        </ul>
-        Tools:
-        <ul>
-          <template repeat="{{tool,toolIndex in tools}}">
-            <li>
-              {{toolIndex}}: {{tool.name}}
-            </li>
-          </template>
-        </ul>
-      </div>
-      <footer>
-        <core-tooltip label="Play/Pause" position="bottom">
-          <core-icon-button icon="fa-vid:{{ {'play':!isPlaying, 'pause':isPlaying} | tokenList }}" 
-            on-tap="{{toggleAnimation}}">
-         </core-icon-button>
-        </core-tooltip>
-        <core-tooltip label="Forward/Backwards" position="bottom">
-          <core-icon-button icon="fa-vid:{{ {'backward':!isForward, 'forward':isForward} | tokenList }}" 
-            on-tap="{{toggleAnimationDir}}">
-          </core-icon-button>
-        </core-tooltip>
-        <core-tooltip label="repeat" position="bottom">
-          <input type="checkbox" checked="{{isRepeating}}"> </input>
-        </core-tooltip>
-        <core-tooltip label="next step" position="bottom">
-          <core-icon-button icon="fa-dirs:chevron-right" on-tap="{{reqNew}}"></core-icon-button>
-        </core-tooltip>
-        
-        
-      </footer>
-    </template>
-    <script>Polymer("assembly-step", {
-      number:0,
-      text:"do some stuff",
-      builds:"AssembledCubion#4",
-      bom:[
-        {
-           partNumber:1,
-           description:"M3 Bolt",
-           url:"",
-           mimetype:"",
-           thumbnailUrl:"",
-           amount:3
-        },
-        {
-           partNumber:2,
-           description:"Printed Cube",
-           url:"",
-           mimetype:"",
-           thumbnailUrl:"",
-           amount:1
-        },
-      ],
-      tools:[
-        {name:"screwdriver"},
-        {name:"hammer"},
-      ],
-      actions:[
-        "screw part #1 into part #2",
-      ],
-      autoPlay:true,
-      isPlaying:false,
-      isForward:true,
-      isRepeating:false,
-      isPlayingChanged:function(oldIsPlaying,isPlaying)
-      { 
-        if(oldIsPlaying)
-        {
-          for(var i=0;i<this._animations.length;i++)
-          {
-            var anim = this._animations[i];
-            anim.stop();
-          }        
-        }
-        else
-        {
-          for(var i=0;i<this._animations.length;i++)
-          {
-            var anim = this._animations[i];
-            anim.start();
-          } 
-        }
-      },
-      isRepeatingChanged:function()
-      {
-        if(this.isRepeating)
-        {
-          for(var i=0;i<this._animations.length;i++)
-          {
-            var anim = this._animations[i];
-            anim.repeat(Infinity);
-          } 
-        }
-        else
-        {
-          for(var i=0;i<this._animations.length;i++)
-          {
-            var anim = this._animations[i];
-            anim.repeat(0);
-          } 
-        }
-      },
-      toggleAnimation:function()
-      {
-        this.isPlaying =! this.isPlaying;
-      },
-      toggleAnimationDir:function()
-      {
-        for(var i=0;i<this._animations.length;i++)
-        {
-          var anim = this._animations[i];
-          anim.stop().yoyo(true).start();
-          //anim.easing( TWEEN.Easing.Back.InOut)
-        }  
-        this.isForward =! this.isForward;
-      },
-      created:function()
-      {
-        this._animations = [];
-      },
-      enteredView:function()
-      {
-        var self = this;
-        window.addEventListener('polymer-ready', function() {
-          self.initialize();    
-          if(self.autoPlay)
-          {
-            self.isPlaying = true;
-          }
-        });
-      },
-      reverse:function()//this turns ins into outs , froms into tos etc
-      {
-      
-      },
-      initialize:function()
-      {
-        
-        var threeViewer = document.querySelector('assembly-viewer');
-        
-        function makeBolt()
-        {
-          var boltHeight = 10;
-          var geometry = new THREE.CylinderGeometry(3,3, boltHeight,6);
-          geometry.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
-          
-          var geometryHead = new THREE.CylinderGeometry(5,5, 2,10);
-          geometryHead.applyMatrix(new THREE.Matrix4().makeRotationX( Math.PI / 2 ));
-          geometryHead.applyMatrix(new THREE.Matrix4().makeTranslation( 0,0, -boltHeight/2 ));
-          
-          geometry.merge( geometryHead );
-          
-        	geometry.computeBoundingSphere();
-          geometry.computeBoundingBox();
-          var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff8800} );
-          var bolt = new THREE.Mesh(geometry, material);
-          
-          //connectors 
-          //for bolt  
-          //TODO: this is both a visual and a logic connector, should be seperate  
-          var connectorSize = 2;
-          var geometry = new THREE.BoxGeometry( connectorSize, connectorSize, connectorSize/2 ); 
-        	geometry.computeBoundingSphere();
-          geometry.computeBoundingBox();
-	        var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff0000,wireframe:true} ); 
-	        var tipConnector = new THREE.Mesh(geometry, material);
-	        
-	        bolt.add( tipConnector );
-	        tipConnector.position.z = boltHeight/2;
-	        
-	        tipConnector.material.depthTest=false;
-          tipConnector.material.depthWrite=false;
-          tipConnector.renderDepth = 1e-20;
-          
-          
-          var geometry = new THREE.BoxGeometry( connectorSize, connectorSize, connectorSize/2 ); 
-        	geometry.computeBoundingSphere();
-          geometry.computeBoundingBox();
-	        var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff0000,wireframe:true} ); 
-	        var endConnector = new THREE.Mesh(geometry, material);
-	        
-	        bolt.add( endConnector );
-	        endConnector.position.z = -boltHeight/2;
-	        
-	        endConnector.material.depthTest=false;
-          endConnector.material.depthWrite=false;
-          endConnector.renderDepth = 1e-20;
-          
-          return bolt;
-        }  
-        
-        function makeTargetCube()
-        {
-          var connectorSize = 2;
-          var cubeSize = 30;
-          var geometry = new THREE.BoxGeometry( cubeSize, cubeSize, cubeSize ); 
-        	geometry.computeBoundingSphere();
-          geometry.computeBoundingBox();
-          var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0x0088ff} ); 
-          var cube = new THREE.Mesh(geometry, material);
-          cube.name = "TargetCube";
-          
-          
-          var geometry = new THREE.BoxGeometry( connectorSize, connectorSize, connectorSize/2 ); 
-        	geometry.computeBoundingSphere();
-          geometry.computeBoundingBox();
-	        var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:true,color: 0xff0000,wireframe:true} ); 
-	        var attachConnector = new THREE.Mesh(geometry, material);
-	        
-	        attachConnector.connectorFor = "Bolts"
-	        attachConnector.position.z = -cubeSize/2;
-	        attachConnector.material.depthTest=false;
-          attachConnector.material.depthWrite=false;
-          attachConnector.renderDepth = 1e-20;
-          
-          var attachConnectorTop = attachConnector.clone();
-          attachConnectorTop.position.z  = cubeSize/2;
-          
-          
-          var attachConnectorSide = attachConnector.clone();
-          attachConnectorSide.position.z  = 0;
-          attachConnectorSide.position.x  = cubeSize/2;
-          
-          
-          cube.add( attachConnector );
-          cube.add( attachConnectorTop );
-          cube.add( attachConnectorSide );
-          
-          cube.connectors = [];
-          cube.connectors.push( attachConnector );
-          cube.connectors.push( attachConnectorTop );
-          cube.connectors.push( attachConnectorSide );
-	        
-	        return cube;
-          
-        }
-        
-        var target2 = cube = makeTargetCube();
-        threeViewer.addToScene( target2 );
-        
-        //build instruction anims tests
-        
-        for(var i=0;i<target2.connectors.length;i++)
-        {
-          var subject = bolt = makeBolt();
-          threeViewer.addToScene( subject );
-        
-          var tgtConnector = target2.connectors[i];
-          //usefull
-          var tgtWorldPos = tgtConnector.localToWorld(tgtConnector.position).clone();
-          //place bolts in the right place
-          var offset = 50;
-          var subjectAutoOffset = tgtWorldPos.clone().normalize().multiplyScalar( offset ); //.sub( new THREE.Vector3() );
-          
-          addAnimationForBolt(tgtConnector, subject, subjectAutoOffset, this._animations);
-        }
-        
-        function addAnimationForBolt(targetConnector, subject, startAnchor, animations)
-        {
-          
-          //var startAnchor = new THREE.Vector3(0,0,50);//new THREE.Vector3(-100,30,30);
-          var endAnchor   = targetConnector.localToWorld(targetConnector.position).clone(); //target2.connectors[1].localToWorld(target2.connectors[1].position).clone();//new THREE.Vector3(0,0,0);
-          
-          //for now use up vector as reference
-          subject.up = new THREE.Vector3(0,0,1);
-          subject.position.copy( startAnchor );
-          
-          var dirVect = endAnchor.clone().sub( startAnchor );
-          var dirVectNorm = dirVect.clone().normalize();
-          
-          var angle = startAnchor.angleTo(endAnchor); //new THREE.Vector3(1,0,0).cross( direction );
-          
-          subject.lookAt( endAnchor ) ;
-          //visual indications
-          var arrow = new DistanceHelper({start: startAnchor, end:endAnchor});
-          threeViewer.addToScene( arrow );
-          
-          var duration = 3000;
-          var turns = 6;
-          var distance = 100;        
-          var axis = new THREE.Vector3(1,0,0);
-
-          var curPos = subject.position;
-          var curRot = subject.rotation;
-          
-          var pos = endAnchor.clone();//new THREE.Vector3(100,20,0);
-          var offs = 100;
-          
-          var curRot = new THREE.Euler();
-          var targetRot = subject.rotation.clone();
-          
-          var translation = new TWEEN.Tween( subject.position )
-            .to( { x: pos.x, y: pos.y, z:pos.z }, duration )
-            //.yoyo(true)
-            //.easing( TWEEN.Easing.Cubic.Out)
-            //.repeat(Infinity);
-
-            var r = turns * Math.PI//*2 ;// + curRot.rotation.z;
-            var rotation = new TWEEN.Tween( subject.rotation )
-              .to( { z:r}, duration )
-              //.yoyo(true)
-              //.easing( TWEEN.Easing.Cubic.Out)
-              //.repeat(Infinity);
-              
-            animations.push( rotation );
-            animations.push( translation );
-            //this._animations.push( rotation );
-            //this._animations.push( translation );
-          }
-      }
-    });
-    </script>
-  
-  </polymer-element>
-  
-  
-  <polymer-element name="assembly-viewer">
-    <template>
-      <assembly-step></assembly-step>
-      <three-js id="threeJs">
-        <three-stats id="stats" show=false></three-stats>
-        <tween-js> </tween-js>
-        <three-js-webglRenderer id="webglRenderer"></three-js-webglRenderer>
-        <!--<three-js-css3dRenderer id="css3dRenderer"></three-js-css3dRenderer>-->
-        <three-js-combinedCamera id="cam1" pos="[100,50,200]" orientation="diagonal" up=[0,0,1]></three-js-combinedCamera>
-
-        <three-js-scene name="main" active>
-          <three-js-light pos="[50,30,200]"></three-js-light>
-          <three-js-light kind="spot" pos=[150,350,90] shadow></three-js-light>
-        </three-js-scene>
-        
-        <three-js-scene name="helpers" active>
-          <three-axis-helper> </three-axis-helper>
-        </three-js-scene>
-      
-        <three-js-viewport name="perspective" id="perspectiveView" cameraId="#cam1" left=0 bottom=0 width=0.5 height=1.0 postProcess>
-          <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10"> </three-js-orbitControls>
-          <!--<three-effect-composer ignore=["helpers"]>
-            <vignette-fx> </vignette-fx>
-          </three-effect-composer>-->
-        </three-js-viewport>
-      </three-js>
-    </template>
-    <script>Polymer("assembly-viewer", {
-      currentStep:0,
-    
-      addToScene:function(object,sceneName)
-      {
-        this.threeJs = this.$.threeJs;
-        this.threeJs.addToScene(object,sceneName);
-      }
-    });
-    </script>
-  </polymer-element>
   
   <assembly-viewer></assembly-viewer>
 
@@ -496,13 +60,83 @@ core-theme-aware.usco-light core-icon-button.selected {
         //load animation data
         //load models
         
-        
         /* assembly instructions are a tree, with depth first assembly ("smallest"/leaves first);
-        
         assembly steps would need to contribute to an existing hierarchy, existing outside of them
         */
         
+        assemblyTest = [
+           {
+            name:"wheel",
+            uri:"demo-data/wheel.stl",
+            position:[0,0,0],
+            rotation:[0,0,0],
+            scale:[1,1,1],
+            children:[
+              {
+                name:"axle",
+                uri:"demo-data/axle.stl",
+                position:[0,0,0],
+                rotation:[0,0,0],
+                scale:[1,1,1],
+              },
+              {
+                name:"mountBolt",
+                uri:"demo-data/mountBolt.stl",
+                position:[0,0,0],
+                rotation:[0,0,0],
+                scale:[1,1,1],
+              },
+            ],
+            connectors:[
+              {name:"foo1",
+               type:"connector",
+               position:[0,0,30],
+               rotation:[0,0,0],
+               scale:[1,1,1],
+               }
+            ]
+           }
+        ];
         
+        finalAssembly = [
+          {
+            name:"BottomCorner",
+            uri:"demo-data/BottomCorner.stl",
+            position:[0,0,0],
+            rotation:[0,0,0],
+            scale:[1,1,1],
+            children:[
+               {name:"motorBolt0",
+               type:"bolt",
+               uri:"demo-data/Bolt.stl",
+               connectedTo:"foo1"
+               },
+               {name:"motorBolt1",
+               type:"bolt",
+               uri:"demo-data/Bolt.stl",
+               connectedTo:"foo1"
+               },
+               {name:"motorBolt2",
+               type:"bolt",
+               uri:"demo-data/Bolt.stl",
+               connectedTo:"foo1"
+               },
+               {name:"motorBolt3",
+               type:"bolt",
+               uri:"demo-data/Bolt.stl",
+               connectedTo:"foo1"
+               }
+            ],
+            connectors:[
+              {name:"foo1",
+               type:"connector",
+               position:[0,0,30],
+               rotation:[0,0,0],
+               scale:[1,1,1],
+               }
+            ]
+           }
+        ];
         
         //Exploring data structures for build instructions
         //based on tracker.json datastructure from TTN ?

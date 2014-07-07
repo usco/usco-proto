@@ -1,0 +1,78 @@
+
+<link rel="import" href="../../components/usco-client-deps/usco-client-deps.html">
+<link rel="import" href="../../components/usco-asset-manager/usco-asset-manager.html">
+
+<link rel="import" href="../../components/usco-xhr-store/xhr-store.html">
+<link rel="import" href="../../components/usco-desktop-store/desktop-store.html">
+<link rel="import" href="../../components/usco-dropbox-store/dropbox-store.html">
+<link rel="import" href="../../components/usco-fs-store/fs-store.html">
+
+<link rel="import" href="../../components/usco-amf-parser/amf-parser.html">
+<link rel="import" href="../../components/usco-stl-parser/stl-parser.html">
+<link rel="import" href="../../components/usco-obj-parser/obj-parser.html">
+<link rel="import" href="../../components/usco-ply-parser/ply-parser.html">
+<link rel="import" href="../../components/usco-ctm-parser/ctm-parser.html">
+
+
+<polymer-element name="assembly-viewer" attributes="showAxis">
+    <template>
+      <assembly-step></assembly-step>
+      
+      <!-- ui elements-->
+      <div style="position:absolute;right:10px;top:300px;z-index:5"> <button>Next step</button> </div>
+      
+      <!--core elements: loaders, viewer etc-->
+      <usco-client-deps> </usco-client-deps>
+      <usco-asset-manager id="assetManager">
+        <xhr-store> </xhr-store>
+        <desktop-store> </desktop-store>
+        <dropbox-store> </dropbox-store>
+        <fs-store> </fs-store>
+
+        <amf-parser> </amf-parser>
+        <stl-parser> </stl-parser>
+        <obj-parser> </obj-parser>
+        <ply-parser> </ply-parser>
+        <ctm-parser> </ctm-parser>
+      </usco-asset-manager>
+      
+      <three-js id="threeJs">
+        <three-stats id="stats" show=false></three-stats>
+        <tween-js> </tween-js>
+        <three-js-webglRenderer id="webglRenderer"></three-js-webglRenderer>
+        <!--<three-js-css3dRenderer id="css3dRenderer"></three-js-css3dRenderer>-->
+        <three-js-combinedCamera id="cam1" pos="[100,50,200]" orientation="diagonal" up=[0,0,1]></three-js-combinedCamera>
+
+        <three-js-scene name="main" active>
+          <three-js-light pos="[50,30,200]"></three-js-light>
+          <three-js-light kind="spot" pos=[150,350,90] shadow></three-js-light>
+        </three-js-scene>
+        
+        <three-js-scene name="helpers" active>
+          <template if="{{showAxis}}">
+            <three-axis-helper> </three-axis-helper>
+          </template>
+        </three-js-scene>
+      
+        <three-js-viewport name="perspective" id="perspectiveView" cameraId="#cam1" left=0 bottom=0 width=0.5 height=1.0 postProcess>
+          <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10"> </three-js-orbitControls>
+          <!--<three-effect-composer ignore=["helpers"]>
+            <vignette-fx> </vignette-fx>
+          </three-effect-composer>-->
+        </three-js-viewport>
+      </three-js>
+    </template>
+    <script>Polymer("assembly-viewer", {
+      showAxis:false,
+      currentStep:0,
+      level:null,
+      
+    
+      addToScene:function(object,sceneName)
+      {
+        this.threeJs = this.$.threeJs;
+        this.threeJs.addToScene(object,sceneName);
+      }
+    });
+    </script>
+  </polymer-element>
