@@ -74,7 +74,7 @@ core-theme-aware.usco-light core-icon-button.selected {
 }
         
       </style>
-      <header><div>Step:{{number}}/{{total}}</div><div>{{builds}}</div></header>
+      <header><div>Step:{{current}}/{{total}}</div><div>{{builds}}</div></header>
       <div>
         <b>Instructions:</b> {{text}}
       </div>
@@ -118,8 +118,8 @@ core-theme-aware.usco-light core-icon-button.selected {
       </footer>
     </template>
     <script>Polymer("assembly-step", {
-      number:1,
-      total:9,
+      current:1,
+      total:1,
       text:"do some stuff",
       builds:"AssembledCubion#4",
       bom:[
@@ -402,6 +402,7 @@ core-theme-aware.usco-light core-icon-button.selected {
           
           var translation = new TWEEN.Tween( subject.position )
             .to( { x: pos.x, y: pos.y, z:pos.z }, duration )
+            .delay(1000);
             //.yoyo(true)
             //.easing( TWEEN.Easing.Cubic.Out)
             //.repeat(Infinity);
@@ -409,6 +410,7 @@ core-theme-aware.usco-light core-icon-button.selected {
             var r = turns * Math.PI//*2 ;// + curRot.rotation.z;
             var rotation = new TWEEN.Tween( subject.rotation )
               .to( { z:r}, duration )
+              .delay(1000);
               //.yoyo(true)
               //.easing( TWEEN.Easing.Cubic.Out)
               //.repeat(Infinity);

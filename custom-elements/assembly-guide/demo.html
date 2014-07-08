@@ -49,8 +49,29 @@
       window.addEventListener('polymer-ready', function() {
         console.log("web components ready");
 
-	    var threeViewer = document.querySelector('assembly-viewer');
-     
+        //Exploring data structures for build instructions
+        //based on tracker.json datastructure from TTN ?
+        instructions = {"instructions":[
+            {
+               "step":1,
+               "text":"do some stuff",
+               "parts": [
+               
+               ],
+               "logic":"screw #0001 into #0004 at [0,2,3]",
+               "images":[
+                  "thumbnails/..."
+               ]
+            },
+            {
+               "step":2,
+               "text":"",
+               "images":[
+                  "thumbnails/..."
+               ]
+            }
+         ]};
+
         //TODO: branching and conditionals ?
         //TODO: what is the best way to define what goes where ? 
         /* ie : bolt M3 L 10 into HOle 1 ?
@@ -64,37 +85,68 @@
         assembly steps would need to contribute to an existing hierarchy, existing outside of them
         */
         
+        
         assemblyTest = [
            {
-            name:"wheel",
-            uri:"demo-data/wheel.stl",
+            name:"3DR-TIKI",
             position:[0,0,0],
             rotation:[0,0,0],
             scale:[1,1,1],
             children:[
-              {
-                name:"axle",
-                uri:"demo-data/axle.stl",
-                position:[0,0,0],
-                rotation:[0,0,0],
-                scale:[1,1,1],
-              },
-              {
-                name:"mountBolt",
-                uri:"demo-data/mountBolt.stl",
-                position:[0,0,0],
-                rotation:[0,0,0],
-                scale:[1,1,1],
-              },
-            ],
-            connectors:[
-              {name:"foo1",
-               type:"connector",
-               position:[0,0,30],
-               rotation:[0,0,0],
-               scale:[1,1,1],
-               }
-            ]
+             {
+              name:"topCorner",
+              uri:"demo-data/TopCornerOK.stl",
+              position:[0,0,0],
+              rotation:[0,0,0],
+              scale:[1,1,1],
+              children:[
+                {
+                  name:"mountNut",
+                  uri:"demo-data/M3Nut.stl",
+                  position:[54,-9,5],
+                  rotation:[0,0,0],
+                  scale:[1,1,1],
+                },
+                {
+                  name:"mountBolt",
+                  uri:"demo-data/M3Bolt_L6.stl",
+                  position:[54,9,5],
+                  rotation:[0,0,0],
+                  scale:[1,1,1],
+                },
+              ],
+              connectors:[
+                {name:"foo1",
+                 type:"connector",
+                 position:[0,0,30],
+                 rotation:[0,0,0],
+                 scale:[1,1,1],
+                 }
+              ]
+             },
+             { name:"bottomCorner",
+              uri:"demo-data/BottomCorner.stl",
+              position:[0,0,0],
+              rotation:[0,0,0],
+              scale:[1,1,1],
+              children:[
+                {
+                  name:"mountNut",
+                  uri:"demo-data/M3Nut.stl",
+                  position:[54,-9,5],
+                  rotation:[0,0,0],
+                  scale:[1,1,1],
+                },
+                {
+                  name:"mountBolt",
+                  uri:"demo-data/M3Bolt_L6.stl",
+                  position:[54,9,5],
+                  rotation:[0,0,0],
+                  scale:[1,1,1],
+                },
+              ],
+             }
+           ]
            }
         ];
         
@@ -137,29 +189,12 @@
             ]
            }
         ];
+
+	      var assemblyViewer = document.querySelector('assembly-viewer');
+	      assemblyViewer.instructions = instructions;
+	      assemblyViewer.assembly = assemblyTest;
+     
         
-        //Exploring data structures for build instructions
-        //based on tracker.json datastructure from TTN ?
-        instructions = {"instructions":[
-            {
-               "step":1,
-               "text":"do some stuff",
-               "parts": [
-               
-               ],
-               "logic":"screw #0001 into #0004 at [0,2,3]",
-               "images":[
-                  "thumbnails/..."
-               ]
-            },
-            {
-               "step":2,
-               "text":"",
-               "images":[
-                  "thumbnails/..."
-               ]
-            }
-         ]};
     });
   </script>  
 </body>

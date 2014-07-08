@@ -16,11 +16,15 @@
 
 <polymer-element name="assembly-viewer" attributes="showAxis">
     <template>
-      <assembly-step></assembly-step>
+      <assembly-step id="assemblyStep"></assembly-step>
       
-      <!-- ui elements-->
-      <div style="position:absolute;right:10px;top:300px;z-index:5"> <button>Next step</button> </div>
-      
+      <!--ui elements-->
+      <template if="{{currentStep < totalSteps}}">
+        <div style="position:absolute;right:10px;top:300px;z-index:5"> <button on-tap="{{nextStep}}">Next step</button> </div>
+      </template>
+      <template if="{{currentStep >1 }}">
+      <div style="position:absolute;right:100px;top:300px;z-index:5"> <button on-tap="{{prevStep}}">Prev step</button> </div>
+      </template>
       <!--core elements: loaders, viewer etc-->
       <usco-client-deps> </usco-client-deps>
       <usco-asset-manager id="assetManager">
@@ -44,9 +48,14 @@
         <three-js-combinedCamera id="cam1" pos="[100,50,200]" orientation="diagonal" up=[0,0,1]></three-js-combinedCamera>
 
         <three-js-scene name="main" active>
-          <three-js-light pos="[50,30,200]"></three-js-light>
-          <three-js-light kind="spot" pos=[150,350,90] shadow></three-js-light>
-          <three-js-light pos="[-150,-130,-200]"></three-js-light>
+          <three-js-light pos="[250,230,200]"></three-js-light>
+          <three-js-light kind="spot" pos=[150,350,290] shadow></three-js-light>
+          <three-js-light pos="[-250,-230,-200]"></three-js-light>
+          
+          <!--<three-js-light kind="dir" color="0xffEEEE" intensity="0.2" pos=[0,50,300] > </three-js-light> 
+          <three-js-light kind="ambient" color="0x161515" intensity="0.8"> </three-js-light>
+          <three-js-light kind="hemi" color="0xffffff" secColor="0xffffff" intensity="0.5" pos=[0,1200,5000]> </three-js-light>-->
+          
         </three-js-scene>
         
         <three-js-scene name="helpers" active>
@@ -64,15 +73,188 @@
       </three-js>
     </template>
     <script>Polymer("assembly-viewer", {
+      //visual settings
       showAxis:false,
+      
+      instructions:null,
       currentStep:0,
+      totalSteps:0,
       level:null,
       
-    
+      assembly: null,
+      
+      dataPerSteps: null,
+      
+      enteredView:function()
+      {
+        this.threeJs      = this.$.threeJs;
+        this.assetManager = this.$.assetManager;
+        this.assemblyStep = this.$.assemblyStep;
+        
+        this.dataPerSteps = {};
+      },
+      //attribute change callbacks
+      instructionsChanged:function()
+      {
+        console.log("instructions changed");
+      },
+      assemblyChanged:function(){
+        console.log("assembly changed");
+        var nodes = [];
+        this.recurse(this.assembly[0], nodes);
+        
+        console.log("assemblable nodes", nodes);
+        this._hierarchyNodes = nodes ;
+
+        //this gives us the actual logical build steps: depth first, because children
+        //need to be completed/assembled before their parents
+        
+        //set various attributes and flags related to current step
+        var currentStepData = nodes[0];
+        this.currentStepData = currentStepData;
+        this.currentStep = 1;
+        this.totalSteps = nodes.length;
+      },
+      currentStepChanged:function(oldStep,newStep)
+      {
+        var nodes = this._hierarchyNodes;
+        var currentStepData = nodes[this.currentStep-1];
+        this.currentStepData = currentStepData;          
+        //load data for current step
+        //TODO: add this to resource manager
+        var basePath = window.location.href.split("/")
+        basePath.pop()
+        basePath = basePath.join("/");
+        
+        console.log(currentStepData);
+        //load main item 3d data + all its children
+        //FIXME: a resulting shape should not even have 3d data of its own
+        
+        var resultShape = new THREE.Object3D();
+
+
+        for(var i=0;i<currentStepData.children.length;i++)
+        {
+          var self = this;
+          function wrapper(i)
+          {
+            var childBla = currentStepData.children[i];
+            var uri = childBla.uri;
+            var currentUrl = basePath;
+            //TODO : detect lack of url prefix
+            function callback(loadedShape)
+            {
+              resultShape.add( loadedShape );
+              loadedShape.position.x = childBla.position[0];
+              loadedShape.position.y = childBla.position[1];
+              loadedShape.position.z = childBla.position[2];
+              
+              loadedShape.material.color.setHex(0xff8800);
+            }
+            self.loadResource( currentUrl+"/"+uri, callback );
+          }
+          wrapper(i);
+        }
+        
+        this.addToScene( resultShape );
+        
+        var uri = currentStepData.uri;
+        var currentUrl = basePath;
+        //TODO : detect lack of url prefix
+        this.loadResource( currentUrl+"/"+uri );
+        
+        this.removeFromScene( this.dataPerSteps[oldStep] );
+        delete this.dataPerSteps[oldStep];    
+                    
+        this.assemblyStep.current = this.currentStep;
+        console.log("data", this.dataPerSteps);
+      },
+      totalStepsChanged:function()
+      {
+        this.assemblyStep.current = this.currentStep;
+        this.assemblyStep.total = this.totalSteps;
+      },
+      //helpers
+      recurse:function(node, nodes)
+      {
+        var validNode = true;
+        if(node.children)
+        {
+          
+          
+          for(var i=0;i<node.children.length;i++)
+          {
+            var child = node.children[i];
+            if(!child.children)
+            {
+              //console.log("blahh", node);
+            }
+            if(child.children)
+            {
+              validNode=false;
+              this.recurse( child, nodes );
+            }
+          }
+          
+        }
+        if(validNode)
+          {
+            nodes.push( node );
+          }
+        //nodes.push( node );
+      },
+      //public API
       addToScene:function(object,sceneName)
       {
-        this.threeJs = this.$.threeJs;
         this.threeJs.addToScene(object,sceneName);
+      },
+      removeFromScene:function(object, sceneName)
+      {
+        this.threeJs.removeFromScene(object,sceneName);
+      },
+      loadResource:function(uriOrData, callback)
+      {
+        var self = this;
+        var resourceDeferred = this.assetManager.loadResource(uriOrData);
+        resourceDeferred.promise.then(function(resource){
+          //geometry
+          var geometry = resource.data;
+          geometry.computeBoundingBox();
+          //geometry.computeCentroids();
+          geometry.computeBoundingSphere();
+
+          //needed at least for .ply files
+          geometry.computeVertexNormals();
+          geometry.computeFaceNormals();
+
+          //nice color: 0x00a9ff
+          var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:false,color: 0x0088ff} );
+          //new THREE.MeshPhongMaterial( { color: 0x17a9f5, specular: 0xffffff, shininess: 10, shading: THREE.FlatShading} );
+          var shape = new THREE.Mesh(geometry, material);
+          
+          //FIXME: hack
+          self.dataPerSteps[self.currentStep] = shape;
+          self.addToScene( shape );
+          //console.log("shape", self.currentStep, uriOrData);
+          if(callback) callback( shape );
+          
+        }).fail(function(error){console.log("failed to load resource", error);})
+      },
+      loadInstructions:function(uriOrData)
+      {
+      
+      },
+      nextStep:function(){
+        if(this.currentStep<this.totalSteps)
+        {
+          this.currentStep += 1;
+        }
+      },
+      prevStep:function(){
+       if(this.currentStep-1 >= 0)
+       {
+        this.currentStep -= 1;
+       }
       }
     });
     </script>
