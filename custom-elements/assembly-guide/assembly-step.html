@@ -287,7 +287,7 @@ core-theme-aware.usco-light core-icon-button.selected {
           var material = new THREE.MeshLambertMaterial( {opacity:1,transparent:false,color: 0x0088ff} ); 
           var cube = new THREE.Mesh(geometry, material);
           cube.name = "TargetCube";
-          
+          cube.visible = false;
           
           /*var geometry = new THREE.BoxGeometry( connectorSize, connectorSize, connectorSize/2 ); 
         	geometry.computeBoundingSphere();
@@ -342,7 +342,39 @@ core-theme-aware.usco-light core-icon-button.selected {
 	        return cube;
         }
         
+        
+        THREE.HelixCurve = THREE.Curve.create(
 
+          function() {
+
+          },
+
+          function(t) {
+              var a = 3; // radius
+              var b = 20; //height
+              var t2 = 2 * Math.PI * t * b / 10;
+              var tx = Math.cos(t2) * a,
+                  ty = Math.sin(t2) * a,
+                  tz = b * t;
+
+              return new THREE.Vector3(tx, ty, tz);
+
+          }
+
+          );
+
+
+        var  extrudeBend = new THREE.HelixCurve();
+
+        
+        var points = extrudeBend.getSpacedPoints(500);
+        var pointsG = new THREE.Geometry();
+        pointsG.vertices = points;
+        console.log("points", points);
+		    var line = new THREE.Line( pointsG, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 2 } ) );
+		    line.position.z +=30
+        
+        threeViewer.addToScene( line );
         
         var target2 = cube = makeTargetCube();
         threeViewer.addToScene( target2 );

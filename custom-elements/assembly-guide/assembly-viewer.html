@@ -150,6 +150,11 @@
               loadedShape.position.z = childBla.position[2];
               
               loadedShape.material.color.setHex(0xff8800);
+              
+              //add current virtual shape & children to data per step
+              self.dataPerSteps[self.currentStep] = resultShape;
+              //self.addToScene( loadedShape );
+              
             }
             self.loadResource( currentUrl+"/"+uri, callback );
           }
@@ -161,13 +166,40 @@
         var uri = currentStepData.uri;
         var currentUrl = basePath;
         //TODO : detect lack of url prefix
-        this.loadResource( currentUrl+"/"+uri );
+        this.loadResource( currentUrl+"/"+uri, function(loadedShape){ resultShape.add(loadedShape);} );
         
         this.removeFromScene( this.dataPerSteps[oldStep] );
         delete this.dataPerSteps[oldStep];    
                     
         this.assemblyStep.current = this.currentStep;
-        console.log("data", this.dataPerSteps);
+        
+        //load connectors
+        if(!(currentStepData.connectors)) return;
+        for(var i=0;i<currentStepData.connectors.length;i++)
+        {
+          var connectorData = currentStepData.connectors[i];
+          //console.log(i, connectorData, currentStepData.connectors[0] );
+          var up = connectorData.up || [0,0,1];
+          up = new THREE.Vector3().fromArray( up );
+          var connector = new Connector({up:up});
+          connector.position.fromArray( connectorData.position );
+          
+          //console.log("pos", connector.position, "up", connector.up);
+          
+          //this.addToScene( connector.generateRenderables({color:0x000001,baseDia:3}) );
+          resultShape.add( connector.generateRenderables({color:0x000001,baseDia:3}) );
+          //FIXME: should these arrows be the indicators for a verb
+          //should they be what the manual's creator defines?
+          
+          
+          var end   = new THREE.Vector3().fromArray( connectorData.position );
+          var start = end.clone().add( up.clone().multiplyScalar(25) );
+          var arrow = new DistanceHelper({start: start, end:end});
+          arrow.toggleText(false);
+          resultShape.add( arrow );
+          //this.addToScene( arrow );
+        }
+        
       },
       totalStepsChanged:function()
       {
@@ -233,11 +265,6 @@
           //new THREE.MeshLambertMaterial( {opacity:1,transparent:false,color: 0x0088ff} );
           //
           var shape = new THREE.Mesh(geometry, material);
-          
-          //FIXME: hack
-          self.dataPerSteps[self.currentStep] = shape;
-          self.addToScene( shape );
-          //console.log("shape", self.currentStep, uriOrData);
           if(callback) callback( shape );
           
         }).fail(function(error){console.log("failed to load resource", error);})

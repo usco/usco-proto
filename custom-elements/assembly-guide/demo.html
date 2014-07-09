@@ -123,7 +123,7 @@
             children:[
              {
               name:"topCorner",
-              uri:"demo-data/TopCornerOK3.stl",
+              uri:"demo-data/TopCornerOK.stl",
               position:[0,0,0],
               rotation:[0,0,0],
               scale:[1,1,1],
@@ -144,12 +144,85 @@
                 },
               ],
               connectors:[
-                {name:"foo1",
+                {name:"hallEndstopMount1",
                  type:"connector",
-                 position:[0,0,30],
+                 position:[54,-9,5],
                  rotation:[0,0,0],
                  scale:[1,1,1],
+                 up:[0,0,1]
+                 },
+                 {name:"hallEndstopMount2",
+                 type:"connector",
+                 position:[54,9,5],
+                 rotation:[0,0,0],
+                 scale:[1,1,1],
+                 up:[0,0,1]
+                 },
+                 {name:"tSlotMount1",
+                   type:"connector",
+                   position:[70,-30,10],
+                   rotation:[0,0,0],
+                   scale:[1,1,1],
+                   up:[0.5,1,0]
+                 },
+                 {name:"tSlotMount2",
+                   type:"connector",
+                   position:[70,30,10],
+                   rotation:[0,0,0],
+                   scale:[1,1,1],
+                   up:[0.5,-1,0]
                  }
+                 ,
+                 {name:"tSlotMount3",
+                   type:"connector",
+                   position:[45,-20,10],
+                   rotation:[0,0,0],
+                   scale:[1,1,1],
+                   up:[0.5,1,0]
+                 },
+                 {name:"tSlotMount4",
+                   type:"connector",
+                   position:[45,20,10],
+                   rotation:[0,0,0],
+                   scale:[1,1,1],
+                   up:[0.5,-1,0]
+                 },
+                 {name:"verticalTSlotMount",
+                   type:"connector",
+                   position:[0,0,10],
+                   rotation:[0,0,0],
+                   scale:[1,1,1],
+                   up:[-1,0,0]
+                 },
+                 {name:"sideTSlotSlideStartR",
+                   type:"connector",
+                   position:[72,45,10],
+                   rotation:[0,0,0],
+                   scale:[1,1,1],
+                   up:[1,0.57,0]
+                 },
+                 {name:"sideTSlotSlideEndR",
+                   type:"connector",
+                   position:[30,24,10],
+                   rotation:[0,0,0],
+                   scale:[1,1,1],
+                   up:[1,0.57,0]
+                 },
+                 {name:"sideTSlotSlideStartL",
+                   type:"connector",
+                   position:[72,-45,10],
+                   rotation:[0,0,0],
+                   scale:[1,1,1],
+                   up:[1,-0.57,0]
+                 },
+                 {name:"sideTSlotSlideEndL",
+                   type:"connector",
+                   position:[30,-24,10],
+                   rotation:[0,0,0],
+                   scale:[1,1,1],
+                   up:[1,-0.57,0]
+                 }
+                 
               ]
              },
              { name:"bottomCorner",
