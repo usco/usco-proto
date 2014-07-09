@@ -1436,12 +1436,14 @@ Connector.prototype.generateRenderables=function(options)
   var options = options || {};
   var length = options.length || 10;
   var color  = options.color || 0xff0000;
-  console.log("option", options);
+  var baseDia = options.baseDia || 10;
+  //var drawText = options.drawText || true;
 
   var isOutwards = false;
-  var from = this.up.clone().multiplyScalar(length);
+  //var from = this.up.clone().multiplyScalar(length);
   //this.position.add  
-  var to = this.position.clone().add( this.up.clone().multiplyScalar(length) );
+  var offsetTo = this.up.clone().multiplyScalar(length);
+  var to = this.position.clone().add( offsetTo );
 
   var lineGeometry = new THREE.Geometry();
   var vertArray = lineGeometry.vertices;
@@ -1455,19 +1457,20 @@ Connector.prototype.generateRenderables=function(options)
   var arrowHeadMaterial = new THREE.MeshBasicMaterial({color:color});
   var arrowHead = new THREE.Mesh(new THREE.CylinderGeometry(0, 0.5, 3, 5, 5, false), arrowHeadMaterial);
   arrowHead.position = to;
-  arrowHead.lookAt( to.clone().multiplyScalar(10) );
+  var arrowTgt =  this.position.clone().add( this.up.clone().multiplyScalar(length*10) );
+  arrowHead.lookAt( arrowTgt );
   arrowHead.rotateX(Math.PI/2);
   line.add( arrowHead );
   
-  var baseRadius  = 5,
+  var baseRadius  = baseDia/2,
     segments = 64,
-    material = new THREE.LineBasicMaterial( { color: color,linewidth:2} ),
+    material = new THREE.LineBasicMaterial( { color: color,linewidth:1} ),
     geometry = new THREE.CircleGeometry( baseRadius, segments );
 
   //geometry.vertices.shift();
   var baseIndicator = new THREE.Line( geometry, material )
   baseIndicator.position.copy( this.position );
-  baseIndicator.lookAt( to.clone().multiplyScalar(10) );
+  baseIndicator.lookAt( to ); //.clone().multiplyScalar(100) );
   line.add( baseIndicator) ;
   
   line.material.depthTest=false;
