@@ -51,3 +51,10 @@ DistanceHelper = function(options)
 
 DistanceHelper.prototype = Object.create( BaseHelper.prototype );
 DistanceHelper.prototype.constructor = DistanceHelper;
+
+DistanceHelper.prototype.toggleText = function(toggle)
+{
+  this.label.visible = toggle;
+  //Fixme:
+  this.label.textSprite.visible = toggle;
+}
