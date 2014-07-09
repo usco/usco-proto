@@ -1,0 +1,9 @@
+function SlideConnector()
+{
+
+}
+
+function PushConnector()
+{
+
+}

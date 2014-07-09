@@ -81,10 +81,38 @@
         //load animation data
         //load models
         
+        
+        
         /* assembly instructions are a tree, with depth first assembly ("smallest"/leaves first);
         assembly steps would need to contribute to an existing hierarchy, existing outside of them
         */
+        /*3DR Tiki example (top)
+        <TopCorner>
+          Bom: 
+            - <TopCorner printedPart> : x1
+            - <M3 nuts>     : x2
+            - <M3L10 bolts> : x2
+            - <hallEndstop> : x1
+          
+        - push <M3 nuts> (x2) into holes of <TopCorner.stl> for endstop mounts -> <TopCorner>
+        - place <hallEndstop> (x1) into correct position on <TopCorner> -> <TopCorner>
+        - screw <M3L10 bolts> (x2) into <M3 nuts>/holes to mount <hallEndstop> into <TopCorner> -> <TopCorner>
         
+        <M4L10 bolt + washer>
+        - put <M4 Tight washer> onto <M4L10 bolt> (x4) -> <M4L10 bolt + washer>
+        - screw <M4L10 bolt + washer> (x4) into <M4 holes> on <TopCorner>
+        - screw <M4 tSlot> onto <M4L10 bolt + washer>
+        
+        <TopStructure>
+          Bom:
+            - <TopCorner>       : x3
+            - <20x20x200 TSlot> : x3 
+          
+          - slide <20x20x200 TSlot> x3 onto <TopCorner> x3 at first TNut position
+          - slide together
+          - tighten all <M4L10 bolt> s
+        
+        */
         
         assemblyTest = [
            {
@@ -95,7 +123,7 @@
             children:[
              {
               name:"topCorner",
-              uri:"demo-data/TopCornerOK.stl",
+              uri:"demo-data/TopCornerOK3.stl",
               position:[0,0,0],
               rotation:[0,0,0],
               scale:[1,1,1],
