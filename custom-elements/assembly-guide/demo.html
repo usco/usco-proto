@@ -12,6 +12,7 @@
 <link rel="import" href="../../components/core-tooltip/core-tooltip.html">
 <link rel="import" href="../../components/core-item/core-item.html">
 <link rel="import" href="../../components/core-transition/core-transition.html">
+<link rel="import" href="../../components/core-theme-aware/core-theme-aware.html">
 
 <link rel="import" href="assembly-viewer.html">
 <link rel="import" href="assembly-step.html">
@@ -37,9 +38,24 @@
         left: 0;
         z-index:1;
       }
+      
+      
+       core-theme-aware.usco {
+            background: salmon;
+          }
+          
+          core-theme-aware.usco-dark {
+            background: darkslategray;
+            color:white;
+          }
+          
+          core-theme-aware.usco-light {
+            background: white;
+            color:black;
+          }
       </style>
   </head>
-<body>
+<body theme="usco-light">
   <!--Experimental-->
   
   
@@ -114,6 +130,30 @@
         
         */
         
+        bomTest = [
+          {
+            id:0,
+            title:"topCorner",
+            description:"top corner, printed",
+            uri:"demo-data/TopCornerOK.stl",
+          },
+          {id:1,
+          title:"M3 Nut",
+          description:"sdfsdfd",
+          uri:"demo-data/M3Nut.stl",
+          },
+          {id:2,
+          title:"M3 Bolt, 6 mm long",
+          description:"sdfsdfd",
+          uri:"demo-data/M3Bolt_L6.stl",
+          },
+          {id:3,
+          title:"M3 Bolt, 10 mm long",
+          description:"sdfsdfd",
+          uri:"demo-data/M3Bolt_L10.stl",
+          }
+        ];
+        
         assemblyTest = [
            {
             name:"3DR-TIKI",
@@ -124,24 +164,81 @@
              {
               name:"topCorner",
               uri:"demo-data/TopCornerOK.stl",
+              partNumber:2,
               position:[0,0,0],
               rotation:[0,0,0],
               scale:[1,1,1],
               children:[
                 {
-                  name:"mountNut",
+                  name:"mountNutL",
                   uri:"demo-data/M3Nut.stl",
-                  position:[54,-9,5],
+                  partNumber:1,
+                  position:[54,-8.5,3.6],
                   rotation:[0,0,0],
                   scale:[1,1,1],
+                  up:[0,0,1]
                 },
                 {
-                  name:"mountBolt",
-                  uri:"demo-data/M3Bolt_L6.stl",
-                  position:[54,9,5],
+                  name:"mountNutR",
+                  uri:"demo-data/M3Nut.stl",
+                  partNumber:1,
+                  position:[54,8.5,3.6],
                   rotation:[0,0,0],
                   scale:[1,1,1],
+                  up:[0,0,1]
                 },
+                {
+                  name:"hallEndstopMountBoltR",
+                  uri:"demo-data/M3Bolt_L6.stl",
+                  partNumber:3,
+                  position:[54,8.5,5],
+                  rotation:[0,0,0],
+                  scale:[1,1,1],
+                  up:[0,0,-1]
+                },
+                {
+                  name:"hallEndstopMountBoltL",
+                  uri:"demo-data/M3Bolt_L6.stl",
+                  partNumber:3,
+                  position:[54,-8.5,5],
+                  rotation:[0,0,0],
+                  scale:[1,1,1],
+                  up:[0,0,-1]
+                },
+                {
+                  name:"sideTSlotMountBoltL1",
+                  uri:"demo-data/M3Bolt_L10.stl",
+                  partNumber:4,
+                  position:[70,-30,10],
+                  rotation:[0,0,0],
+                  scale:[1,1,1],
+                  up:[0.5,1,0]
+                },
+                {
+                  name:"sideTSlotMountBoltR1",
+                  uri:"demo-data/M3Bolt_L10.stl",
+                  partNumber:4,
+                  position:[70,30,10],
+                  rotation:[0,0,0],
+                  scale:[1,1,1],
+                  up:[0.5,-1,0]
+                },
+                {name:"sideTSlotMountBoltL2",
+                  uri:"demo-data/M3Bolt_L10.stl",
+                  partNumber:4,
+                   position:[45,-20,10],
+                   rotation:[0,0,0],
+                   scale:[1,1,1],
+                   up:[0.5,1,0]
+                 },
+                 {name:"sideTSlotMountBoltL2",
+                  uri:"demo-data/M3Bolt_L10.stl",
+                  partNumber:4,
+                   position:[45,20,10],
+                   rotation:[0,0,0],
+                   scale:[1,1,1],
+                   up:[0.5,-1,0]
+                 },
               ],
               connectors:[
                 {name:"hallEndstopMount1",

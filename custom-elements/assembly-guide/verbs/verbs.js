@@ -1,3 +1,5 @@
+//should we go class based or functional (aka see tween.js)
+
 
 //base class for various assembly methods      
 function AssemblyMethod(name, target)
@@ -14,8 +16,22 @@ AssemblyMethod.prototype.start = function()
      this._animations[i].start();
   }
 }
+
 //Action verbs for assembly methods
-function PlaceItem()
+function PlaceItem(name, currentItem, targetPosition, orientation, distance, duration)
+{
+
+}
+
+function PushItem()//same as place ?
+{
+}
+
+function SlideItem()//again, same as place and push ?
+{
+
+}
+
 
 function ScrewItem(name, currentItem, targetItem, turns, distance ,duration)
 {

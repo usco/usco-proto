@@ -3,8 +3,9 @@
 <script src="../usco-shapes/lib/usco-shapes.js"></script>
 
 
-<polymer-element name="assembly-step">
-    <template>
+<polymer-element name="assembly-step" attributes="bom showIndicators" on-mouseleave="{{onPointerLeave}}">
+    <template >
+      <core-theme-aware> 
       <style>
         :host{
           display:block;
@@ -12,9 +13,9 @@
           right:10px;
           z-index:10;
         }
-        header{
+        /*header{
           font-weight:bold;
-        }
+        }*/
         
         core-icon{
   width:18px !important;
@@ -72,6 +73,25 @@ core-theme-aware.usco-light core-icon-button.selected {
   background-color: rgba(71, 167, 255, 1);
   box-shadow: rgba(0, 0, 0, 0.0470588) 0px 1px 0px 0px inset, rgba(0, 0, 0, 0.117647) 0px 0px 0px 1px;
 }
+
+
+.usco-light>header{
+  color:red;
+  font-weight:bold;
+}
+
+.usco-light .aPart{
+  color:rgb(0, 0, 0);
+}
+
+.usco-light .aPart:hover{
+  color:rgb(0, 153, 221);
+}
+
+.usco-light .highlighted{
+  color:rgb(0, 153, 221);
+}
+
         
       </style>
       <header><div>Step:{{current}}/{{total}}</div><div>{{builds}}</div></header>
@@ -82,7 +102,7 @@ core-theme-aware.usco-light core-icon-button.selected {
         Parts:
         <table>
           <template repeat="{{part,partIndex in bom}}">
-            <tr>
+            <tr on-mouseover="{{onHover}}" class="aPart {{ {'highlighted':part.highlighted} | tokenList  }}">
               <td>&nbsp  {{partIndex}}:</td><td> {{part.description}} :</td><td> {{part.amount}}x</td>
             </tr>
           </template>
@@ -110,16 +130,28 @@ core-theme-aware.usco-light core-icon-button.selected {
         <core-tooltip label="repeat" position="bottom">
           <input type="checkbox" checked="{{isRepeating}}"> </input>
         </core-tooltip>
+        <core-tooltip label="toggle indicators" position="bottom">
+          <input type="checkbox" checked="{{showIndicators}}"> </input>
+        </core-tooltip>
         <core-tooltip label="next step" position="bottom">
           <core-icon-button icon="fa-dirs:chevron-right" on-tap="{{reqNew}}"></core-icon-button>
         </core-tooltip>
         
         
       </footer>
+      </core-theme-aware> 
     </template>
     <script>Polymer("assembly-step", {
       current:1,
       total:1,
+      showIndicators:true,
+      autoPlay:true,
+      isPlaying:false,
+      isForward:true,
+      isRepeating:false,
+      highlightedItem:null,
+      
+      
       text:"do some stuff",
       builds:"AssembledCubion#4",
       bom:[
@@ -146,10 +178,7 @@ core-theme-aware.usco-light core-icon-button.selected {
       actions:[
         "screw part #1 into part #2",
       ],
-      autoPlay:true,
-      isPlaying:false,
-      isForward:true,
-      isRepeating:false,
+      
       isPlayingChanged:function(oldIsPlaying,isPlaying)
       { 
         if(oldIsPlaying)
@@ -188,6 +217,34 @@ core-theme-aware.usco-light core-icon-button.selected {
           } 
         }
       },
+      bomChanged:function(){
+        console.log("BOOm", this.bom);
+      },
+      highlightedItemChanged:function(oldItem, newItem)
+      {
+        console.log(oldItem, newItem);
+        if(oldItem)
+        {
+          for(var i=0;i<oldItem.instances.length;i++)
+          {
+            var oldHighlight = oldItem.instances[i];
+            if(oldHighlight._oldColor)
+            {
+              oldHighlight.material.color = oldHighlight._oldColor;
+            }
+          }
+        }
+        if(newItem)
+        {
+          for(var i=0;i<newItem.instances.length;i++)
+          {
+            var newHighLight = newItem.instances[i];
+            newHighLight._oldColor = newHighLight.material.color;
+            newHighLight.material.color = new THREE.Color(0xf03333);
+          }
+        }
+      },
+      //api
       toggleAnimation:function()
       {
         this.isPlaying =! this.isPlaying;
@@ -216,6 +273,16 @@ core-theme-aware.usco-light core-icon-button.selected {
             self.isPlaying = true;
           }
         });
+      },
+      //helpers
+      onHover:function(event,detail,sender){
+        //console.log("hovering",event,detail,sender);  
+        var model = sender.templateInstance.model.part;
+        console.log(" model", model);
+        this.highlightedItem = model;
+      },
+      onPointerLeave:function(event, detail, sender){
+        this.highlightedItem = null;
       },
       reverse:function()//this turns ins into outs , froms into tos etc
       {
@@ -351,8 +418,8 @@ core-theme-aware.usco-light core-icon-button.selected {
 
           function(t) {
               var a = 3; // radius
-              var b = 20; //height
-              var t2 = 2 * Math.PI * t * b / 10;
+              var b = 5; //height
+              var t2 = 2 * Math.PI * t * b / 4;
               var tx = Math.cos(t2) * a,
                   ty = Math.sin(t2) * a,
                   tz = b * t;
@@ -370,7 +437,6 @@ core-theme-aware.usco-light core-icon-button.selected {
         var points = extrudeBend.getSpacedPoints(500);
         var pointsG = new THREE.Geometry();
         pointsG.vertices = points;
-        console.log("points", points);
 		    var line = new THREE.Line( pointsG, new THREE.LineBasicMaterial( { color: 0xFF0000, linewidth: 2 } ) );
 		    line.position.z +=30
         
