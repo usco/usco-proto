@@ -1,4 +1,6 @@
 
+<link rel="import" href="../../components/polymer-localstorage/polymer-localstorage.html">
+
 <link rel="import" href="../../components/usco-client-deps/usco-client-deps.html">
 <link rel="import" href="../../components/usco-asset-manager/usco-asset-manager.html">
 
@@ -13,19 +15,62 @@
 <link rel="import" href="../../components/usco-ply-parser/ply-parser.html">
 <link rel="import" href="../../components/usco-ctm-parser/ctm-parser.html">
 
+<link rel="import" href="../../components/core-theme-aware/core-theme-aware.html">
+
 
 <polymer-element name="assembly-viewer" attributes="showAxis showIndicators">
     <template>
-      <assembly-step id="assemblyStep" showIndicators="{{showIndicators}}" ></assembly-step>
-      
-      <!--ui elements-->
-      <template if="{{currentStep < totalSteps}}">
-        <div style="position:absolute;right:10px;top:300px;z-index:5"> <button on-tap="{{nextStep}}">Next step</button> </div>
+      <style>
+        paper-progress{
+        width: 50%;
+height: 4px;
+left: 25%;
+top: 50%;
+position: absolute;
+z-index: 5;}
+      </style>
+      <template if="{{stepLoadProgress != 100}}">
+        <paper-progress id="loadProgress" value="0" max="100"></paper-progress>
       </template>
-      <template if="{{currentStep >1 }}">
-      <div style="position:absolute;right:100px;top:300px;z-index:5"> <button on-tap="{{prevStep}}">Prev step</button> </div>
-      </template>
-      <!--core elements: loaders, viewer etc-->
+        <assembly-step id="assemblyStep" showIndicators="{{showIndicators}}" step="{{currentStep}}"></assembly-step>
+        
+        
+        <!--ui elements-->
+        <template if="{{currentStep < totalSteps}}">
+          <div style="position:absolute;right:10px;top:300px;z-index:5"> <button on-tap="{{nextStep}}">Next step</button> </div>
+        </template>
+        <template if="{{currentStep >1 }}">
+        <div style="position:absolute;right:100px;top:300px;z-index:5"> <button on-tap="{{prevStep}}">Prev step</button> </div>
+        </template>
+        
+        <three-js id="threeJs" selectedObjects="{{selectedMeshes}}" highlightedObject="{{highlightedMesh}}">
+          <three-stats id="stats" show=false></three-stats>
+          <tween-js> </tween-js>
+          <three-js-webglRenderer id="webglRenderer"></three-js-webglRenderer>
+          <!--<three-js-css3dRenderer id="css3dRenderer"></three-js-css3dRenderer>-->
+          <three-js-combinedCamera id="cam1" pos="[100,50,200]" orientation="diagonal" up=[0,0,1]></three-js-combinedCamera>
+
+          <three-js-scene name="main" active pickable>
+            <three-js-light pos="[250,230,200]"></three-js-light>
+            <three-js-light kind="spot" pos=[150,350,290] shadow></three-js-light>
+            <three-js-light pos="[-250,-230,-200]"></three-js-light>
+          </three-js-scene>
+          
+          <three-js-scene name="helpers" active>
+            <template if="{{showAxis}}">
+              <three-axis-helper> </three-axis-helper>
+            </template>
+          </three-js-scene>
+        
+          <three-js-viewport name="perspective" id="perspectiveView" cameraId="#cam1" left=0 bottom=0 width=0.5 height=1.0 postProcess>
+            <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10"> </three-js-orbitControls>
+            <!--<three-effect-composer ignore=["helpers"]>
+              <vignette-fx> </vignette-fx>
+            </three-effect-composer>-->
+          </three-js-viewport>
+        </three-js>
+      <!--</template>-->
+      <!--core elements: loaders, etc-->
       <usco-client-deps> </usco-client-deps>
       <usco-asset-manager id="assetManager">
         <xhr-store> </xhr-store>
@@ -40,49 +85,24 @@
         <ctm-parser> </ctm-parser>
       </usco-asset-manager>
       
-      <three-js id="threeJs" selectedObjects="{{selectedMeshes}}" highlightedObject="{{highlightedMesh}}">
-        <three-stats id="stats" show=false></three-stats>
-        <tween-js> </tween-js>
-        <three-js-webglRenderer id="webglRenderer"></three-js-webglRenderer>
-        <!--<three-js-css3dRenderer id="css3dRenderer"></three-js-css3dRenderer>-->
-        <three-js-combinedCamera id="cam1" pos="[100,50,200]" orientation="diagonal" up=[0,0,1]></three-js-combinedCamera>
-
-        <three-js-scene name="main" active pickable>
-          <three-js-light pos="[250,230,200]"></three-js-light>
-          <three-js-light kind="spot" pos=[150,350,290] shadow></three-js-light>
-          <three-js-light pos="[-250,-230,-200]"></three-js-light>
-          
-          <!--<three-js-light kind="dir" color="0xffEEEE" intensity="0.2" pos=[0,50,300] > </three-js-light> 
-          <three-js-light kind="ambient" color="0x161515" intensity="0.8"> </three-js-light>
-          <three-js-light kind="hemi" color="0xffffff" secColor="0xffffff" intensity="0.5" pos=[0,1200,5000]> </three-js-light>-->
-          
-        </three-js-scene>
-        
-        <three-js-scene name="helpers" active>
-          <template if="{{showAxis}}">
-            <three-axis-helper> </three-axis-helper>
-          </template>
-        </three-js-scene>
-      
-        <three-js-viewport name="perspective" id="perspectiveView" cameraId="#cam1" left=0 bottom=0 width=0.5 height=1.0 postProcess>
-          <three-js-orbitControls cameraUp=[0,0,1] autoRotateSpeed="10"> </three-js-orbitControls>
-          <!--<three-effect-composer ignore=["helpers"]>
-            <vignette-fx> </vignette-fx>
-          </three-effect-composer>-->
-        </three-js-viewport>
-      </three-js>
+      <!--AutoSaving settings to localstorage-->
+      <!--<polymer-localstorage name="settings-lastStep"   value="{{currentStep}}"></polymer-localstorage>
+      <polymer-localstorage name="settings-lastBuild"  value="{{showAxes}}"></polymer-localstorage>-->
     </template>
     <script>Polymer("assembly-viewer", {
+      //api attributes
+      bom: null,
+      assembly: null,
+      instructions:null,
+    
       //visual settings
       showAxis:false,
       showIndicators:true,
       
-      instructions:null,
+      //internal
       currentStep:0,
       totalSteps:0,
       level:null,
-      
-      assembly: null,
       
       dataPerSteps: null,
       bomPerStep:null,
@@ -90,7 +110,9 @@
       highlightedMesh:null,
       selectedMeshes:null,
       
-      //TODO: should these be here ?
+      stepLoadProgress:0,
+      _initialLoad:true,
+      _loadedSteps:null,
       
       enteredView:function()
       {
@@ -98,11 +120,14 @@
         this.assetManager = this.$.assetManager;
         this.assemblyStep = this.$.assemblyStep;
         
+        this.loadProgress = this.$.loadProgress;
+        
         //this.meshHighlightEffect = new 
         
         this.dataPerSteps = {};
         //FIXME:this is a big ole' hack: for now get different things based on uri of 3d file
         this.bomPerStep = {};
+        this._loadedSteps = [];
       },
       //attribute change callbacks
       instructionsChanged:function()
@@ -110,126 +135,139 @@
         console.log("instructions changed");
       },
       assemblyChanged:function(){
-        console.log("assembly changed");
         var nodes = [];
         this.recurse(this.assembly[0], nodes);
         
         console.log("assemblable nodes", nodes);
         this._hierarchyNodes = nodes ;
-
         //this gives us the actual logical build steps: depth first, because children
         //need to be completed/assembled before their parents
         
         //set various attributes and flags related to current step
-        var currentStepData = nodes[0];
-        this.currentStepData = currentStepData;
         this.currentStep = 1;
         this.totalSteps = nodes.length;
       },
+      bomChanged:function(){
+        //this.loadBomData();
+      },
       currentStepChanged:function(oldStep,newStep)
       {
+        var Q = require("q");
         var nodes = this._hierarchyNodes;
-        var currentStepData = nodes[this.currentStep-1];
-        this.currentStepData = currentStepData;          
+        //TODO: make sure the hierarchy and build instructions have been loaded first
+        var currentStepData = nodes[newStep-1]; 
+        var stepContainer = new THREE.Object3D();
+        var helpersContainer = new THREE.Object3D();
+           
         //load data for current step
-        //TODO: add this to resource manager
-        var basePath = window.location.href.split("/")
-        basePath.pop()
-        basePath = basePath.join("/");
-        
         //load main item 3d data + all its children
-        //FIXME: a resulting shape should not even have 3d data of its own
         
-        var resultShape = new THREE.Object3D();
-
-        var uri = currentStepData.uri;
-        var currentUrl = basePath;
-        var self = this;
-        //TODO : detect lack of url prefix
-        this.loadResource( currentUrl+"/"+uri, function(loadedShape){ 
-          loadedShape.name = uri;
-          resultShape.add(loadedShape);
-          self.fillBomPerStep(currentStepData, loadedShape);
-        } );
-
-
-        for(var i=0;i<currentStepData.children.length;i++)
+        //1st step: fetch all the meshes/files/resources for the current step
+        var requiredData = [currentStepData];
+        requiredData = requiredData.concat( currentStepData.children );
+        var requiredBomEntries = [];
+        for(var i=0;i<requiredData.length;i++)
         {
+          var part = requiredData[i];
+          var partNumber = part.partNumber;
           var self = this;
+          
+          //fill list of required bom entries
+          if(requiredBomEntries.indexOf( partNumber) == -1)
+          {
+            requiredBomEntries.push( partNumber );
+          }
+        }
+        
+        var self = this;
+        //if we already have the data we need, skip loading
+        console.log("loaded", newStep, self.dataPerSteps[newStep]);
+        if(self.dataPerSteps[newStep]){
+          //remove from scene the container object of the previously displayed step        
+          
+          self.removeFromScene( self.dataPerSteps[oldStep] );
+        
+        //add all newly loaded stuff to scene
+        stepContainer = self.dataPerSteps[newStep]
+        self.addToScene( stepContainer );
+        //delete self.dataPerSteps[oldStep];    
+        return;
+        }
+        
+        this.loadDataForStep( this.currentStep, requiredBomEntries ).then( function()
+        {
+        
+        for(var i=0;i<requiredData.length;i++)
+        {
           
           function wrapper(i)
           {
-            var childData = currentStepData.children[i];
-            var uri = childData.uri;
-            var currentUrl = basePath;
+            var part = requiredData[i];
             
-            //TODO : detect lack of url prefix
-            function callback(loadedShape)
-            {
-              loadedShape.name = uri;
-              self.fillBomPerStep(childData, loadedShape);
-              resultShape.add( loadedShape );
-              loadedShape.position.x = childData.position[0];
-              loadedShape.position.y = childData.position[1];
-              loadedShape.position.z = childData.position[2];
-              
-              loadedShape.material.color.setHex(0xff8800);
-              
-              
+            function onMeshLoaded(origMesh){
+              var mesh = origMesh.clone();
+              mesh.geometry = origMesh.geometry;
+              mesh.position.x = part.position[0];
+              mesh.position.y = part.position[1];
+              mesh.position.z = part.position[2];
+              if(currentStepData.partNumber != part.partNumber)
+              {mesh.material.color.setHex(0xff8800);}
               //add current virtual shape & children to data per step
-              loadedShape.lookAt(loadedShape.position.clone().add( new THREE.Vector3().fromArray(childData.up)) );
+              if(part.up){
+                mesh.lookAt(mesh.position.clone().add( new THREE.Vector3().fromArray( part.up )) ); 
+              };
               
-            }
-            self.loadResource( currentUrl+"/"+uri, callback );
+              self.fillBomPerStep(part, mesh);
+              
+              stepContainer.add( mesh );
+            };
+            Q.when(self.bom[part.partNumber]._mesh,onMeshLoaded);
           }
-          wrapper(i);
+          wrapper( i );
         }
-        
-     
-          
-        //add all loaded stuff to scene
-        this.addToScene( resultShape );
-        this.dataPerSteps[self.currentStep] = resultShape;
-        
+        //load connectors
+        if(currentStepData.connectors)
+        {
+          for(var i=0;i<currentStepData.connectors.length;i++)
+          {
+            var connectorData = currentStepData.connectors[i];
+            //console.log(i, connectorData, currentStepData.connectors[0] );
+            var up = connectorData.up || [0,0,1];
+            up = new THREE.Vector3().fromArray( up );
+            var connector = new Connector({up:up});
+            connector.position.fromArray( connectorData.position );
+            
+            helpersContainer.add( connector.generateRenderables({color:0x000001,baseDia:3}) );
+            //FIXME: should these arrows be the indicators for a verb
+            //should they be what the manual's creator defines?
+            
+            var end   = new THREE.Vector3().fromArray( connectorData.position );
+            var start = end.clone().add( up.clone().multiplyScalar(25) );
+            var arrow = new DistanceHelper({start: start, end:end});
+            //arrow.toggleText(false);
+            //hack-ish
+            arrow.label.parent.remove(arrow.label);
+            helpersContainer.add( arrow );
+          }
+        }
+        stepContainer.add( helpersContainer );
+        stepContainer.indicators = helpersContainer;
+        });
         
         //remove from scene the container object of the previously displayed step        
-        this.removeFromScene( this.dataPerSteps[oldStep] );
-        delete this.dataPerSteps[oldStep];    
+        self.removeFromScene( self.dataPerSteps[oldStep] );
         
-        //load connectors
-        var helpersContainer = new THREE.Object3D();
-        if(!(currentStepData.connectors)) return;
-        for(var i=0;i<currentStepData.connectors.length;i++)
-        {
-          var connectorData = currentStepData.connectors[i];
-          //console.log(i, connectorData, currentStepData.connectors[0] );
-          var up = connectorData.up || [0,0,1];
-          up = new THREE.Vector3().fromArray( up );
-          var connector = new Connector({up:up});
-          connector.position.fromArray( connectorData.position );
-          
-          //this.addToScene( connector.generateRenderables({color:0x000001,baseDia:3}) );
-          helpersContainer.add( connector.generateRenderables({color:0x000001,baseDia:3}) );
-          //FIXME: should these arrows be the indicators for a verb
-          //should they be what the manual's creator defines?
-          
-          var end   = new THREE.Vector3().fromArray( connectorData.position );
-          var start = end.clone().add( up.clone().multiplyScalar(25) );
-          var arrow = new DistanceHelper({start: start, end:end});
-          //arrow.toggleText(false);
-          //hack-ish
-          arrow.label.parent.remove(arrow.label);
-          //this.label.textSprite.visible = toggle;
-          helpersContainer.add( arrow );
-        }
+        //add all newly loaded stuff to scene
+        self.addToScene( stepContainer );
+        self.dataPerSteps[newStep] = stepContainer;
         
-        resultShape.add( helpersContainer );
-        resultShape.indicators = helpersContainer;
+        
+        //delete self.dataPerSteps[oldStep];    
 
-        //update current step in controls
-        //TODO: use databinding
-        this.assemblyStep.current = this.currentStep;
-        //this.assemblyStep.bom = this.bomPerStep;
+        if(self._loadedSteps.indexOf( newStep ) ==-1)
+        {
+          self._loadedSteps.push( newStep );  
+        }    
         
       },
       totalStepsChanged:function()
@@ -248,7 +286,6 @@
         });
       },
       highlightedMeshChanged:function(oldHighlight, newHighLight){
-        console.log(oldHighlight, newHighLight);
         if(oldHighlight)
         {
           if(oldHighlight._oldColor)
@@ -265,7 +302,6 @@
         {
           newHighLight._oldColor = newHighLight.material.color;
           newHighLight.material.color = new THREE.Color(0xf03333);
-         // newHighLight.material.shininess = 1; 
           if(newHighLight._meta_)
           {
            newHighLight._meta_.part.highlighted = true;
@@ -283,7 +319,6 @@
             var child = node.children[i];
             if(!child.children)
             {
-              //console.log("blahh", node);
             }
             if(child.children)
             {
@@ -298,21 +333,64 @@
           }
         //nodes.push( node );
       },
+      loadDataForStep:function(step, bomEntryNumbers)
+      {
+        //console.log("loadDataForStep", step, bomEntryNumbers);
+        //TODO: add this to resource manager to handle relative file paths client side?
+        var basePath = window.location.href.split("/")
+        basePath.pop()
+        basePath = basePath.join("/");
+      
+        var allResources = [];
+        var self = this;
+        for(var i=0;i<bomEntryNumbers.length;i++)
+        {
+          function wrapper(i)
+          {
+            var bomEntry = self.bom[bomEntryNumbers[i]];
+            var uri = bomEntry.uri;
+            var currentUrl = basePath;
+            
+            function callback(loadedShape)
+            {
+              loadedShape.name = bomEntry.title;
+              bomEntry._mesh = loadedShape;
+              //add current virtual shape & children to data per step
+              //loadedShape.lookAt(loadedShape.position.clone().add( new THREE.Vector3().fromArray(childData.up)) );
+              return loadedShape;
+            }
+            bomEntry._mesh = self.loadResource( currentUrl+"/"+uri).then(callback);//,null,progress;
+            bomEntry._mesh.then( done );
+            allResources.push( bomEntry._mesh );
+          }
+          wrapper(i);
+        }
+        function done()
+        {
+          //self.loadProgress.value = 100;
+          console.log("done");
+          self.stepLoadProgress = 100;
+        }
+        
+        var totalResources = allResources.length;
+        var totalProg = totalResources*100;
+        var summedDownloads = 0;
+        function onProgress(progress)
+        {
+          if(progress.value.download == 100)
+          {
+            summedDownloads+= 1/totalResources*100;
+            self.loadProgress.value = summedDownloads;
+          }
+        }
+        var Q = require("q");
+        return Q.all(allResources).then( done, null, onProgress );
+      },
       fillBomPerStep:function(partData, instance)
       {
         //console.log("partData", partData);
         var partNumber = partData.partNumber;
         var currentStep = this.currentStep;
-        /*Storage per partNumber
-        
-        if(!(this.bomPerStep[partNumber])) this.bomPerStep[partNumber] = {amount:1,uri:partData.uri,description:"",instances:[]};
-        
-        this.bomPerStep[partNumber].amount+=1;
-        if(this.bomPerStep[partNumber].instances.indexOf(instance) == -1)
-        {
-          this.bomPerStep[partNumber].instances.push( instance );
-        }
-        console.log("bomPerStep",this.bomPerStep);*/
         
         //storage as simple list
         if(!(this.bomPerStep[currentStep])) this.bomPerStep[currentStep] = [];
@@ -341,17 +419,15 @@
         if(!(found))
         {
           //for now, hackiing uri as description
-          var part = {partNumber:partNumber, description:partData.uri.replace("demo-data/",""), amount:1,uri:partData.uri,instances:[instance]};
+          var bomEntry = this.bom[partNumber];
+          var part = {title:bomEntry.title, description:bomEntry.description, amount:1,partNumber:partNumber,instances:[instance]};
           parts.push( part );
         }
-        
         if(!(instance._meta_))
         {
           instance._meta_= {}
           instance._meta_.part = part;
         }
-        
-        console.log("this.bomPerStep",this.bomPerStep, this);
         this.assemblyStep.bom = this.bomPerStep[currentStep];
       },
       //public API
@@ -367,13 +443,15 @@
       {
         var self = this;
         var resourceDeferred = this.assetManager.loadResource(uriOrData);
-        resourceDeferred.promise.then(function(resource){
+        
+        
+        function formatResource(resource)
+        {
           //geometry
           var geometry = resource.data;
           geometry.computeBoundingBox();
           //geometry.computeCentroids();
           geometry.computeBoundingSphere();
-
           //needed at least for .ply files
           geometry.computeVertexNormals();
           geometry.computeFaceNormals();
@@ -384,9 +462,15 @@
           //new THREE.MeshLambertMaterial( {opacity:1,transparent:false,color: 0x0088ff} );
           //
           var shape = new THREE.Mesh(geometry, material);
-          if(callback) callback( shape );
-          
-        }).fail(function(error){console.log("failed to load resource", error);})
+          //if(callback) callback( shape );
+          return shape;
+        }
+        
+        function resourceLoadFailed(reason)
+        {
+          console.log("failed to load resource", error);
+        }
+        return resourceDeferred.promise.then(formatResource,resourceLoadFailed);
       },
       loadInstructions:function(uriOrData)
       {
