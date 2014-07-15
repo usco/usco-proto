@@ -1,0 +1,44 @@
+//paint bottom corner
+//screw 4 M5 nuts into top corner
+//paint 43 little kitties
+
+{
+ function trim(s) {
+    return s.replace( /^\s+|\s+$/g, '' );
+  }
+}
+
+instruction =v:verb amnt:integer? subj:wordgroup prep:preposition? obj:wordgroup?
+
+{
+ return {
+  verb:v,
+  amount:amnt,
+  subject:subj,
+  preposition:prep,
+  object:obj
+ };
+}
+
+
+wordgroup = wg:$(!(preposition/end).)+ { return trim(wg); }
+
+word  = letter+
+letter= [a-zA-Z0-9]
+sep   = [ \t]
+end = [\r\n]
+
+preposition
+  = prep:$(sep('into'/'from'/'to'/'on'/'off'/'at')sep) { return trim(prep); }
+
+verb
+  = verb:('push'/'slide'/'attach'/'screw'/'bolt'/'place'/'paint'/'sand')sep? { return verb; }
+
+articles
+  = (sep('a'/'an'/'the')sep)
+
+positions
+  = ('left'/'right'/'top'/'bottom'/'edge'/'center')
+
+integer "integer"
+  = digits:[0-9]+ { return parseInt(digits.join(""), 10); }

@@ -41,11 +41,6 @@
         z-index:1;
       }
       
-      
-       core-theme-aware.usco {
-            background: salmon;
-          }
-          
           core-theme-aware.usco-dark {
             background: darkslategray;
             color:white;
@@ -72,22 +67,20 @@
         instructions = {"instructions":[
             {
                "step":1,
-               "text":"do some stuff",
+               "text":"push 1 M3 Nut into the left nut hole",
                "parts": [
-               
                ],
-               "logic":"screw #0001 into #0004 at [0,2,3]",
                "images":[
-                  "thumbnails/..."
                ]
             },
             {
                "step":2,
-               "text":"",
+               "text":"push 1 M3 Nut into the right nut hole",
+               "parts": [
+               ],
                "images":[
-                  "thumbnails/..."
                ]
-            }
+            },
          ]};
 
         //TODO: branching and conditionals ?
@@ -133,7 +126,7 @@
         
         */
         
-        bomTest = [
+        bom = [
           {
             id:0,
             title:"topCorner",
@@ -189,7 +182,7 @@
               scale:[1,1,1],
               children:[
                 {
-                  name:"mountNutL",
+                  name:"left nut hole",
                   partNumber:1,
                   position:[54,-8.5,3.6],
                   rotation:[0,0,0],
@@ -197,7 +190,7 @@
                   up:[0,0,1]
                 },
                 {
-                  name:"mountNutR",
+                  name:"right nut hole",
                   partNumber:1,
                   position:[54,8.5,3.6],
                   rotation:[0,0,0],
@@ -361,7 +354,7 @@
    
 
 	      var assemblyViewer = document.querySelector('assembly-viewer');
-	      assemblyViewer.bom = bomTest;
+	      assemblyViewer.bom = bom;
 	      assemblyViewer.instructions = instructions;
 	      assemblyViewer.assembly = assemblyTest;
      
