@@ -112,7 +112,9 @@ core-theme-aware.usco-light core-icon-button.selected {
       <div>
         <article>
         <header>Instructions:</header>
-        <p>{{instruction}}</p>
+        <p>{{instructionObj.verb}} {{instructionObj.amount}} 
+        <span on-mouseover="{{onInstructionSubectHover}}" on-mouseleave="{{onPointerLeave}}" class="aPart {{ {'highlighted':instructionObj.subjectPart.highlighted} | tokenList  }}"> <b>{{instructionObj.subject}}</b></span> {{instructionObj.preposition}} {{instructionObj.object}} {{instructionObj.prep2}}
+        <span on-mouseover="{{onInstructionComplementHover}}" on-mouseleave="{{onPointerLeave}}" class="aPart {{ {'highlighted':instructionObj.complementPart.highlighted} | tokenList  }}"><b>{{instructionObj.complement}}</b></span>
         </article>
       </div>
       <div>
@@ -173,15 +175,16 @@ core-theme-aware.usco-light core-icon-button.selected {
       highlightedItem:null,
       
       
-      instruction:"do some stuff",
+      instruction:"",
       builds:"AssembledCubion#4",
       bom:null,
-      tools:[
-        {name:"screwdriver"},
-      ],
-      actions:[
-        "screw part #1 into part #2",
-      ],
+      tools:null,
+      
+      
+      hItems:null,
+      instructionObj:null,
+      bomByPartName:null,
+      
       
       isPlayingChanged:function(oldIsPlaying,isPlaying)
       { 
@@ -222,12 +225,25 @@ core-theme-aware.usco-light core-icon-button.selected {
         }
       },
       bomChanged:function(){
+        this.bomByPartName = {};
+        for(var i=0;i<this.bom.length;i++)
+        {
+          this.bomByPartName[this.bom[i].title.toLowerCase()]= this.bom[i];
+        }
+        this.instructionObj.subjectPart = this.bomByPartName[this.instructionObj.subject.toLowerCase()];
+        this.instructionObj.complementPart = this.bomByPartName[this.instructionObj.complement.toLowerCase()];
+        
+      },
+      instructionChanged:function(oldInst, newInst){
+        var instruction = instructionParser.parse(this.instruction);
+        this.instructionObj = instruction;
       },
       highlightedItemChanged:function(oldItem, newItem)
       {
         console.log(oldItem, newItem);
         if(oldItem)
         {
+          oldItem.highlighted = false;
            var oldHighlight = oldItem.instances[0];
             if(oldHighlight._oldColor)
             {
@@ -246,6 +262,7 @@ core-theme-aware.usco-light core-icon-button.selected {
         }
         if(newItem)
         {
+          newItem.highlighted = true;
           var newHighLight = newItem.instances[0];
           newHighLight._oldColor = newHighLight.material.color;
           newHighLight.material.color = new THREE.Color(0xf03333);
@@ -296,9 +313,22 @@ core-theme-aware.usco-light core-icon-button.selected {
       onPointerLeave:function(event, detail, sender){
         this.highlightedItem = null;
       },
+      onInstructionSubectHover:function(event,detail,sender){
+        //FIXME: do this better
+        var subject = this.trim( sender.innerText.toLowerCase() );
+        var model = this.bomByPartName[subject];
+        this.highlightedItem = model;
+      },
+      onInstructionComplementHover:function(event,detail,sender){
+        var complement = this.trim( sender.innerText.toLowerCase() );
+        var model = this.bomByPartName[complement];
+        this.highlightedItem = model;
+      },
+      trim:function(s) {
+        return s.replace( /^\s+|\s+$/g, '' );
+      },
       reverse:function()//this turns ins into outs , froms into tos etc
       {
-      
       },
       initialize:function()
       {

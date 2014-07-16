@@ -8,7 +8,7 @@
   }
 }
 
-instruction =v:verb amnt:integer? subj:wordgroup prep:preposition? obj:wordgroup?
+instruction =v:verb amnt:integer? subj:wordgroup? prep:preposition? obj:wordgroup? prep2:preposition? grom:wordgroup?
 
 {
  return {
@@ -16,20 +16,21 @@ instruction =v:verb amnt:integer? subj:wordgroup prep:preposition? obj:wordgroup
   amount:amnt,
   subject:subj,
   preposition:prep,
-  object:obj
+  object:obj,
+  prep2:prep2,   
+  complement: grom     
  };
 }
 
 
 wordgroup = wg:$(!(preposition/end).)+ { return trim(wg); }
 
-word  = letter+
-letter= [a-zA-Z0-9]
-sep   = [ \t]
+sep = [ \t]
 end = [\r\n]
 
 preposition
-  = prep:$(sep('into'/'from'/'to'/'on'/'off'/'at')sep) { return trim(prep); }
+  = prep:$(sep('into'/'from'/'to'/'on'/'off'/'at'/'of')sep) { return trim(prep); }
+
 
 verb
   = verb:('push'/'slide'/'attach'/'screw'/'bolt'/'place'/'paint'/'sand')sep? { return verb; }
@@ -42,3 +43,4 @@ positions
 
 integer "integer"
   = digits:[0-9]+ { return parseInt(digits.join(""), 10); }
+
